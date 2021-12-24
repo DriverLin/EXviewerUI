@@ -11,6 +11,10 @@
 # production
 /build
 
+/server
+/TEMPLATE
+
+
 # misc
 .DS_Store
 .env.local
