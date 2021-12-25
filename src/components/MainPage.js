@@ -15,9 +15,10 @@ import SortIcon from '@mui/icons-material/Sort';
 import DownloadIcon from '@mui/icons-material/Download';
 import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
-
-import LinearProgress from '@mui/material/LinearProgress';
 import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
+import LinearProgress from '@mui/material/LinearProgress';
+
+import { useLocation } from "react-router-dom";
 
 const formatTime = (time, format) => {
     const date = new Date(Number(time + "000"))
@@ -55,7 +56,10 @@ const translateGdata2CardData = (g_data) => {
 }
 
 export default function MainPage(props) {
-    const currrentUrl = () => window.location.href.replace(window.location.origin, "") 
+    const locationProps = useLocation()
+
+
+    const currrentUrl = () => locationProps.pathname
 
     const matches = useMediaQuery('(min-width:830px)');
     const small_matches = useMediaQuery('(min-width:560px)');
@@ -73,34 +77,33 @@ export default function MainPage(props) {
     const [galaryList, setgalaryList] = useState([]);
 
 
-    const gallaryListRef =  useRef(null);
-    const gidSet =          useRef(null);
-    const cacheAll =        useRef(null)
-    const lock =            useRef(null);
-    const currentPageNum =  useRef(null)
-    const apiUrl =          useRef(null)
-    const loadover =        useRef(null)
+    const gallaryListRef = useRef(null)
+    const gidSet = useRef(null)
+    const cacheAll = useRef(null)
+    const lock = useRef(null)
+    const currentPageNum = useRef(null)
+    const apiUrl = useRef(null)
+    const loadover = useRef(null)
 
 
 
 
-    const openNewTab = (url) => { 
-        window.open(url, "_blank")
+
+    const openNewTab = (url) => {
+        window.open("/#" + url, "_blank")
     }
     const openCurrentTab = (url) => {
-        window.location.href = url
-        // window.location.reload()
-        initPageFunc()
+        window.location.href = "/#" + url
     }
+
+
     const init_AllDATA_API = () => {
         fetch("/api/data")
             .then(res => res.json())
             .then(data => {
                 cacheAll.current = data.map(item => translateGdata2CardData(item));
                 localSearchAction()
-
                 requestNextPage()
-                // console.log(data)
             })
     };
 
@@ -121,16 +124,23 @@ export default function MainPage(props) {
 
 
     const requestNextPage = () => {
-        console.log("requestNextPage")
+        // if (apiUrl.current === null) { 
+        //     console.log("apiUrl.current is null")
+        // }
+
+        
         if (lock.current) return;
         lock.current = true;
+        
+        
         if (cacheAll.current === null) {
             if (loadover.current) return;
             setLoadingBar(true)
-            fetch(apiUrl.current + `&page=${currentPageNum.current}`)
+            const targetUrl = apiUrl.current + `&page=${currentPageNum.current}`
+            console.log("开始请求nextPage...", targetUrl)
+            fetch(targetUrl)
                 .then(res => res.json())
                 .then(res => {
-                    console.log(res)
                     if (res.length === 0) {
                         loadover.current = true
                     }
@@ -138,7 +148,7 @@ export default function MainPage(props) {
                         if (!gidSet.current.has(item.gid)) {
                             gallaryListRef.current.push(item)
                             gidSet.current.add(item.gid)
-                        } else { 
+                        } else {
                             console.log("duplicate", item.gid)
                         }
 
@@ -146,11 +156,14 @@ export default function MainPage(props) {
                     setgalaryList([...gallaryListRef.current])
                     lock.current = false;
                     setLoadingBar(false)
+                    console.log("请求结束", res)
+
                 }).catch(err => {
                     console.log(err)
                 })
             currentPageNum.current = currentPageNum.current + 1
         } else {
+            console.log("静态加载...")
             setLoadingBar(false)
             const totalLen = cacheAll.current.length;
             const currentlen = gallaryListRef.current.length;
@@ -165,7 +178,7 @@ export default function MainPage(props) {
     }
 
     const localSearchAction = () => {
-        let inputText = decodeURIComponent(window.location.search.replace("?f_search=", ""))
+        let inputText = decodeURIComponent(locationProps.search.replace("?f_search=", ""))
         console.log("[", inputText, "]")
         if (cacheAll.current === null) {
 
@@ -196,20 +209,20 @@ export default function MainPage(props) {
     }
 
     //对当前画廊进行按名字的hash排序
-    const currentHashSort = () => { 
+    const currentHashSort = () => {
         const nameDict = {}
         const firstShow = []
-        for (let item of gallaryListRef.current) {  
+        for (let item of gallaryListRef.current) {
             const hashName = item.name.replace(/\[.*?\]|\(.*?\)|【.*?】|（.*?）|\s+/g, "")
             if (nameDict[hashName] !== undefined) {
                 if (item.lang === "chinese") {
                     //如果是中文画廊，则放在前面
                     nameDict[hashName].unshift(item)
-                } else { 
+                } else {
                     //如果是英文画廊，则放在后面
                     nameDict[hashName].push(item)
                 }
-            } else { 
+            } else {
                 nameDict[hashName] = [item]
             }
             if (firstShow.indexOf(hashName) === -1) {
@@ -217,16 +230,14 @@ export default function MainPage(props) {
             }
         }
         const newList = []
-        for (let hashName of firstShow) { 
+        for (let hashName of firstShow) {
             newList.push(...nameDict[hashName])
         }
         gallaryListRef.current = newList
         setgalaryList(newList)
     }
 
-
-    const initPageFunc = () => { 
-        
+    const initPageFunc = () => {
         gallaryListRef.current = []
         gidSet.current = new Set()
         cacheAll.current = null
@@ -234,40 +245,40 @@ export default function MainPage(props) {
         currentPageNum.current = 0;
         apiUrl.current = null
         loadover.current = false;
-        
         setgalaryList([])
+        
+        console.log("初始化页面")
+        console.log("window.serverSideConfigure.type", window.serverSideConfigure.type)
+        console.log("Data.db ? ", window.serverSideConfigure.type === "Data.db")
+        console.log("static ? ",
+            (window.serverSideConfigure.type === "staticApi"
+            || localStorage.getItem("offline_mode") === "true"
+            || currrentUrl() === "/downloaded")
+        )
 
-        
-        
+
+
         if (window.serverSideConfigure.type === "Data.db") {
             init_WASMSQL_API()
         } else if (
             window.serverSideConfigure.type === "staticApi"
             || localStorage.getItem("offline_mode") === "true"
-            || currrentUrl() === "/#/downloaded"
+            || currrentUrl() === "/downloaded"
         ) {
             init_AllDATA_API()
         } else {
             const urlMap = {
                 "/": "/list/?0=0",
-                "/#/": "/list/?0=0",
-                "/#/search": "/list/" + window.location.search,
-                "/#/watched": "/list/watched?0=0",
-                "/#/popular": "/list/popular?0=0",
-                "/#/favorites": "/list/favorites.php?0=0",
+                "/search": "/list/" + locationProps.search,
+                "/watched": "/list/watched?0=0",
+                "/popular": "/list/popular?0=0",
+                "/favorites": "/list/favorites.php?0=0",
             }
             apiUrl.current = urlMap[currrentUrl()]
+            console.log("apiUrl.current", currrentUrl(), "->", apiUrl.current)
             requestNextPage()
         }
     }
-
-
-    useEffect(() => {
-        window.addEventListener('scroll', handelScroll, true)
-        console.log("serverSideConfigure", window.serverSideConfigure)
-        initPageFunc()
-        return () => { window.removeEventListener('scroll', handelScroll, true) }
-    }, [])
 
     const lastE = useRef(0);
     const handelScroll = (e) => {
@@ -275,7 +286,7 @@ export default function MainPage(props) {
         const end = e.target.documentElement.scrollHeight - e.target.documentElement.scrollTop - e.target.documentElement.clientHeight
         // console.log(lastE.current, end, lastE.current > dis2trigger && end <= dis2trigger)
         if (lastE.current > dis2trigger && end <= dis2trigger) {
-            console.log("reach the end")
+            console.log("触底触发加载")
             requestNextPage()
         }
         lastE.current = end
@@ -284,7 +295,7 @@ export default function MainPage(props) {
     const handeLongClicked = () => { }
     const detailCallback = (g_data) => {
         console.log("detailCallback", g_data.gid, g_data.token)
-        openNewTab(`/#/g/${g_data.gid}/${g_data.token}/`)
+        openNewTab(`/g/${g_data.gid}/${g_data.token}/`)
     }
 
 
@@ -299,26 +310,26 @@ export default function MainPage(props) {
     let menuItems = [
         {
             onClick: () => {
-                openCurrentTab("/#/")
+                openCurrentTab("/")
             },
             icon: <HomeIcon />,
             text: "主页"
         }, {
             onClick: () => {
-                openCurrentTab("/#/watched")
+                openCurrentTab("/watched")
             },
             icon: <SubscriptionsIcon />,
             text: "订阅"
         }, {
             onClick: () => {
-                openCurrentTab("/#/popular")
+                openCurrentTab("/popular")
             },
             icon: <LocalFireDepartmentIcon />,
             text: "热门"
         },
         {
             onClick: () => {
-                openCurrentTab("/#/downloaded")
+                openCurrentTab("/downloaded")
             },
             icon: <DownloadIcon />,
             text: "下载"
@@ -334,7 +345,7 @@ export default function MainPage(props) {
         window.serverSideConfigure.type === "staticApi"
         || window.serverSideConfigure === "Data.db"
         || localStorage.getItem("offline_mode") === "true"
-        || currrentUrl() === "/#/downloaded"
+        || currrentUrl() === "/downloaded"
     ) {
         menuItems.push({
             onClick: randomSort,
@@ -365,11 +376,27 @@ export default function MainPage(props) {
         })
     }
 
-    
+
 
     const doSearch = (text) => {
-        openNewTab(`/#/search?f_search=${encodeURIComponent(text)}`)
+        openCurrentTab(`/search?f_search=${encodeURIComponent(text)}`)
     }
+
+
+
+
+    useEffect(() => {
+        window.addEventListener('scroll', handelScroll, true)
+        return () => { window.removeEventListener('scroll', handelScroll, true) }
+    }, [])
+
+    useEffect(() => {
+        initPageFunc()
+    }, [locationProps])
+
+
+
+
 
     return (
         <React.Fragment >
@@ -402,7 +429,7 @@ export default function MainPage(props) {
                     }
                 </Grid>
             </div>
-            
+
             {
                 loadingBar ? <div
                     style={{
@@ -410,7 +437,7 @@ export default function MainPage(props) {
                         bottom: "0px",
                         width: "100%",
                     }}
-                ><LinearProgress color='primary'  /></div> : null
+                ><LinearProgress color='primary' /></div> : null
             }
         </React.Fragment>
     )

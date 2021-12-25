@@ -4,6 +4,7 @@ import { makeStyles } from '@mui/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 import PropTypes from 'prop-types';
+import { useLocation } from "react-router-dom";
 
 
 function HideOnScroll(props) {
@@ -24,7 +25,9 @@ HideOnScroll.propTypes = {
 
 export default function TopSearchBar(props) {
     const matches = useMediaQuery('(min-width:830px)')
-    const defaultSearch = decodeURIComponent(window.location.search.replace("?f_search=", "")) 
+    const locationProps = useLocation()
+    
+    const defaultSearch = decodeURIComponent(locationProps.search).replace('?f_search=', '')
     const useStyles = makeStyles((theme) => ({
         inputRoot: {
             color: 'inherit',
