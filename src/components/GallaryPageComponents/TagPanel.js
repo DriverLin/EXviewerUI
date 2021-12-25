@@ -36,7 +36,7 @@ export default function TagPanel(props) {
                                             <BootstrapButton
                                                 key={value}
                                                 onClick={() => {
-                                                    window.open(`/search?f_search=${encodeURIComponent(`${row}:"${value}$"`)}`,"_blank");                  
+                                                    window.open(`/#/search?f_search=${encodeURIComponent(`${row}:"${value}$"`)}`,"_blank");                  
                                                  }}
                                             >{
                                                     GetTranslate(row,value)
