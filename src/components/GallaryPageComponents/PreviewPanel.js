@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, Paper, Grid, Snackbar, Rating, Alert, useMediaQuery, Card, Typography, Box } from '@mui/material';
-import SkeImg from '../SkeImg';
 export default function PreviewPanel(props) { 
     const [previewButtonShow, setPreviewButtonShow] = useState(props.previews.length !== 0)
     const [previewShows, setPreviewShows] = useState(props.previews.slice(0, 20))

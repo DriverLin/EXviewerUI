@@ -4175,7 +4175,7 @@ const preciseQuery = {
         "soushi miketsukami": "\u5fa1\u72d0\u795e\u53cc\u70bd",
         "maya tendo": "\u5929\u5802\u771f\u77e2",
         "seto miyako": "\u6fd1\u6237\u7f8e\u591c\u5b50",
-        "pecorine": "\u4f69\u53ef\u8389\u9732",
+        "pecorine": "\u4f69\u53ef\u8389\u59c6",
         "harumi fujiyoshi": "\u85e4\u5409\u6674\u7f8e",
         "chiri kitsu": "\u6728\u6d25\u5343\u91cc",
         "kaere kimura": "\u6728\u6751\u5361\u611b\u62c9",
@@ -4888,7 +4888,21 @@ const preciseQuery = {
         "golden snub-nosed monkey": "\u91d1\u4e1d\u7334",
         "african wild dog": "\u975e\u6d32\u91ce\u72ac",
         "kusunoki sio": "\u6960\u681e\u685c",
-        "sara": "\u838e\u62c9"
+        "sara": "\u838e\u62c9",
+        "metera": "\u7f8e\u9edb\u62c9",
+        "sutera": "\u65af\u9edb\u62c9",
+        "chieru kazama": "\u98ce\u95f4\u5343\u7231\u7460",
+        "hanako kuroe": "\u9ed1\u6c5f\u82b1\u5b50",
+        "kasumi kirihara": "\u96fe\u539f\u971e",
+        "makoto aki": "\u5b89\u827a\u771f\u7434",
+        "christina morgan": "\u514b\u8389\u4e1d\u63d0\u5a1c\u00b7\u6469\u6839",
+        "mythra": "\u5149",
+        "pyra": "\u7130",
+        "cucouroux": "\u5e93\u5e93\u9c81",
+        "jessica": "\u6770\u897f\u5361",
+        "jasmine": "\u8309\u8389",
+        "karva": "\u5361\u9c81\u5df4",
+        "korwa": "\u53ef\u9732\u74e6"
     },
     "group": {
         "clockup": "CLOCKUP",
@@ -7040,7 +7054,10 @@ const preciseQuery = {
         "sakura saku saku": "\u4f50\u5009\u3055\u304f\u3055\u304f",
         "calorie and cholesterols": "\u30ab\u30ed\u30ea\u30fc&Cholesterols",
         "stapspats": "Stapspats",
-        "letitia no ohirune": "\u30ec\u30c6\u30a3\u30fc\u30b7\u30e3\u306e\u304a\u663c\u5bdd"
+        "letitia no ohirune": "\u30ec\u30c6\u30a3\u30fc\u30b7\u30e3\u306e\u304a\u663c\u5bdd",
+        "rokumarusou": "\u308d\u304f\u307e\u308b\u8358",
+        "yamo7": "\u30e4\u30e2\u30bb\u30d6\u30f3",
+        "ginga-kei pride": "\u94f6\u6cb3\u7cfbPRIDE"
     },
     "artist": {
         "13": "13",
@@ -10470,7 +10487,8 @@ const preciseQuery = {
         "chinese": "\u6c49\u8bed",
         "itsuki kuro": "\u4f0a\u6708\u30af\u30ed",
         "tonari": "\u96a3",
-        "sawaragi": "\u6ca2\u826f\u5b9c"
+        "sawaragi": "\u6ca2\u826f\u5b9c",
+        "sanrokumaru": "\u3055\u3093\u308d\u304f\u4e38"
     },
     "cosplayer": {
         "otohara an": "\u4e59\u539f\u3042\u3093",
@@ -11644,10 +11662,8 @@ const preciseQuery = {
 
 export default function GetTranslate(type,value) {
     try { 
-        return preciseQuery[type][value] === undefined ? value : preciseQuery[type][value]
+        return preciseQuery[type][value]
     } catch (e) {
-        return type;
+        return value
     }
 }
-
-
