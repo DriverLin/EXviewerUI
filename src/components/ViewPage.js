@@ -12,10 +12,21 @@ export default function ViewPage(props) {
     const location = useLocation();
     const gid = location.pathname.split("/")[2]
     const token = location.pathname.split("/")[3]
-    const [pageCount, setPageCount] = useState(0);
+    
+    const pageCountRef = useRef(0)
+    const [pageCount, _setPageCount] = useState(0);
+    const setPageCount = (value) => {
+        pageCountRef.current = value
+        _setPageCount(value)
+    }
+
+
+    const pageNumRef = useRef(Number(localStorage.getItem(`/viewing/${gid}/${token}/`)) || 1)
     const [pageNum, _setPageNum] = useState(Number(localStorage.getItem(`/viewing/${gid}/${token}/`)) || 1);
+
+
     const setPageNum = (value) => {
-        console.log("setPageNum", value);
+        pageNumRef.current = value
         _setPageNum(value);
         localStorage.setItem(`/viewing/${gid}/${token}/`, value);
         if (value == pageCount) {
@@ -24,6 +35,21 @@ export default function ViewPage(props) {
     }
 
 
+    //考虑到服务器压力  以及阅读速度
+    //不需要按照是否双页进行双倍预加载
+    useEffect(() => {
+        const prevRange = 4
+        const nextRange = 6
+        const start = pageNumRef.current - prevRange > 0 ? pageNumRef.current - prevRange : 1
+        const end = pageNumRef.current + nextRange > pageCountRef.current ? pageCountRef.current : pageNumRef.current + nextRange
+        for (let i = start; i <= end; i++) { 
+            let img = new Image();
+            img.onload = () => { 
+                img = null
+            }
+            img.src = urls[i - 1]
+        }
+    }, [pageNum])
 
     const [sliderOpen, setSliderOpen] = useState(false)
     const onSliderClose = () => {

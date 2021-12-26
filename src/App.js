@@ -22,7 +22,6 @@ import {
 import CommentPanel from './components/GallaryPageComponents/CommentPanel';
 import PreviewPanel from './components/GallaryPageComponents/PreviewPanel';
 import InfoPanel from './components/GallaryPageComponents/InfoPanel';
-import SkeImg from './components/SkeImg';
 
 
 
@@ -45,7 +44,6 @@ function App() {
 
           <Route path="/g/:id/:token/" element={<GallaryPage />} />
           <Route path="/viewing/:id/:token/" element={<ViewPage />} />
-          <Route path="/test/" element={<SkeImg src="http://localhost:11/img/2024486/24bc252dd1/?index=1" />} />
         </Routes>
       </HashRouter>
     </div >
