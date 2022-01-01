@@ -29,6 +29,6 @@ jobs:
       - name: Run a one-line script
         run: echo Hello, world!
         
-      - name: Setup Debug Session
-        uses: DriverLin/debugger-action@master
+      # - name: Setup Debug Session
+      #   uses: DriverLin/debugger-action@master
       
