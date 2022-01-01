@@ -95,7 +95,7 @@ const useStyles = makeStyles((theme) => ({
     },
     d_icon: {
         margin: "0px 0px 0px 8px",
-        
+
     },
     d_icon_img: {
         width: "18px",
@@ -137,24 +137,25 @@ export default function GallaryCard(props) {
     if (props.data.lang in languageMap) {
         langText = languageMap[props.data.lang]
     }
-    if (process[0] !== 0 || process[1] !== 0) {
-        if (process[0] === process[1]) {
-            //下载卡片 且下载已成功
-            //仅显下载图标 语言 页数
+    //未知 下载中 下载完成 未完成 未开始
+    if (process[1] === 0) {
+        cardText = langText + " " + props.data.pages + "P"
+    }
+    else {
+        if (process[1] === 0) {
+            cardText = "下载中"
+        }
+        else if (process[1] === -1) { 
+            cardText = "未开始"
+        }
+        else if (process[1] === process[0]) {
             downloadIcon = true
-            cardText = langText + " " + props.data.pages + "P" 
+            cardText = langText + " " + props.data.pages + "P"
         } else {
-            //下载卡片 且下载未成功
-            //显示 下载进度
             downloadIcon = false
             cardText = `${process[1] - process[0]} 项未下载`
         }
-    } else { 
-        //非下载卡片
-        //显示 下载 收藏 页数 语言
-        cardText = langText + " " + props.data.pages + "P" 
     }
-
 
     return (
         <GallaryContainer

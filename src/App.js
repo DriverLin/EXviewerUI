@@ -1,33 +1,16 @@
 
 import './App.css';
-import React, { useState, useEffect, useRef } from 'react';
-import Button from '@mui/material/Button';
+import React from 'react';
 
-import GallaryCard from './components/GallaryCard';
 import GallaryPage from './components/GallaryPage';
 import MainPage from './components/MainPage';
-import TagPanel from './components/GallaryPageComponents/TagPanel';
-import TestScript from './components/TestScript';
 import ViewPage from './components/ViewPage';
-import RevSlider from './components/RevSlider';
-import TwoWaySwiper from './components/TwoWaySwiper';
-import MultPageSwiper from './components/MultPageSwiper';
 
-// import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 import {
   HashRouter,
   Routes,
   Route
 } from "react-router-dom";
-import CommentPanel from './components/GallaryPageComponents/CommentPanel';
-import PreviewPanel from './components/GallaryPageComponents/PreviewPanel';
-import InfoPanel from './components/GallaryPageComponents/InfoPanel';
-
-
-
-
-
-
 
 
 function App() {

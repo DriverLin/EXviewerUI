@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { Button, Paper, Grid, Snackbar, Rating, Alert, useMediaQuery, Card, Typography, Box } from '@mui/material';
+import { Button, Grid,  Rating,  useMediaQuery,  Typography } from '@mui/material';
 
-import GetTranslate from "./GetTranslate.js"
 import TagPanel from "./GallaryPageComponents/TagPanel.js"
 import InfoPanel from './GallaryPageComponents/InfoPanel.js';
 import CommentPanel from './GallaryPageComponents/CommentPanel.js';
@@ -10,15 +9,15 @@ import PreviewPanel from './GallaryPageComponents/PreviewPanel.js';
 
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 
-import { styled, makeStyles, withStyles } from '@mui/styles';
+import {  makeStyles} from '@mui/styles';
 
 import LoadingAnime from './LoadingAnime';
 
-import { useLocation, NavLink } from "react-router-dom";
+import { useLocation, } from "react-router-dom";
 import DownloadButton from './GallaryPageComponents/DownloadButton.js';
 import ZipDownloadButton from './GallaryPageComponents/ZipDownloadButton.js';
 import DeleteButton from './GallaryPageComponents/DeleteButton.js';
-import PopoverNotifier from './PopoverNotifier.js';
+import PopoverNotifier from './GallaryPageComponents/PopoverNotifier.js';
 import FavoButton from './GallaryPageComponents/FavoButton.js';
 
 
@@ -109,8 +108,8 @@ export default function GallaryPage(props) {
         const token = location.pathname.split("/")[3]
 
         let g_data_url = `/gallarys/${gid}_${token}/g_data.json`
-        if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") { 
-            g_data_url = g_data_url+"?nocache=true"
+        if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
+            g_data_url = g_data_url + "?nocache=true"
         }
         console.log("g_data_url", g_data_url)
 
@@ -156,6 +155,15 @@ function GallaryInfoPage(props) {
     const matches = useMediaQuery('(min-width:800px)');
     const small_matches = useMediaQuery('(min-width:560px)');
     const borderWidth = small_matches ? 24 : 12
+    const [deleteButtonDisabled, setdeleteButtonDisabled] = useState(!props.g_data.hasOwnProperty('extended') || props.g_data.extended.downloaded === false);
+
+    const disableDeleteButton = () => {
+        setdeleteButtonDisabled(true)
+    }
+
+    const enableDeleteButton = () => {
+        setdeleteButtonDisabled(false)
+    }
 
     const useStyles = makeStyles((theme) => (
         {
@@ -186,8 +194,12 @@ function GallaryInfoPage(props) {
 
     const classes = useStyles();
 
-    const FunctionButton = (props) => {
-        return (<Button
+
+    const downloadButtonShow = window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true"
+    const FCBS_XS = (b) => b ? 5 : 12
+
+
+    const readButton = <Button
             sx={{
                 width: "100%",
                 height: 42,
@@ -197,47 +209,28 @@ function GallaryInfoPage(props) {
                     backgroundColor: "#646464",
                 }
             }}
-            onClick={props.onClick}
+            onClick={() => {window.open(`/#/viewing/${props.g_data.gid}/${props.g_data.token}/`, "_blank")}}
             variant="contained" >
-            {props.text}
-        </Button>)
-    }
+            {"阅读"}
+        </Button>
+    
 
-    const FCBS = (props) => {
-        if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
-            return (
-                <Grid
-                    container
-                    direction="row"
-                    justifyContent="space-evenly"
-                    alignItems="flex-start">
-                    <Grid item xs={props.bxs}>
-                        <FunctionButton text="阅读" onClick={() => {
-                            window.open(`/#/viewing/${props.g_data.gid}/${props.g_data.token}/`, "_blank")
-                        }} />
-                    </Grid>
-                    <Grid item xs={props.bxs}>
-                        <DownloadButton g_data={props.g_data} />
-                    </Grid>
-                </Grid>
-            )
-        }
-        else { 
-            return <Grid
-                container
-                direction="row"
-                justifyContent="space-evenly"
-                alignItems="flex-start">
-                <Grid item xs={12}>
-                    <FunctionButton text="阅读" onClick={() => {
-                        window.open(`/#/viewing/${props.g_data.gid}/${props.g_data.token}/`, "_blank")
-                    }} />
-                </Grid>
-            </Grid>
-        }
 
-        
-    }
+    const downloadButton = <DownloadButton
+        g_data={props.g_data}
+        enableDelete={enableDeleteButton}
+    />
+
+
+
+    const FCBS = <Grid
+        container
+        direction="row"
+        justifyContent="space-evenly"
+        alignItems="flex-start">
+        <Grid item xs={FCBS_XS(downloadButtonShow)}>{readButton}</Grid>
+        {downloadButtonShow ? <Grid item xs={FCBS_XS(downloadButtonShow)}>{downloadButton}</Grid> : null}
+    </Grid>
 
     const [notifyMessage, setNotifyMessage] = useState({
         severity: "success",
@@ -282,10 +275,7 @@ function GallaryInfoPage(props) {
                                         ["title", "uploader", "category"]
                                 }
                             />
-                            {
-                                matches ? <FCBS bxs={5} g_data={ props.g_data}  /> : null
-                            }
-
+                            {matches ? FCBS : null}
                         </Grid>
                     </Grid>
                 </Grid>
@@ -293,7 +283,7 @@ function GallaryInfoPage(props) {
             {
                 !matches ?
                     <div className={classes.elemContainer}>
-                        <FCBS bxs={5} g_data={props.g_data} />
+                        {FCBS}
                     </div> : null
             }
             {
@@ -336,11 +326,15 @@ function GallaryInfoPage(props) {
                     <DeleteButton
                         g_data={props.g_data}
                         setNotifyMessage={setNotifyMessage}
+
+                        forceControlDisabled={deleteButtonDisabled}
+                        enableDeleteButton={enableDeleteButton}
+                        disableDeleteButton={disableDeleteButton}
                     />
-                    <FavoButton 
+                    <FavoButton
                         g_data={props.g_data}
                     />
-                    
+
                     <ZipDownloadButton
                         g_data={props.g_data}
                     />

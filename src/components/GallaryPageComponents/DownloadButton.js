@@ -1,12 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Paper, Grid, Snackbar, Rating, Alert, useMediaQuery, Card, Typography, Box, ButtonBase } from '@mui/material';
-import { styled, makeStyles, withStyles } from '@mui/styles';
-import { useLocation, NavLink } from "react-router-dom";
-import CircularProgress from '@mui/material/CircularProgress';
-import LinearProgress from '@mui/material/LinearProgress';
+import { Button, LinearProgress} from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import { color } from '@mui/system';
 
 export default function DownloadButton(props) {
     let initButtonText = ""
@@ -14,9 +9,13 @@ export default function DownloadButton(props) {
     if (props.g_data.hasOwnProperty('extended') && props.g_data.extended.downloaded === true) {
         const over = props.g_data.extended.process[0]
         const total = props.g_data.extended.process[1]
-        if (over === total ) {
+        
+        if (over === total) {
             initButtonText = "已下载"
-        } else { 
+        } else if (over === -1) {
+            initButtonText = "队列中"
+         }
+        else{ 
             initButtonText = `${total-over}项未完成`
         }
     } else {
@@ -25,6 +24,13 @@ export default function DownloadButton(props) {
 
 
     const [stause, setStause] = useState("init")
+
+
+    useEffect(() => {
+        console.log("stause", stause)
+    }, [stause])
+
+
     const [downloadProgress, _setDownloadProgress] = useState([0, 0, 999])
     const downloadProgressRef = useRef(0)
     const setDownloadProgress = (value) => {
@@ -54,19 +60,24 @@ export default function DownloadButton(props) {
         }, 600)
     }
 
+    useEffect(() => {
+        console.log("amount DownloadButton")
+        return () => {
+            console.log("unmount DownloadButton")
+        }
+    },[])
 
     const lock = useRef(false)
-
-
-
     const onClick = () => {
         if (window.serverSideConfigure.type !== "full" || localStorage.getItem("offline_mode") === "true") return
         //只有full and not offline mode才能下载
 
-
         if (lock.current) return
         lock.current = true
+        
         setDownloadProgress([0, 0, 999])
+        
+        
         const wssOrWS = window.location.protocol === "https:" ? "wss:" : "ws:"
         let wsUrl = `${wssOrWS}//${window.location.host}/ws`
         if (window.location.host.includes(":3000")) {
@@ -74,17 +85,21 @@ export default function DownloadButton(props) {
             //球球别部署在3000 球球了
             wsUrl = wsUrl.replace(":3000", ":8080")
         }
-
         switchToProcessing()
         const gid_token = `${props.g_data.gid}_${props.g_data.token}`
+        
+        props.enableDelete()
+
+        
+    
         fetch(`/download/${gid_token}`)
             .then(res => {
                 try { 
-                    console.log("res", res.json())
                     const ws = new WebSocket(wsUrl)
                     ws.onmessage = (e) => {
                         try {
                             const recvData = JSON.parse(e.data)
+                            console.log("recvData", recvData)
                             if (`${recvData.gid}_${recvData.token}` === gid_token) {
                                 if (recvData.tag === "notify") {
                                     if (recvData.msg === "downloadSuccess") {
@@ -95,7 +110,6 @@ export default function DownloadButton(props) {
                                         switchToText("failed")
                                         lock.current = false
                                         ws.close()
-
                                     }
                                 } else if (recvData.tag === "reportProcess") {
                                     const process = recvData.msg

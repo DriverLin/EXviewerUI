@@ -3,12 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react/swiper-react';
 import SwiperCore, { Virtual, Controller, Keyboard, Mousewheel } from 'swiper';
 import 'swiper/swiper.scss';
-import { VerifiedUserRounded } from '@mui/icons-material';
 SwiperCore.use([Virtual, Controller, Keyboard, Mousewheel]);
-
-
-
-
 
 //反向滑动
 //对外部表现正常而无语考虑内部顺序

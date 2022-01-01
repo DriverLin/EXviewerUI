@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, } from 'react';
 import TwoWaySwiper from './TwoWaySwiper';
 import MultImageShow from './MultImageShow';
 export default function MultPageSwiper(props) {
