@@ -1,6 +1,59 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, Paper, Grid, Snackbar, Rating, Alert, useMediaQuery, Card, Typography, Box } from '@mui/material';
-export default function PreviewPanel(props) { 
+import CircularProgress from '@mui/material/CircularProgress';
+import BrokenImageIcon from '@mui/icons-material/BrokenImage';
+import Skeleton from '@mui/material/Skeleton';
+
+function PreviewLoadingImg(props) {
+    const [stause, setStause] = useState('loading')//loading error finished
+    let img = new Image()
+    img.onload = () => {
+        setStause('finished')
+        img = null
+    }
+    img.onerror = () => {
+        setStause('error')
+    }
+    img.src = props.src
+
+    const elemMap = {
+        'loading':
+            <Skeleton variant="rectangular" style={{
+                width: "100%",
+                height: "0",
+                paddingBottom: "139%",
+                overflow: "hidden",
+                borderRadius: 5
+            }} />
+        ,
+        'error':
+            <div style={{
+                height: "auto",
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+            }} >
+                <BrokenImageIcon />
+            </div>,
+        'finished':
+            <div
+                style={{
+                    width: "100%",
+                    height: "0",
+                    paddingBottom: "139%",
+                    overflow: "hidden",
+                    borderRadius: 5,
+                }}
+            >
+                <img src={props.src} style={{ width: "100%", borderRadius: 5 }} alt="prev" />
+            </div>
+    }
+    return elemMap[stause]
+}
+
+
+export default function PreviewPanel(props) {
     const [previewButtonShow, setPreviewButtonShow] = useState(props.previews.length !== 0)
     const [previewShows, setPreviewShows] = useState(props.previews.slice(0, 20))
     const currentShowPreviewLength = useRef(20)
@@ -52,7 +105,7 @@ export default function PreviewPanel(props) {
                     justifyContent="flex-start"
                     alignItems="flex-start"
                     spacing={props.spacingPX + "px"}
-                    sx={{width: "100%"}}
+                    sx={{ width: "100%" }}
                 >
                     {
                         previewShows.map((item, index) => {
@@ -65,7 +118,7 @@ export default function PreviewPanel(props) {
                                         }
                                     }
                                 >
-                                    <img style={{ width: "100%", borderRadius: 5 }} alt="prev" src={item} />
+                                    <PreviewLoadingImg src={item} />
 
                                 </Grid>
                             )
@@ -79,7 +132,7 @@ export default function PreviewPanel(props) {
                         ?
                         <Button
                             sx={{
-                                marginTop: props.spacingPX+"px",
+                                marginTop: props.spacingPX + "px",
                                 color: "white",
                                 backgroundColor: "#303030",
                                 width: "100%",

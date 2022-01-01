@@ -11,6 +11,7 @@ export default function LeftMenu(props) {
             disableDiscovery={iOS}
             anchor={"left"}
             open={props.open}
+            onOpen={() => { }}
             onClose={props.onClose}
         >
             <List>

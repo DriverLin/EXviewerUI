@@ -12,6 +12,8 @@
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.7.1",
     "mui-image": "^1.0.4",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -24,7 +26,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build  ; D:\\refacted_exviewer\\copyBuild.bat",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
