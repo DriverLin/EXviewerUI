@@ -20,6 +20,7 @@ export default function TagPanel(props) {
             background: "#646464",
         },
     });
+
     return (<table>
         <tbody >
             {
@@ -27,7 +28,7 @@ export default function TagPanel(props) {
                     return (
                         <tr key={row}>
                             <td valign="top"><BootstrapButton sx={{ width: "83px", }} >{
-                                GetTranslate("rows",row)
+                                GetTranslate("rows", row)
                             }:</BootstrapButton></td>
                             <td>
                                 {
@@ -36,11 +37,13 @@ export default function TagPanel(props) {
                                             <BootstrapButton
                                                 key={value}
                                                 onClick={() => {
-                                                    window.open(`/#/search?f_search=${encodeURIComponent(`${row}:"${value}$"`)}`,"_blank");                  
-                                                 }}
-                                            >{
-                                                    GetTranslate(row,value)
-                                            }</BootstrapButton>
+                                                    window.open(`/#/search?f_search=${encodeURIComponent(`${row}:"${value}$"`)}`, "_blank");
+                                                }}
+                                            >
+                                                {
+                                                    GetTranslate(row, value)
+                                                }
+                                            </BootstrapButton>
                                         )
                                     })
                                 }

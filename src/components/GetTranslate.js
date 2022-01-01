@@ -11662,7 +11662,8 @@ const preciseQuery = {
 
 export default function GetTranslate(type,value) {
     try { 
-        return preciseQuery[type][value]
+        const translated = preciseQuery[type][value]
+        return translated === undefined ? value : translated 
     } catch (e) {
         return value
     }

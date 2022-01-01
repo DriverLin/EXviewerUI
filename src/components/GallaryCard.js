@@ -26,6 +26,7 @@ const colormap = {
     "Western": "#8BC24A",
     "Game CG": "#4CB050",
     "Misc": "#D90051",
+    "Artist CG": "#D90051",
 };
 const languageMap = {
     "chinese": "ZH",
@@ -93,7 +94,8 @@ const useStyles = makeStyles((theme) => ({
         display: "flex",
     },
     d_icon: {
-        margin: "0px 0px 0px 8px"
+        margin: "0px 0px 0px 8px",
+        
     },
     d_icon_img: {
         width: "18px",
@@ -127,6 +129,33 @@ export default function GallaryCard(props) {
     const relative_height = small_matches ? 200 : 160;
     const classes = useStyles();
     const touchEvent = useRef({})
+
+    let cardText = ""
+    const process = props.data.process
+    let downloadIcon = props.data.downloaded//下载按钮显示 初始等于下载状态
+    let langText = ""
+    if (props.data.lang in languageMap) {
+        langText = languageMap[props.data.lang]
+    }
+    if (process[0] !== 0 || process[1] !== 0) {
+        if (process[0] === process[1]) {
+            //下载卡片 且下载已成功
+            //仅显下载图标 语言 页数
+            downloadIcon = true
+            cardText = langText + " " + props.data.pages + "P" 
+        } else {
+            //下载卡片 且下载未成功
+            //显示 下载进度
+            downloadIcon = false
+            cardText = `${process[1] - process[0]} 项未下载`
+        }
+    } else { 
+        //非下载卡片
+        //显示 下载 收藏 页数 语言
+        cardText = langText + " " + props.data.pages + "P" 
+    }
+
+
     return (
         <GallaryContainer
             style={
@@ -201,24 +230,20 @@ export default function GallaryCard(props) {
                     <div className={classes.upload_time}>{props.data.uploadtime}</div>
                     <div className={classes.details}>
                         {
-                            props.data.downloaded ?
+                            downloadIcon ?
                                 <div className={classes.d_icon}>
-                                    <DownloadIcon fontSize={small_matches ? "medium" : "small" }  />
+                                    <DownloadIcon fontSize={small_matches ? "medium" : "small"} />
                                 </div>
                                 : null
                         }
                         {
                             props.data.favo ?
                                 <div className={classes.d_icon}>
-                                    <FavoriteIcon fontSize={small_matches ? "medium" : "small" } />
+                                    <FavoriteIcon fontSize={small_matches ? "medium" : "small"} />
                                 </div>
                                 : null
                         }
-                        {
-                            props.data.lang in languageMap ?
-                                <div className={classes.d_icon}>{languageMap[props.data.lang]}</div> : null
-                        }
-                        <div className={classes.d_icon}>{props.data.pages + "P"}</div>
+                        <div className={classes.d_icon}>{cardText}</div>
                     </div>
                 </div>
             </div>

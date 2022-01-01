@@ -18,9 +18,7 @@ export default function CommentPanel(props) {
         }
     }, [props.comments]);
     return (
-        <div style={{
-            width: "100%",
-        }}>
+        <div style={{width: "100%",}}>
             <Grid
                 sx={{
                     width: "100%",
@@ -33,7 +31,7 @@ export default function CommentPanel(props) {
                 {
                     (commentButtonShow ? props.comments.slice(0, 4) : props.comments).map((row, index) => {
                         return (
-                            <div key={index}>
+                            <div key={index} style={{ width: "100%", }}>
                                 <div style={
                                     {
                                         marginTop: "10px",
@@ -43,14 +41,15 @@ export default function CommentPanel(props) {
                                         textAlign: "justify",
                                         fontSize: "10pt",
                                         fontWeight: "bold",
+                                        
                                     }
                                 }>
                                     <div style={{ float: "left" }}><a>{row.poster}{row.score === "" ? " (上传者)" : " "}</a></div>
                                     <div style={{ float: "right" }}><a>{row.score}</a></div>
-                                </div>
+                                </div    >
                                 {
                                     !commentButtonShow ?
-                                        <div style={{color:"#ffffff"}}  dangerouslySetInnerHTML={{ __html: row.text }} /> :
+                                        <div style={{color:"#ffffff" ,maxWidth:"100%"   }}  dangerouslySetInnerHTML={{ __html: row.text }} /> :
                                         <div style={{ color: "#ffffff" }}  >{row.bref}</div>
                                 }
                                 <hr color="#4C4C4C" size={3} />

@@ -48,17 +48,18 @@ const translateGdata2CardData = (g_data) => {
         category: g_data.category,
         uploadtime: formatTime(Number(g_data.posted), 'yy-MM-dd hh:mm'),
         downloaded: true,
-        favo: true,
+        favo: false,//下载页面 不显示是否收藏过
         lang: g_data.tags.indexOf("language:chinese") !== -1 ? "chinese" : "",
         pages: Number(g_data.filecount),
         tags: g_data.tags,
+        process: g_data.hasOwnProperty("process") ? g_data.process : [0, 0] 
+        //在前段判断是否有process字段  避免了对于DB模式的改造以及污染
+        //没有则是[0,0]
     }
 }
 
 export default function MainPage(props) {
     const locationProps = useLocation()
-
-
     const currrentUrl = () => locationProps.pathname
 
     const matches = useMediaQuery('(min-width:830px)');
@@ -102,6 +103,7 @@ export default function MainPage(props) {
             .then(res => res.json())
             .then(data => {
                 cacheAll.current = data.map(item => translateGdata2CardData(item));
+                console.log(cacheAll.current)
                 localSearchAction()
                 requestNextPage()
             })

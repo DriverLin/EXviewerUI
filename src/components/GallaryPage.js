@@ -15,6 +15,11 @@ import { styled, makeStyles, withStyles } from '@mui/styles';
 import LoadingAnime from './LoadingAnime';
 
 import { useLocation, NavLink } from "react-router-dom";
+import DownloadButton from './GallaryPageComponents/DownloadButton.js';
+import ZipDownloadButton from './GallaryPageComponents/ZipDownloadButton.js';
+import DeleteButton from './GallaryPageComponents/DeleteButton.js';
+import PopoverNotifier from './PopoverNotifier.js';
+import FavoButton from './GallaryPageComponents/FavoButton.js';
 
 
 
@@ -58,7 +63,6 @@ const transformTags = (g_data) => {
             tags["other"].push(tagStr)
         }
     })
-    console.log(tags)
     return tags
 }
 
@@ -103,7 +107,14 @@ export default function GallaryPage(props) {
         setLoading(true)
         const gid = location.pathname.split("/")[2]
         const token = location.pathname.split("/")[3]
-        fetch(`/gallarys/${gid}_${token}/g_data.json`).then(res => res.json()).then(res => {
+
+        let g_data_url = `/gallarys/${gid}_${token}/g_data.json`
+        if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") { 
+            g_data_url = g_data_url+"?nocache=true"
+        }
+        console.log("g_data_url", g_data_url)
+
+        fetch(g_data_url).then(res => res.json()).then(res => {
             document.title = res.title_jpn || res.title
             setG_data(res)
             g_data_ref.current = res
@@ -193,29 +204,53 @@ function GallaryInfoPage(props) {
     }
 
     const FCBS = (props) => {
-        return (
-            <Grid
+        if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
+            return (
+                <Grid
+                    container
+                    direction="row"
+                    justifyContent="space-evenly"
+                    alignItems="flex-start">
+                    <Grid item xs={props.bxs}>
+                        <FunctionButton text="阅读" onClick={() => {
+                            window.open(`/#/viewing/${props.g_data.gid}/${props.g_data.token}/`, "_blank")
+                        }} />
+                    </Grid>
+                    <Grid item xs={props.bxs}>
+                        <DownloadButton g_data={props.g_data} />
+                    </Grid>
+                </Grid>
+            )
+        }
+        else { 
+            return <Grid
                 container
                 direction="row"
                 justifyContent="space-evenly"
                 alignItems="flex-start">
-                <Grid item xs={props.bxs}>
-
+                <Grid item xs={12}>
                     <FunctionButton text="阅读" onClick={() => {
-                        window.open(`/#/viewing/${props.gid}/${props.token}/`, "_blank")
+                        window.open(`/#/viewing/${props.g_data.gid}/${props.g_data.token}/`, "_blank")
                     }} />
-
                 </Grid>
-                <Grid item xs={props.bxs}>
-                    <FunctionButton text="下载" onClick={() => { }} />
+            </Grid>
+        }
 
-                </Grid>
-
-            </Grid>)
+        
     }
+
+    const [notifyMessage, setNotifyMessage] = useState({
+        severity: "success",
+        text: ""
+    })
+
+
 
     return (
         <div className={matches ? classes.borderCard : classes.matches_borderCard} >
+            <PopoverNotifier
+                message={notifyMessage}
+            />
             <div className={classes.elemContainer}>
                 <Grid
                     container
@@ -248,7 +283,7 @@ function GallaryInfoPage(props) {
                                 }
                             />
                             {
-                                matches ? <FCBS bxs={5} gid={props.g_data.gid} token={props.g_data.token} /> : null
+                                matches ? <FCBS bxs={5} g_data={ props.g_data}  /> : null
                             }
 
                         </Grid>
@@ -258,10 +293,10 @@ function GallaryInfoPage(props) {
             {
                 !matches ?
                     <div className={classes.elemContainer}>
-                        <FCBS bxs={5} gid={props.g_data.gid} token={props.g_data.token} />
+                        <FCBS bxs={5} g_data={props.g_data} />
                     </div> : null
             }
-            { 
+            {
                 !small_matches ?
                     <div className={classes.elemContainer}>
                         <Grid
@@ -274,9 +309,9 @@ function GallaryInfoPage(props) {
                                 <Typography sx={{ color: "#ffffff" }} variant="body1" gutterBottom component="div">{props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB</Typography>
                             </Grid>
                             <Grid item xs={4}>
-                                <Typography sx={{ color: "#ffffff",  float: "right" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>
+                                <Typography sx={{ color: "#ffffff", float: "right" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>
                             </Grid>
-                            <Grid item xs={12} sx={{textAlign  :"center"} }  >
+                            <Grid item xs={12} sx={{ textAlign: "center" }}  >
                                 <Rating
                                     name="customized-empty"
                                     defaultValue={Number(props.g_data.rating)}
@@ -289,12 +324,29 @@ function GallaryInfoPage(props) {
                         </Grid>
                     </div> : null
             }
-            
 
-            
+            <div className={classes.elemContainer} style={{ height: 42 }} >
+                <Grid
+                    container
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    style={{ width: "100%" }}
+                >
+                    <DeleteButton
+                        g_data={props.g_data}
+                        setNotifyMessage={setNotifyMessage}
+                    />
+                    <FavoButton 
+                        g_data={props.g_data}
+                    />
+                    
+                    <ZipDownloadButton
+                        g_data={props.g_data}
+                    />
+                </Grid>
 
-
-
+            </div>
 
             <div className={classes.elemContainer}>
                 <TagPanel tags={props.tags} />

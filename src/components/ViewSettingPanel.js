@@ -66,7 +66,7 @@ export default function ViewSettingPanel(props) {
         JSON.parse(localStorage.getItem("global_viewingSettings")) || {
             "横屏模式": false,
             "切换分页": false,
-            "切换方向":false,
+            "切换方向":true,
         }
     );
 

@@ -8,9 +8,10 @@ import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 
 function SkeImg(props) {
     const [stause, setStause] = useState('loading')//loading error finished
-    const img = new Image()
+    let img = new Image()
     img.onload = () => {
         setStause('finished')
+        img = null
     }
     img.onerror = () => {
         setStause('error')
