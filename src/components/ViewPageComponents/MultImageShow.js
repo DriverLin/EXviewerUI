@@ -1,7 +1,5 @@
 import Grid from '@mui/material/Grid';
-import React, { useState, useEffect, useRef } from 'react';
-import Skeleton from '@mui/material/Skeleton';
-import { height } from '@mui/system';
+import React, { useState, } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 

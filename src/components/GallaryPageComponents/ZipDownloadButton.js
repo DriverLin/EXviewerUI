@@ -1,12 +1,7 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Button, IconButton, Paper, Grid, Snackbar, Rating, Alert, useMediaQuery, Card, Typography, Box, ButtonBase } from '@mui/material';
-import { styled, makeStyles, withStyles } from '@mui/styles';
-import { useLocation, NavLink } from "react-router-dom";
-import CircularProgress from '@mui/material/CircularProgress';
-import LinearProgress from '@mui/material/LinearProgress';
+import React, { useState,} from 'react';
+import { IconButton, CircularProgress  } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import JsZip from 'jszip'
 import FileSaver from 'file-saver'

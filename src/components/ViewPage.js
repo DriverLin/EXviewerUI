@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import LoadingAnime from './LoadingAnime';
-import RevSlider from './RevSlider';
-import ViewSettingPanel from './ViewSettingPanel';
-import MultPageSwiper from './MultPageSwiper';
-import { useLocation, NavLink } from "react-router-dom";
+import RevSlider from './ViewPageComponents/RevSlider';
+import ViewSettingPanel from './ViewPageComponents/ViewSettingPanel';
+import MultPageSwiper from './ViewPageComponents/MultPageSwiper';
+import { useLocation } from "react-router-dom";
 
 
 
-export default function ViewPage(props) {
+export default function ViewPage() {
+
+    const [urls, setUrls] = useState([])
+
+
     const location = useLocation();
     const gid = location.pathname.split("/")[2]
     const token = location.pathname.split("/")[3]
@@ -29,7 +32,7 @@ export default function ViewPage(props) {
         pageNumRef.current = value
         _setPageNum(value);
         localStorage.setItem(`/viewing/${gid}/${token}/`, value);
-        if (value == pageCount) {
+        if (value === pageCount) {
             localStorage.removeItem(`/viewing/${gid}/${token}/`);
         }
     }
@@ -76,7 +79,6 @@ export default function ViewPage(props) {
         }
     }
 
-    const [urls, setUrls] = useState([])
 
     const [viewSettings, setViewSettings] = useState(
         JSON.parse(localStorage.getItem("global_viewingSettings")) || {

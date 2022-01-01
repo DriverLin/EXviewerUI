@@ -1,17 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Button, IconButton, Paper, Grid, Snackbar, Rating, Alert, useMediaQuery, Card, Typography, Box, ButtonBase } from '@mui/material';
-import { styled, makeStyles, withStyles } from '@mui/styles';
-import { useLocation, NavLink } from "react-router-dom";
-import CircularProgress from '@mui/material/CircularProgress';
-import LinearProgress from '@mui/material/LinearProgress';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import React, { useState} from 'react';
+import { Button, IconButton} from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import IosShareIcon from '@mui/icons-material/IosShare';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -19,7 +12,9 @@ import CloseIcon from '@mui/icons-material/Close';
 export default function DeleteButton(props) {
 
     const [open, setOpen] = useState(false);
-    const [disabled, setDisabled] = useState(  !props.g_data.hasOwnProperty('extended') || props.g_data.extended.downloaded === false);
+    
+    
+    
     const handleClickOpen = () => {
         setOpen(true);
     };
@@ -36,26 +31,26 @@ export default function DeleteButton(props) {
                 props.setNotifyMessage(
                     {
                         severity: "success",
-                        text: "Deleted Successfully"
+                        text: "已发送删除信号"
                     }
                 )
-                setDisabled(true);
+                props.disableDeleteButton();
              })
             .catch(err => { 
                 props.setNotifyMessage(
                     {
                         severity: "error",
-                        text: "Deleted Failed"
+                        text: "删除失败"
                     }
                 )
-                setDisabled(false);
+                props.enableDeleteButton();
             })
     }
 
     return (
         <div>
             <IconButton
-                disabled={disabled}
+                disabled={props.forceControlDisabled}
                 onClick={handleClickOpen}
                 sx={{
                     // opacity: initOpacity,

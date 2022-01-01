@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 
-import { Button, Paper, Grid, Snackbar, Rating, Alert, useMediaQuery, Card, Typography, Box } from '@mui/material';
+import {  Rating , Typography } from '@mui/material';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 
 

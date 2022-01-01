@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Paper, Grid, Snackbar, Rating, Alert, useMediaQuery, Card, Typography, Box } from '@mui/material';
-import CircularProgress from '@mui/material/CircularProgress';
+import { Button, Grid} from '@mui/material';
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 import Skeleton from '@mui/material/Skeleton';
 

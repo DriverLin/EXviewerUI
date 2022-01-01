@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import GallaryCard from './GallaryCard'
+import GallaryCard from './MainPageComponents/GallaryCard'
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
 import { makeStyles } from '@mui/styles';
-import TopSearchBar from './TopSearchBar'
-import LeftMenu from './LeftMenu'
+import TopSearchBar from './MainPageComponents/TopSearchBar'
+import LeftMenu from './MainPageComponents/LeftMenu'
 import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
