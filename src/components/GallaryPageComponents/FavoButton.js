@@ -68,7 +68,7 @@ export default function FavoButton(props) {
                 onClick={() => { }}
                 sx={{
                     "&.Mui-disabled": {
-                        color: "#757575",
+                        color: "iconButton.disabled",
                     },
                 }}
                 component="span"
@@ -80,7 +80,7 @@ export default function FavoButton(props) {
                 onClick={onClick}
                 sx={{
                     transition: ".5s",
-                    color: "#ffffff",
+                    color: "iconButton.main",
                 }}
                 component="span"
             >
@@ -91,7 +91,7 @@ export default function FavoButton(props) {
                 onClick={onClick}
                 sx={{
                     transition: ".5s",
-                    color: "#ffffff",
+                    color: "iconButton.main",
                 }}
                 component="span"
             >
@@ -101,7 +101,7 @@ export default function FavoButton(props) {
             <IconButton
                 sx={{
                     transition: ".5s",
-                    color: "#757575",
+                    color: "iconButton.disabled",
                 }}
                 component="span"
             >

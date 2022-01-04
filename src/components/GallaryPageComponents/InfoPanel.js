@@ -2,6 +2,7 @@ import React from 'react';
 
 import {  Rating , Typography } from '@mui/material';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
+import { styled } from '@mui/material/styles';
 
 
 
@@ -39,31 +40,33 @@ export default function InfoPanel(props) {
         "": "#00000000"
     };
 
+    const HeadDiv =  styled("div")(({ theme }) => ({
+        fontSize: "16pt",
+        color: theme.palette.text.main,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        display: '-webkit-box',
+        WebkitLineClamp: '3',
+        WebkitBoxOrient: 'vertical',
+    }));
+
     return (
         <div>
             {
                 props.shows.indexOf("title") === -1 ? null :
-                    <div style={{
-                        fontSize: "16pt",
-                        color: "#ffffff",
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: '3',
-                        WebkitBoxOrient: 'vertical',
-                    }} ><a>{props.g_data.title_jpn || props.g_data.title}</a></div>}
+                    <HeadDiv><a>{props.g_data.title_jpn || props.g_data.title}</a></HeadDiv>}
 
             {
                 props.shows.indexOf("uploader") === -1 ? null :
-                    <Typography sx={{ color: "#ffffff" }} variant="body1" gutterBottom component="div">{props.g_data.uploader}</Typography>
+                    <Typography sx={{ color: "text.main" }} variant="body1" gutterBottom component="div">{props.g_data.uploader}</Typography>
             }
             {
                 props.shows.indexOf("filecountsize") === -1 ? null :
-                    <Typography sx={{ color: "#ffffff" }} variant="body1" gutterBottom component="div">{props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB</Typography>}
+                    <Typography sx={{ color: "text.main" }} variant="body1" gutterBottom component="div">{props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB</Typography>}
 
             {
                 props.shows.indexOf("posted") === -1 ? null :
-                    <Typography sx={{ color: "#ffffff" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>}
+                    <Typography sx={{ color: "text.main" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>}
 
             {
                 props.shows.indexOf("category") === -1 ? null :

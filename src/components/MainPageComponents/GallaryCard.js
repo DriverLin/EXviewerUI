@@ -73,7 +73,6 @@ const useStyles = makeStyles((theme) => ({
     },
     rank_stars: {
         // color: "#d90051"
-        backgroundColor: "#191919"
     },
     category: {
         position: "absolute",
@@ -85,7 +84,7 @@ const useStyles = makeStyles((theme) => ({
         position: "absolute",
         right: "0px",
         bottom: "0px",
-
+        color: theme.palette.text.secondary,
     },
     details: {
         position: "absolute",
@@ -95,7 +94,7 @@ const useStyles = makeStyles((theme) => ({
     },
     d_icon: {
         margin: "0px 0px 0px 8px",
-
+        color: theme.palette.text.secondary
     },
     d_icon_img: {
         width: "18px",
@@ -112,8 +111,8 @@ const useStyles = makeStyles((theme) => ({
 const GallaryContainer = styled(ButtonBase)(({ theme }) => ({
     width: "100%",
     display: "flex",
-    backgroundColor: "#191919",
-    color: "#DDDDDD",
+    backgroundColor: theme.palette.background.mainCard,
+    color: theme.palette.text.main,
     borderRadius: "2px",
     overflow: "hidden",
     boxSizing: "border-box",
@@ -226,7 +225,7 @@ export default function GallaryCard(props) {
                         <Rating name="read-only" value={props.data.rank} precision={0.5} max={5} readOnly />
                     </div>
                     <div style={{ backgroundColor: colormap[props.data.category], }} className={classes.category}>
-                        <a>{props.data.category.toUpperCase()}</a>
+                        <a style={{color:"#ffffff"}}  >{props.data.category.toUpperCase()}</a>
                     </div>
                     <div className={classes.upload_time}>{props.data.uploadtime}</div>
                     <div className={classes.details}>

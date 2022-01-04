@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button, Grid} from '@mui/material';
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 import Skeleton from '@mui/material/Skeleton';
+import { styled } from '@mui/material/styles';
+
 
 function PreviewLoadingImg(props) {
     const [stause, setStause] = useState('loading')//loading error finished
@@ -86,6 +88,16 @@ export default function PreviewPanel(props) {
     }
 
 
+    const BottomButton = styled(Button)(({ theme }) => ({
+        marginTop: props.spacingPX + "px",
+        color: theme.palette.text.main,
+        backgroundColor: theme.palette.background.main,
+        width: "100%",
+        height: 50,
+        "&:hover": {
+            background: theme.palette.background.readHover,
+        },
+    }));
 
     return (
         <div
@@ -129,24 +141,14 @@ export default function PreviewPanel(props) {
                 {
                     (previewButtonShow && props.previews.length > 20)
                         ?
-                        <Button
-                            sx={{
-                                marginTop: props.spacingPX + "px",
-                                color: "white",
-                                backgroundColor: "#303030",
-                                width: "100%",
-                                height: 50,
-                                "&:hover": {
-                                    background: "#646464",
-                                },
-                            }}
+                        <BottomButton
                             onClick={() => {
                                 setPreviewButtonShow(false)
                                 scrollLoadLockRef.current = true
                                 handelReachEnd()
                             }} >
                             {'查看全部'}
-                        </Button>
+                        </BottomButton>
                         : null
                 }
             </div>

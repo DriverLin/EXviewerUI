@@ -173,14 +173,14 @@ function GallaryInfoPage(props) {
                 marginBottom: 40,
                 width: 754,
                 borderRadius: 20,
-                color: "#303030",
-                boxShadow: "7px 7px 14px #1b1b1b , -7px -7px 14px #454545",
+                color: theme.palette.background.mainCard,
+                boxShadow: theme.palette.background.pageShadow,
                 overflow: "hidden"
             },
             matches_borderCard: {
                 margin: "0 auto",
                 marginBottom: 40,
-                color: "#303030",
+                color: theme.palette.background.mainCard,
                 overflow: "hidden"
             },
             elemContainer: {
@@ -203,11 +203,11 @@ function GallaryInfoPage(props) {
             sx={{
                 width: "100%",
                 height: 42,
-                // backgroundColor: "#d90051"
-                backgroundColor: "#4a4a4a",
+                backgroundColor: "background.read",
                 "&:hover": {
-                    backgroundColor: "#646464",
-                }
+                    backgroundColor: "background.readHover",
+                },
+                color: "text.main",
             }}
             onClick={() => {window.open(`/#/viewing/${props.g_data.gid}/${props.g_data.token}/`, "_blank")}}
             variant="contained" >
@@ -296,10 +296,10 @@ function GallaryInfoPage(props) {
                             alignItems="flex-start"
                         >
                             <Grid item xs={4}>
-                                <Typography sx={{ color: "#ffffff" }} variant="body1" gutterBottom component="div">{props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB</Typography>
+                                <Typography sx={{ color: "text.main" }} variant="body1" gutterBottom component="div">{props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB</Typography>
                             </Grid>
                             <Grid item xs={4}>
-                                <Typography sx={{ color: "#ffffff", float: "right" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>
+                                <Typography sx={{ color: "text.main", float: "right" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>
                             </Grid>
                             <Grid item xs={12} sx={{ textAlign: "center" }}  >
                                 <Rating
