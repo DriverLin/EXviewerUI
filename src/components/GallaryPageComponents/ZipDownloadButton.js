@@ -84,7 +84,7 @@ export default function ZipDownloadButton(props) {
                 sx={{
                     opacity: initOpacity,
                     transition: ".5s",
-                    color: "#ffffff",
+                    color: "iconButton.main",
                     width: 42,
                     height: 42,
                 }}
@@ -101,7 +101,7 @@ export default function ZipDownloadButton(props) {
                     transition: ".5s",
                     width: 42,
                     height: 42,
-                    color: "#00796b",
+                    color: "primary",
                 }}
                 variant="determinate"
                 value={process}
@@ -112,11 +112,11 @@ export default function ZipDownloadButton(props) {
                 sx={{
                     opacity: finishOpacity,
                     transition: ".5s",
-                    color: "#ffffff",
+                    color: "iconButton.main",
                     width: 42,
                     height: 42,
                 }}
-                color="primary" aria-label="makeOver" component="span">
+                aria-label="makeOver" component="span">
                 <CheckCircleOutlineIcon fontSize="large" />
             </IconButton>
     }

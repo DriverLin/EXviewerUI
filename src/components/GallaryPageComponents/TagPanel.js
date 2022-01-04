@@ -6,18 +6,18 @@ import GetTranslate from "../GetTranslate.js"
 
 
 export default function TagPanel(props) {
-    const BootstrapButton = styled(Button)({
+    const BootstrapButton = styled(Button)(({ theme }) => ({
         color: "#ffffff",
-        backgroundColor: "#4A4A4A",
+        backgroundColor: theme.palette.background.tag,
         textTransform: "none",
         height: "32px",
         fontSize: "10pt",
         margin: "10px",
         marginLeft: 0,
         "&:hover": {
-            background: "#646464",
+            background: theme.palette.background.tagHover,
         },
-    });
+    }));
 
     return (<table>
         <tbody >
@@ -33,6 +33,9 @@ export default function TagPanel(props) {
                                     props.tags[row].map((value) => {
                                         return (
                                             <BootstrapButton
+                                                sx={{
+                                                    
+                                                }}
                                                 key={value}
                                                 onClick={() => {
                                                     window.open(`/#/search?f_search=${encodeURIComponent(`${row}:"${value}$"`)}`, "_blank");

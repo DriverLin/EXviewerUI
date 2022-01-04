@@ -47,7 +47,29 @@ export default function GetTranslate(type,value) {
     } catch (e) {
         return value
     }
-}""".replace(
+}
+export function getGuess(value) { 
+    if (value === "") return []
+    const guess = []
+    for (let type of Object.keys(preciseQuery)) {
+        for (let name of Object.keys(preciseQuery[type])) { 
+            if (preciseQuery[type][name].includes(value) || name.includes(value)) { 
+                guess.push({
+                    type: type,
+                    origin: name,
+                    translated: preciseQuery[type][name]
+                })
+                if (guess.length > 25) {
+                    return guess
+                }
+            }
+        }
+    }
+    return guess
+}
+
+
+""".replace(
     "[[[JSONRESUT]]]", json.dumps(outDict, indent=4,ensure_ascii=True)
 )
 

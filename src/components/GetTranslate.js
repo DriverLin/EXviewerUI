@@ -1675,7 +1675,8 @@ const preciseQuery = {
         "love live superstar": "Love Live! Superstar!!",
         "tales of arise": "\u7834\u6653\u4f20\u8bf4",
         "osananajimi ga zettai ni makenai love comedy": "\u9752\u6885\u7af9\u9a6c\u7edd\u5bf9\u4e0d\u4f1a\u8f93\u7684\u604b\u7231\u559c\u5267",
-        "buried stars": "\u6df1\u57cb\u4e4b\u661f"
+        "buried stars": "\u6df1\u57cb\u4e4b\u661f",
+        "gunbuster": "\u98de\u8dc3\u5dc5\u5cf0"
     },
     "character": {
         "alice": "\u7231\u4e3d\u4e1d",
@@ -2268,6 +2269,7 @@ const preciseQuery = {
         "airi totoki": "\u5341\u65f6\u7231\u68a8",
         "natalia": "\u5a1c\u5854\u8389\u4e9a",
         "takumi mukai": "\u5411\u4e95\u62d3\u6d77",
+        "eve santaclaus": "\u4f0a\u8299\u00b7\u73ca\u5fb7\u514b\u7f57\u4e1d",
         "nina ichihara": "\u5e02\u539f\u4ec1\u5948",
         "hinako kita": "\u559c\u591a\u65e5\u83dc\u5b50",
         "mary cochran": "\u739b\u4e3d\u00b7\u67ef\u514b\u5170",
@@ -4902,7 +4904,15 @@ const preciseQuery = {
         "jessica": "\u6770\u897f\u5361",
         "jasmine": "\u8309\u8389",
         "karva": "\u5361\u9c81\u5df4",
-        "korwa": "\u53ef\u9732\u74e6"
+        "korwa": "\u53ef\u9732\u74e6",
+        "noriko takaya": "\u9ad8\u5c4b\u6cd5\u5b50",
+        "kazumi amano": "\u5929\u91ce\u548c\u7f8e",
+        "jung freud": "\u8363\u683c\u00b7\u4f5b\u6d1b\u4f9d\u5fb7",
+        "aru rikuhachima": "\u9678\u516b\u9b54\u30a2\u30eb",
+        "hifumi ajitani": "\u963f\u6148\u8c37\u30d2\u30d5\u30df",
+        "azusa shirasu": "\u767d\u6d32\u30a2\u30ba\u30b5",
+        "hanako urawa": "\u6d66\u548c\u30cf\u30ca\u30b3",
+        "koharu shimoe": "\u4e0b\u6c5f\u30b3\u30cf\u30eb"
     },
     "group": {
         "clockup": "CLOCKUP",
@@ -7057,7 +7067,19 @@ const preciseQuery = {
         "letitia no ohirune": "\u30ec\u30c6\u30a3\u30fc\u30b7\u30e3\u306e\u304a\u663c\u5bdd",
         "rokumarusou": "\u308d\u304f\u307e\u308b\u8358",
         "yamo7": "\u30e4\u30e2\u30bb\u30d6\u30f3",
-        "ginga-kei pride": "\u94f6\u6cb3\u7cfbPRIDE"
+        "ginga-kei pride": "\u94f6\u6cb3\u7cfbPRIDE",
+        "suiikazuchi": "\u30b9\u30a4\u30a4\u30ab\u30ba\u30c1",
+        "atelier hinata": "\u3042\u3068\u308a\u3048\u3072\u306a\u305f",
+        "tortoiseshell": "\u30c8\u30fc\u30c6\u30a3\u30b7\u30a7\u30eb",
+        "shinoya": "\u7be0\u5c4b",
+        "ink complex": "Ink Complex",
+        "supe": "\u3059\u307a",
+        "akaneiro": "\u7d05\u97f3\u8272",
+        "hakukoukai": "\u767d\u86df\u4f1a",
+        "marshmallow balloon": "\u30de\u30b7\u30e5\u30de\u30ed\u98a8\u8239",
+        "zombie to yukaina nakamatachi": "\u305e\u3093\u3073\u3068\u6109\u5feb\u306a\u4ef2\u9593\u305f\u3061",
+        "anmitsuyomogitei": "\u3042\u3093\u307f\u3064\u3088\u3082\u304e\u4ead",
+        "golden complex": "\u91d1\u8272complex"
     },
     "artist": {
         "13": "13",
@@ -10488,7 +10510,18 @@ const preciseQuery = {
         "itsuki kuro": "\u4f0a\u6708\u30af\u30ed",
         "tonari": "\u96a3",
         "sawaragi": "\u6ca2\u826f\u5b9c",
-        "sanrokumaru": "\u3055\u3093\u308d\u304f\u4e38"
+        "sanrokumaru": "\u3055\u3093\u308d\u304f\u4e38",
+        "kuga mayuri": "\u4e45\u6211\u8327\u8389",
+        "jiyu2": "\u78c1\u6cb92",
+        "yoshida": "\u5409\u7530",
+        "dokukinokozin": "\u6bd2\u8338\u4eba",
+        "danrenji": "\u3060\u3093\u308c\u3093\u3058",
+        "kiri-kiri mai": "\u30ae\u30ea\u30ae\u30ea\u821e",
+        "oshino": "\u63a8\u4e43",
+        "shiramizu mizuchi": "\u767d\u745e\u307f\u305a\u3061",
+        "majima tetsurou": "\u771f\u5cf6\u3066\u3064\u308d\u30fc",
+        "super zombie": "\u3059\u30fc\u3071\u30fc\u305e\u3093\u3073",
+        "seuma": "\u305b\u3046\u307e"
     },
     "cosplayer": {
         "otohara an": "\u4e59\u539f\u3042\u3093",
@@ -10508,7 +10541,8 @@ const preciseQuery = {
         "kaya huang": "KaYa \u8431",
         "sayako": "\u3055\u3084\u3053",
         "mikomi hokina": "Mikomi Hokina",
-        "akane araragi": "Akane Araragi"
+        "akane araragi": "Akane Araragi",
+        "lenfried": "lenfried"
     },
     "male": {
         "age progression": "\u5e74\u9f84\u589e\u957f",
@@ -11668,3 +11702,25 @@ export default function GetTranslate(type,value) {
         return value
     }
 }
+
+
+export function getGuess(value) { 
+    if (value === "") return []
+    const guess = []
+    for (let type of Object.keys(preciseQuery)) {
+        for (let name of Object.keys(preciseQuery[type])) { 
+            if (preciseQuery[type][name].includes(value) || name.includes(value)) { 
+                guess.push({
+                    type: type,
+                    origin: name,
+                    translated: preciseQuery[type][name]
+                })
+                if (guess.length > 25) {
+                    return guess
+                }
+            }
+        }
+    }
+    return guess
+}
+

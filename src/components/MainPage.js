@@ -69,7 +69,7 @@ export default function MainPage(props) {
         root: {
             flexGrow: 1,
             margin: small_matches ? "48px" : "8px",
-            marginTop: 45
+            marginTop: 45,
         },
     }));
     const classes = useStyles();
@@ -88,8 +88,6 @@ export default function MainPage(props) {
 
 
 
-
-
     const openNewTab = (url) => {
         window.open("/#" + url, "_blank")
     }
@@ -103,7 +101,7 @@ export default function MainPage(props) {
             .then(res => res.json())
             .then(data => {
                 cacheAll.current = data.map(item => translateGdata2CardData(item));
-                console.log(cacheAll.current)
+                // console.log(cacheAll.current)
                 localSearchAction()
                 requestNextPage()
             })
@@ -124,17 +122,13 @@ export default function MainPage(props) {
         requestNextPage()
     }
 
+    const currentApiFlag = () => `${apiUrl.current}_${cacheAll.current === null }`
+    
 
     const requestNextPage = () => {
-        // if (apiUrl.current === null) { 
-        //     console.log("apiUrl.current is null")
-        // }
-
-        
         if (lock.current) return;
         lock.current = true;
-        
-        
+        const storedApiFlag = currentApiFlag()
         if (cacheAll.current === null) {
             if (loadover.current) return;
             setLoadingBar(true)
@@ -143,23 +137,28 @@ export default function MainPage(props) {
             fetch(targetUrl)
                 .then(res => res.json())
                 .then(res => {
-                    if (res.length === 0) {
-                        loadover.current = true
-                    }
-                    res.forEach(item => {
-                        if (!gidSet.current.has(item.gid)) {
-                            gallaryListRef.current.push(item)
-                            gidSet.current.add(item.gid)
-                        } else {
-                            console.log("duplicate", item.gid)
+                    console.log("storedApiFlag", storedApiFlag)
+                    console.log("currentApiFlag", currentApiFlag())
+                    
+                    if (storedApiFlag === currentApiFlag()) {
+                        if (res.length === 0) {
+                            loadover.current = true
                         }
-
-                    })
-                    setgalaryList([...gallaryListRef.current])
+                        res.forEach(item => {
+                            if (!gidSet.current.has(item.gid)) {
+                                gallaryListRef.current.push(item)
+                                gidSet.current.add(item.gid)
+                            } else {
+                                console.log("duplicate", item.gid)
+                            }
+                        })
+                        setgalaryList([...gallaryListRef.current])
+                    } else { 
+                        console.log("数据已过期")
+                    }
                     lock.current = false;
                     setLoadingBar(false)
                     console.log("请求结束", res)
-
                 }).catch(err => {
                     console.log(err)
                 })
@@ -258,8 +257,6 @@ export default function MainPage(props) {
             || currrentUrl() === "/downloaded")
         )
 
-
-
         if (window.serverSideConfigure.type === "Data.db") {
             init_WASMSQL_API()
         } else if (
@@ -285,6 +282,9 @@ export default function MainPage(props) {
     const lastE = useRef(0);
     const handelScroll = (e) => {
         const dis2trigger = 3
+        if (e.target !== document) { 
+            return
+        }
         const end = e.target.documentElement.scrollHeight - e.target.documentElement.scrollTop - e.target.documentElement.clientHeight
         // console.log(lastE.current, end, lastE.current > dis2trigger && end <= dis2trigger)
         if (lastE.current > dis2trigger && end <= dis2trigger) {
