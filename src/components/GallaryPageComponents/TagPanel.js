@@ -6,16 +6,30 @@ import GetTranslate from "../GetTranslate.js"
 
 
 export default function TagPanel(props) {
-    const BootstrapButton = styled(Button)(({ theme }) => ({
-        color: "#ffffff",
-        backgroundColor: theme.palette.background.tag,
+    const ButtonType = styled(Button)(({ theme }) => ({
+        color: theme.palette.button.tag.text,
+        backgroundColor: theme.palette.button.tag.type.main,
         textTransform: "none",
         height: "32px",
         fontSize: "10pt",
         margin: "10px",
         marginLeft: 0,
         "&:hover": {
-            background: theme.palette.background.tagHover,
+            background: theme.palette.button.tag.type.hover,
+        },
+    }));
+
+
+    const ButtonValue = styled(Button)(({ theme }) => ({
+        color: theme.palette.button.tag.text,
+        backgroundColor: theme.palette.button.tag.value.main,
+        textTransform: "none",
+        height: "32px",
+        fontSize: "10pt",
+        margin: "10px",
+        marginLeft: 0,
+        "&:hover": {
+            background: theme.palette.button.tag.value.hover,
         },
     }));
 
@@ -25,14 +39,14 @@ export default function TagPanel(props) {
                 Object.keys(props.tags).map((row) => {
                     return (
                         <tr key={row}>
-                            <td valign="top"><BootstrapButton sx={{ width: "83px", }} >{
+                            <td valign="top"><ButtonType sx={{ width: "83px", }} >{
                                 GetTranslate("rows", row)
-                            }:</BootstrapButton></td>
+                            }:</ButtonType></td>
                             <td>
                                 {
                                     props.tags[row].map((value) => {
                                         return (
-                                            <BootstrapButton
+                                            <ButtonValue
                                                 sx={{
                                                     
                                                 }}
@@ -44,7 +58,7 @@ export default function TagPanel(props) {
                                                 {
                                                     GetTranslate(row, value)
                                                 }
-                                            </BootstrapButton>
+                                            </ButtonValue>
                                         )
                                     })
                                 }

@@ -163,15 +163,15 @@ export default function DownloadButton(props) {
                     height: "100%",
                     borderRadius: 1,
                     "& .MuiLinearProgress-bar1Buffer": {
-                        backgroundColor: "primary",
+                        backgroundColor: "button.readAndDownload.process",
                     },
                     "& .MuiLinearProgress-bar2Buffer": {
-                        backgroundColor: "#BDBDBD"
+                        backgroundColor: "#button.readAndDownload.buffer"
                     },
                     "& .MuiLinearProgress-dashed": {
                         display: "none"
                     },
-                    backgroundColor: "background.read",
+                    backgroundColor: "button.readAndDownload.main",
                     transition: ".5s",
                     opacity: progressOpacity,
                 }}
@@ -201,11 +201,11 @@ export default function DownloadButton(props) {
             height: 42,
             padding: "0px",
             overflow: "hidden",
-            backgroundColor: "background.read",
+            backgroundColor: "button.readAndDownload.main",
             "&:hover": {
-                backgroundColor: "background.readHover",
+                backgroundColor: "button.readAndDownload.hover",
             },
-            color: "text.main",
+            color: "button.readAndDownload.text",
         }}
         variant="contained"
         onClick={onClick}

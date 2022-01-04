@@ -82,17 +82,14 @@ a:link {
   color: #00796b;
 }
 
-/* 未访问的链bai接duzhi */
 a:visited {
   color: #00796b;
 }
 
-/* 已访问的链接 */
-a:hover {
+/* a:hover {
   color: #00796b;
-}
+} */
 
-/* 鼠标移动到链接上dao */
 a:active {
   color: #00796b;
 }

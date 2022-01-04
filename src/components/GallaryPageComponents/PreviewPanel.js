@@ -90,12 +90,12 @@ export default function PreviewPanel(props) {
 
     const BottomButton = styled(Button)(({ theme }) => ({
         marginTop: props.spacingPX + "px",
-        color: theme.palette.text.main,
-        backgroundColor: theme.palette.background.main,
+        color: theme.palette.button.loadMore.text,
+        backgroundColor: theme.palette.button.loadMore.main,
         width: "100%",
         height: 50,
         "&:hover": {
-            background: theme.palette.background.readHover,
+            background: theme.palette.button.loadMore.hover,
         },
     }));
 

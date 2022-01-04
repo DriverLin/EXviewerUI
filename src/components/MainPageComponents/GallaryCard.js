@@ -111,8 +111,8 @@ const useStyles = makeStyles((theme) => ({
 const GallaryContainer = styled(ButtonBase)(({ theme }) => ({
     width: "100%",
     display: "flex",
-    backgroundColor: theme.palette.background.mainCard,
-    color: theme.palette.text.main,
+    backgroundColor: theme.palette.button.gallaryCard.main,
+    color: theme.palette.text.primary,
     borderRadius: "2px",
     overflow: "hidden",
     boxSizing: "border-box",

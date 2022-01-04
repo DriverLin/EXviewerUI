@@ -23,7 +23,7 @@ export default function InfoPanel(props) {
         if (/(y+)/.test(format))
             format = format.replace(RegExp.$1, (date.getFullYear() + ""));
         for (var k in o)
-            if (new RegExp("(" + k + ")").test(format)) format = format.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            if (new RegExp("(" + k + ")").test(format)) format = format.replace(RegExp.$1, (RegExp.$1.length === 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
         return format;
     }
 
@@ -42,7 +42,7 @@ export default function InfoPanel(props) {
 
     const HeadDiv =  styled("div")(({ theme }) => ({
         fontSize: "16pt",
-        color: theme.palette.text.main,
+        color: theme.palette.text.primary,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         display: '-webkit-box',
@@ -58,15 +58,15 @@ export default function InfoPanel(props) {
 
             {
                 props.shows.indexOf("uploader") === -1 ? null :
-                    <Typography sx={{ color: "text.main" }} variant="body1" gutterBottom component="div">{props.g_data.uploader}</Typography>
+                    <Typography sx={{ color: "text.primary" }} variant="body1" gutterBottom component="div">{props.g_data.uploader}</Typography>
             }
             {
                 props.shows.indexOf("filecountsize") === -1 ? null :
-                    <Typography sx={{ color: "text.main" }} variant="body1" gutterBottom component="div">{props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB</Typography>}
+                    <Typography sx={{ color: "text.primary" }} variant="body1" gutterBottom component="div">{props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB</Typography>}
 
             {
                 props.shows.indexOf("posted") === -1 ? null :
-                    <Typography sx={{ color: "text.main" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>}
+                    <Typography sx={{ color: "text.primary" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>}
 
             {
                 props.shows.indexOf("category") === -1 ? null :

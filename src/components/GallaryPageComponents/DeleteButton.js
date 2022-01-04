@@ -55,9 +55,9 @@ export default function DeleteButton(props) {
                 sx={{
                     // opacity: initOpacity,
                     transition: ".5s",
-                    color: "iconButton.main",
+                    color: "button.iconFunction.main",
                     "&.Mui-disabled": {
-                        color: "iconButton.disabled",
+                        color: "button.iconFunction.disabled",
                     },
                 }}
                 component="span"
@@ -73,7 +73,7 @@ export default function DeleteButton(props) {
                 aria-describedby="alert-dialog-description" 
                 sx={{
                     "& .MuiDialog-paper": {
-                        color: "text.main",
+                        color: "text.primary",
                         backgroundColor: "background.main",
                     }
                 }}
@@ -85,7 +85,7 @@ export default function DeleteButton(props) {
                     <DialogContentText
                         id="alert-dialog-description"
                         sx={{
-                            color: "text.main",
+                            color: "text.primary",
                         }}
 
                     >
@@ -117,7 +117,7 @@ export default function DeleteButton(props) {
                         variant="text"
                         startIcon={<CloseIcon />}
                         sx={{
-                            color: "text.main",
+                            color: "text.primary",
                         }}
                     >
                         取消
