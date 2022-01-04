@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Grid, InputBase, ButtonBase, useScrollTrigger, Paper, AppBar, Toolbar, Slide, useMediaQuery, autocompleteClasses } from '@mui/material';
+import { Grid, InputBase, ButtonBase, useScrollTrigger, Paper, AppBar, Slide, useMediaQuery, } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
@@ -34,7 +34,7 @@ export default function TopSearchBar(props) {
         },
         inputInput: {
             "&.MuiInputBase-input": {
-                color: theme.palette.text.main
+                color: theme.palette.search.text
             }
         },
         drawer: {
@@ -125,9 +125,10 @@ export default function TopSearchBar(props) {
                 width: matches ? 730 : document.body.clientWidth - 60,
                 height: 55,
                 textAlign: "left",
-                borderTop: "1px solid #e0e0e0",
-                backgroundColor: "background.secondary",
-                color:"text.main",
+                borderTop: "1px solid",
+                borderColor:"search.split",
+                backgroundColor: "search.color",
+                color: "search.text",
             }
             }>
             <div style={{
@@ -169,13 +170,13 @@ export default function TopSearchBar(props) {
                 backgroundColor: "#00000000",
                 boxShadow: "None"
             }}>
-                <Paper sx={{ margin: "0 auto", overflow: "hidden", backgroundColor: "background.secondary", color: "text.main" }}>
+                <Paper sx={{ margin: "0 auto", overflow: "hidden", backgroundColor: "search.color", color: "search.text" }}>
                     <div>
                         <ButtonBase sx={{
                             width: 50,
                             height: 50,
-                            backgroundColor: "background.secondary",
-                            color: "text.main",
+                            backgroundColor: "search.color",
+                            color: "search.text",
                         }} onClick={props.leftButtonClick} >
                             <MenuIcon />
                         </ButtonBase>
@@ -189,10 +190,8 @@ export default function TopSearchBar(props) {
                             inputProps={{ 'aria-label': 'text' }}
                             autoComplete='off'
                             value={searchValue}
-
-
                             onChange={updateSearchValue}
-                            defaultValue={defaultSearch}
+                            // defaultValue={defaultSearch}
                             onFocus={() => {
                                 setAutocomplete(true)
                                 inputFocusStause.current = true
@@ -217,8 +216,8 @@ export default function TopSearchBar(props) {
                         <ButtonBase sx={{
                             width: 50,
                             height: 50,
-                            backgroundColor: "background.secondary",
-                            color: "text.main",
+                            backgroundColor: "search.color",
+                            color: "search.text",
                         }} onClick={doSearch}>
                             <SearchIcon />
                         </ButtonBase>

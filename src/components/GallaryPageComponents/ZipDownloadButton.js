@@ -84,7 +84,7 @@ export default function ZipDownloadButton(props) {
                 sx={{
                     opacity: initOpacity,
                     transition: ".5s",
-                    color: "iconButton.main",
+                    color: "button.iconFunction.main",
                     width: 42,
                     height: 42,
                 }}
@@ -101,7 +101,7 @@ export default function ZipDownloadButton(props) {
                     transition: ".5s",
                     width: 42,
                     height: 42,
-                    color: "primary",
+                    color: "button.iconFunction.process",
                 }}
                 variant="determinate"
                 value={process}
@@ -112,7 +112,7 @@ export default function ZipDownloadButton(props) {
                 sx={{
                     opacity: finishOpacity,
                     transition: ".5s",
-                    color: "iconButton.main",
+                    color: "button.iconFunction.main",
                     width: 42,
                     height: 42,
                 }}

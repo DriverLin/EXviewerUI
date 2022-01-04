@@ -7,7 +7,6 @@ import Grid from '@mui/material/Grid';
 import { makeStyles } from '@mui/styles';
 import TopSearchBar from './MainPageComponents/TopSearchBar'
 import LeftMenu from './MainPageComponents/LeftMenu'
-import SearchIcon from '@mui/icons-material/Search';
 import HomeIcon from '@mui/icons-material/Home';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
@@ -19,6 +18,8 @@ import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import { useLocation } from "react-router-dom";
+
+
 
 const formatTime = (time, format) => {
     const date = new Date(Number(time + "000"))
@@ -34,7 +35,7 @@ const formatTime = (time, format) => {
     if (/(y+)/.test(format))
         format = format.replace(RegExp.$1, (date.getFullYear() + ""));
     for (var k in o)
-        if (new RegExp("(" + k + ")").test(format)) format = format.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+        if (new RegExp("(" + k + ")").test(format)) format = format.replace(RegExp.$1, (RegExp.$1.length === 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
     return format;
 }
 
@@ -52,7 +53,7 @@ const translateGdata2CardData = (g_data) => {
         lang: g_data.tags.indexOf("language:chinese") !== -1 ? "chinese" : "",
         pages: Number(g_data.filecount),
         tags: g_data.tags,
-        process: g_data.hasOwnProperty("process") ? g_data.process : [0, 0] 
+        process: g_data.hasOwnProperty("process") ? g_data.process : [0, 0]
         //在前段判断是否有process字段  避免了对于DB模式的改造以及污染
         //没有则是[0,0]
     }
@@ -122,8 +123,8 @@ export default function MainPage(props) {
         requestNextPage()
     }
 
-    const currentApiFlag = () => `${apiUrl.current}_${cacheAll.current === null }`
-    
+    const currentApiFlag = () => `${apiUrl.current}_${cacheAll.current === null}`
+
 
     const requestNextPage = () => {
         if (lock.current) return;
@@ -139,7 +140,7 @@ export default function MainPage(props) {
                 .then(res => {
                     console.log("storedApiFlag", storedApiFlag)
                     console.log("currentApiFlag", currentApiFlag())
-                    
+
                     if (storedApiFlag === currentApiFlag()) {
                         if (res.length === 0) {
                             loadover.current = true
@@ -153,7 +154,7 @@ export default function MainPage(props) {
                             }
                         })
                         setgalaryList([...gallaryListRef.current])
-                    } else { 
+                    } else {
                         console.log("数据已过期")
                     }
                     lock.current = false;
@@ -247,14 +248,16 @@ export default function MainPage(props) {
         apiUrl.current = null
         loadover.current = false;
         setgalaryList([])
-        
+
+        const usingUrl = currrentUrl()
+
         console.log("初始化页面")
         console.log("window.serverSideConfigure.type", window.serverSideConfigure.type)
         console.log("Data.db ? ", window.serverSideConfigure.type === "Data.db")
         console.log("static ? ",
             (window.serverSideConfigure.type === "staticApi"
-            || localStorage.getItem("offline_mode") === "true"
-            || currrentUrl() === "/downloaded")
+                || localStorage.getItem("offline_mode") === "true"
+                || usingUrl === "/downloaded")
         )
 
         if (window.serverSideConfigure.type === "Data.db") {
@@ -262,7 +265,7 @@ export default function MainPage(props) {
         } else if (
             window.serverSideConfigure.type === "staticApi"
             || localStorage.getItem("offline_mode") === "true"
-            || currrentUrl() === "/downloaded"
+            || usingUrl === "/downloaded"
         ) {
             init_AllDATA_API()
         } else {
@@ -273,16 +276,17 @@ export default function MainPage(props) {
                 "/popular": "/list/popular?0=0",
                 "/favorites": "/list/favorites.php?0=0",
             }
-            apiUrl.current = urlMap[currrentUrl()]
-            console.log("apiUrl.current", currrentUrl(), "->", apiUrl.current)
+            apiUrl.current = urlMap[usingUrl]
+            console.log("apiUrl.current", usingUrl, "->", apiUrl.current)
             requestNextPage()
         }
     }
+    
 
     const lastE = useRef(0);
     const handelScroll = (e) => {
         const dis2trigger = 3
-        if (e.target !== document) { 
+        if (e.target !== document) {
             return
         }
         const end = e.target.documentElement.scrollHeight - e.target.documentElement.scrollTop - e.target.documentElement.clientHeight

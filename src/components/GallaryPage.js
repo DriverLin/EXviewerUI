@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { Button, Grid,  Rating,  useMediaQuery,  Typography } from '@mui/material';
+import { Button, Grid, Rating, useMediaQuery, Typography } from '@mui/material';
 
 import TagPanel from "./GallaryPageComponents/TagPanel.js"
 import InfoPanel from './GallaryPageComponents/InfoPanel.js';
@@ -9,7 +9,7 @@ import PreviewPanel from './GallaryPageComponents/PreviewPanel.js';
 
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 
-import {  makeStyles} from '@mui/styles';
+import { makeStyles } from '@mui/styles';
 
 import LoadingAnime from './LoadingAnime';
 
@@ -39,7 +39,7 @@ const formatTime = (time, format) => {
     if (/(y+)/.test(format))
         format = format.replace(RegExp.$1, (date.getFullYear() + ""));
     for (var k in o)
-        if (new RegExp("(" + k + ")").test(format)) format = format.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+        if (new RegExp("(" + k + ")").test(format)) format = format.replace(RegExp.$1, (RegExp.$1.length === 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
     return format;
 }
 
@@ -174,7 +174,7 @@ function GallaryInfoPage(props) {
                 width: 754,
                 borderRadius: 20,
                 color: theme.palette.background.mainCard,
-                boxShadow: theme.palette.background.pageShadow,
+                boxShadow: theme.palette.page.shadow,
                 overflow: "hidden"
             },
             matches_borderCard: {
@@ -200,20 +200,20 @@ function GallaryInfoPage(props) {
 
 
     const readButton = <Button
-            sx={{
-                width: "100%",
-                height: 42,
-                backgroundColor: "background.read",
-                "&:hover": {
-                    backgroundColor: "background.readHover",
-                },
-                color: "text.main",
-            }}
-            onClick={() => {window.open(`/#/viewing/${props.g_data.gid}/${props.g_data.token}/`, "_blank")}}
-            variant="contained" >
-            {"阅读"}
-        </Button>
-    
+        sx={{
+            width: "100%",
+            height: 42,
+            backgroundColor: "button.readAndDownload.main",
+            "&:hover": {
+                backgroundColor: "button.readAndDownload.hover",
+            },
+            color: "button.readAndDownload.text",
+        }}
+        onClick={() => { window.open(`/#/viewing/${props.g_data.gid}/${props.g_data.token}/`, "_blank") }}
+        variant="contained" >
+        {"阅读"}
+    </Button>
+
 
 
     const downloadButton = <DownloadButton
@@ -296,10 +296,10 @@ function GallaryInfoPage(props) {
                             alignItems="flex-start"
                         >
                             <Grid item xs={4}>
-                                <Typography sx={{ color: "text.main" }} variant="body1" gutterBottom component="div">{props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB</Typography>
+                                <Typography sx={{ color: "text.primary" }} variant="body1" gutterBottom component="div">{props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB</Typography>
                             </Grid>
                             <Grid item xs={4}>
-                                <Typography sx={{ color: "text.main", float: "right" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>
+                                <Typography sx={{ color: "text.primary", float: "right" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>
                             </Grid>
                             <Grid item xs={12} sx={{ textAlign: "center" }}  >
                                 <Rating
