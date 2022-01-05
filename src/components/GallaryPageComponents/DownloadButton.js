@@ -24,6 +24,7 @@ export default function DownloadButton(props) {
 
 
     const [stause, setStause] = useState("init")
+    // const [stause, setStause] = useState("processing")
 
 
     useEffect(() => {
@@ -32,6 +33,7 @@ export default function DownloadButton(props) {
 
 
     const [downloadProgress, _setDownloadProgress] = useState([0, 0, 999])
+    // const [downloadProgress, _setDownloadProgress] = useState([500, 100, 999])
     const downloadProgressRef = useRef(0)
     const setDownloadProgress = (value) => {
         downloadProgressRef.current = value
