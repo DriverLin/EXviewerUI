@@ -74,13 +74,14 @@ export default function DeleteButton(props) {
                 sx={{
                     "& .MuiDialog-paper": {
                         color: "text.primary",
-                        backgroundColor: "background.main",
+                        backgroundColor: "page.background",
                     }
                 }}
             >
                 <DialogTitle id="alert-dialog-title">
                     {"确认删除?"}
                 </DialogTitle>
+                
                 <DialogContent>
                     <DialogContentText
                         id="alert-dialog-description"

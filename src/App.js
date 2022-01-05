@@ -67,6 +67,15 @@ function App() {
         styleOverrides: {
           body: {
             backgroundColor: dark ? '#303030' : "#ECEFF1",
+            "a: link": {
+              color: dark ? '#00796b' : "#00796b",
+            },
+            "a: visited": {
+              color: dark ? '#00796b' : "#00796b",
+            },
+            "a: active": {
+              color: dark ? '#00796b' : "#00796b",
+            },
           },
         },
       },
@@ -75,10 +84,10 @@ function App() {
     palette: dark ? {
 
       primary: {
-        main: "#d90051",
+        main: "#00796B",
       },
       secondary: {
-        main: "#dadada",
+        main: "#d90051",
       },
       button: {
         tag: {
@@ -131,10 +140,10 @@ function App() {
       :
       {
         primary: {
-          main: "#d90051",
+          main: "#00796B",
         },
         secondary: {
-          main: "#00796b",
+          main: "#00796B",
         },
         background: {
           main: "#ffffff",

@@ -30,7 +30,7 @@ const BootstrapDialogTitle = (props) => {
     const { children, onClose, ...other } = props;
 
     return (
-        <DialogTitle sx={{ m: 0, p: 2 }} {...other}>
+        <DialogTitle sx={{ m: 0, p: 2, backgroundColor:"page.background" }} {...other}>
             {children}
             {onClose ? (
                 <IconButton
@@ -40,7 +40,7 @@ const BootstrapDialogTitle = (props) => {
                         position: 'absolute',
                         right: 8,
                         top: 8,
-                        color: (theme) => theme.palette.grey[500],
+                        color: (theme) => theme.palette.primary.main,
                     }}
                 >
                     <CloseIcon />
@@ -79,17 +79,27 @@ return (
             onClose={props.onClose}
             aria-labelledby="customized-dialog-title"
             open={props.open}
+            sx={{
+                "& .MuiDialog-paper": {
+                    backgroundColor: "page.background",
+                },
+            }}
         >
             <BootstrapDialogTitle id="customized-dialog-title" onClose={props.onClose}>
                 菜单
             </BootstrapDialogTitle>
             <List
-                sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}
+                sx={{
+                    width: '100%',
+                    maxWidth: 360,
+                    backgroundColor:'page.background',
+                    color:"text.primary",
+                }}
             // subheader={<ListSubheader>Settings</ListSubheader>}
             >
                 <ListItem>
                     <ListItemIcon>
-                        <ScreenRotationIcon />
+                        <ScreenRotationIcon color='primary'/>
                     </ListItemIcon>
                     <ListItemText primary="横屏模式" />
                     <Switch
@@ -103,7 +113,7 @@ return (
                 </ListItem>
                 <ListItem>
                     <ListItemIcon>
-                        <ViewColumnIcon />
+                        <ViewColumnIcon color='primary' />
                     </ListItemIcon>
                     <ListItemText primary="切换分页" />
                     <Switch
@@ -119,7 +129,7 @@ return (
 
                 <ListItem>
                     <ListItemIcon>
-                        <MenuBookIcon />
+                        <MenuBookIcon color='primary'/>
                     </ListItemIcon>
                     <ListItemText primary="切换方向" />
                     <Switch

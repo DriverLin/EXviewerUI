@@ -52,8 +52,15 @@ export default function RevSlider(props) {
             }} >
                 <Slider
                     sx={{
-                        color: '#00796B',
+                        color: 'primary.main',
                         height: 4,
+                        '&.MuiSlider-trackInverted': {
+                            color: "primary.main",
+                            '&.MuiSlider-track': {
+                                border: 'none',
+                                color: "primary.main",
+                            },
+                        },
                         '& .MuiSlider-track': {
                             border: 'none',
                         },
@@ -79,7 +86,7 @@ export default function RevSlider(props) {
                             width: 32,
                             height: 32,
                             borderRadius: '50% 50% 50% 0',
-                            backgroundColor: '#00796B',
+                            backgroundColor: 'primary.main',
                             transformOrigin: 'bottom left',
                             transform: 'translate(50%, -100%) rotate(-45deg) scale(0)',
                             '&:before': { display: 'none' },
