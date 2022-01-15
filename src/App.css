@@ -6,7 +6,10 @@ body::-webkit-scrollbar {
   width: 0 !important;
 }
 
-
+.clickableDomOnSelected{
+  transition: all s0.5s ease;
+  border: 1px solid #00bcd4 !important ;
+}
 
 .loadanimespinner {
   position: absolute;

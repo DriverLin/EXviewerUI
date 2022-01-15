@@ -14,3 +14,6 @@ shutil.copytree(r"D:\refacted_exviewer\build",r"D:\EXviewer\server")
 
 shutil.rmtree(r"D:\refacted_exviewer\server\server")
 shutil.copytree(r"D:\refacted_exviewer\build",r"D:\refacted_exviewer\server\server")
+
+
+print('copy to other done')

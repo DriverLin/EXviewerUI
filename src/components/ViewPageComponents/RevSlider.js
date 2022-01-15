@@ -56,13 +56,14 @@ export default function RevSlider(props) {
                         height: 4,
                         '&.MuiSlider-trackInverted': {
                             color: "primary.main",
-                            '&.MuiSlider-track': {
+                            '& .MuiSlider-track': {
                                 border: 'none',
                                 color: "primary.main",
                             },
                         },
                         '& .MuiSlider-track': {
                             border: 'none',
+                            color: "primary.main",
                         },
                         '& .MuiSlider-thumb': {
                             height: 16,

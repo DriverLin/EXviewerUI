@@ -20,7 +20,7 @@ import DeleteButton from './GallaryPageComponents/DeleteButton.js';
 import PopoverNotifier from './GallaryPageComponents/PopoverNotifier.js';
 import FavoButton from './GallaryPageComponents/FavoButton.js';
 
-
+import KeyboardController from '../KeyboardController.js';
 
 
 
@@ -209,6 +209,7 @@ function GallaryInfoPage(props) {
             },
             color: "button.readAndDownload.text",
         }}
+        name='clickable'
         onClick={() => { window.open(`/#/viewing/${props.g_data.gid}/${props.g_data.token}/`, "_blank") }}
         variant="contained" >
         {"阅读"}
@@ -241,6 +242,7 @@ function GallaryInfoPage(props) {
 
     return (
         <div className={matches ? classes.borderCard : classes.matches_borderCard} >
+            <KeyboardController/>
             <PopoverNotifier
                 message={notifyMessage}
             />

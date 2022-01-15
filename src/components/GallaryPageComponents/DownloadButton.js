@@ -209,6 +209,7 @@ export default function DownloadButton(props) {
             },
             color: "button.readAndDownload.text",
         }}
+        name='clickable'
         variant="contained"
         onClick={onClick}
     >

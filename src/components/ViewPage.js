@@ -8,9 +8,7 @@ import { useLocation } from "react-router-dom";
 
 
 export default function ViewPage() {
-
     const [urls, setUrls] = useState([])
-
 
     const location = useLocation();
     const gid = location.pathname.split("/")[2]
@@ -29,6 +27,7 @@ export default function ViewPage() {
 
 
     const setPageNum = (value) => {
+        if (pageNumRef.current === value) return
         pageNumRef.current = value
         _setPageNum(value);
         localStorage.setItem(`/viewing/${gid}/${token}/`, value);
@@ -129,6 +128,8 @@ export default function ViewPage() {
                 <div style={{ height: '100vh', width: '100vw', }} onClick={handelTap}>
                     {
                         <MultPageSwiper
+                            key={viewSettings['横屏模式']}//切换横屏模式  就重新渲染 避免了页数切换的BUG
+
                             value={pageNum}
                             setValue={setPageNum}
                             reverse={viewSettings["切换方向"]}

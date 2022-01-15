@@ -39,17 +39,17 @@ export default function TagPanel(props) {
                 Object.keys(props.tags).map((row) => {
                     return (
                         <tr key={row}>
-                            <td valign="top"><ButtonType sx={{ width: "83px", }} >{
-                                GetTranslate("rows", row)
-                            }:</ButtonType></td>
+                            <td valign="top">
+                                <ButtonType name='clickable' sx={{ width: "83px", }} >{
+                                    GetTranslate("rows", row) + ":"
+                                }</ButtonType>
+                            </td>
                             <td>
                                 {
                                     props.tags[row].map((value) => {
                                         return (
                                             <ButtonValue
-                                                sx={{
-                                                    
-                                                }}
+                                                name='clickable'
                                                 key={value}
                                                 onClick={() => {
                                                     window.open(`/#/search?f_search=${encodeURIComponent(`${row}:"${value}$"`)}`, "_blank");
@@ -82,3 +82,5 @@ export default function TagPanel(props) {
 //         }} />
 //     );
 // }
+
+

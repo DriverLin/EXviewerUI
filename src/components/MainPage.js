@@ -18,6 +18,7 @@ import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import { useLocation } from "react-router-dom";
+import KeyboardController from '../KeyboardController';
 
 
 
@@ -298,11 +299,20 @@ export default function MainPage(props) {
         lastE.current = end
     }
 
-    const handeLongClicked = () => { }
-    const detailCallback = (g_data) => {
-        console.log("detailCallback", g_data.gid, g_data.token)
-        openNewTab(`/g/${g_data.gid}/${g_data.token}/`)
+    const handeLongClicked = (g_data,x,y) => { 
+        console.log("长按事件")
     }
+    const infoCallBack = (g_data) => {
+        console.log("infoCallBack", g_data.gid, g_data.token)
+        openNewTab(`/g/${g_data.gid}/${g_data.token}/`)
+     }
+
+    const viewCallBack = (g_data) => { 
+        console.log("viewCallBack", g_data.gid, g_data.token)
+        openNewTab(`/viewing/${g_data.gid}/${g_data.token}/`)
+    }
+
+
 
 
     const [leftMenuOpen, setLeftMenuOpen] = useState(false)
@@ -311,6 +321,10 @@ export default function MainPage(props) {
     }
     const handelLeftMenuOpen = () => {
         setLeftMenuOpen(true)
+    }
+
+    const handelLeftMenuClick = () => { 
+        setLeftMenuOpen(leftMenuOpen => !leftMenuOpen)
     }
 
     let menuItems = [
@@ -406,8 +420,8 @@ export default function MainPage(props) {
 
     return (
         <React.Fragment >
-
-            <TopSearchBar leftButtonClick={handelLeftMenuOpen} doSearch={doSearch} />
+            <KeyboardController/>
+            <TopSearchBar leftButtonClick={handelLeftMenuClick} doSearch={doSearch} />
             <div style={{ width: "100%", height: "60px" }} ></div>
 
             <LeftMenu open={leftMenuOpen} onClose={handelLeftMenuClose} Items={menuItems}  ></LeftMenu>
@@ -425,7 +439,8 @@ export default function MainPage(props) {
                                     <Paper className={classes.paper}>
                                         <GallaryCard
                                             longClickCallback={handeLongClicked}
-                                            callBack={detailCallback}
+                                            infoCallBack={viewCallBack}
+                                            viewCallBack={infoCallBack}
                                             data={row}
                                         />
                                     </Paper>

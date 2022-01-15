@@ -63,7 +63,11 @@ export default function LeftMenu(props) {
                     {
                         props.Items.map(row => (
 
-                            <ListItem key={Math.random()} button onClick={() => {
+                            <ListItem
+                                button
+                                name='clickable'
+                                key={Math.random()}
+                                onClick={() => {
                                 row.onClick();
                                 props.onClose();
                             }} >

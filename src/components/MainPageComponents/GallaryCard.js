@@ -144,7 +144,7 @@ export default function GallaryCard(props) {
         if (process[1] === 0) {
             cardText = "下载中"
         }
-        else if (process[1] === -1) { 
+        else if (process[1] === -1) {
             cardText = "未开始"
         }
         else if (process[1] === process[0]) {
@@ -158,6 +158,8 @@ export default function GallaryCard(props) {
 
     return (
         <GallaryContainer
+            name='clickable'
+
             style={
                 small_matches ?
                     {
@@ -169,9 +171,7 @@ export default function GallaryCard(props) {
                         fontSize: "16px"
                     }
             }
-            onClick={() => {
-                props.callBack(props.data)
-            }}
+            
             onContextMenu={(e) => {
                 e.preventDefault();
                 props.longClickCallback(props.data, e.clientX, e.clientY)
@@ -208,13 +208,24 @@ export default function GallaryCard(props) {
                 }
             }}
         >
-            <div style={{
-                height: relative_height,
-                width: relative_height / 1.39,
-            }} className={classes.imgContainer}>
+            <div
+                style={{
+                    height: relative_height,
+                    width: relative_height / 1.39,
+                }}
+                className={classes.imgContainer}
+                onClick={() => { 
+                    props.infoCallBack(props.data)
+                }}
+            >
                 <img style={{ width: relative_height / 1.39, }} className={classes.imgContainer_img} src={props.data.imgSrc} alt={`cover of ${props.data.name}`} />
             </div>
-            <div className={classes.infoContainer}>
+            <div
+                className={classes.infoContainer}
+                onClick={() => {
+                    props.viewCallBack(props.data)
+                }}
+            >
                 <div className={classes.name_container}>
                     <div className={classes.name_text}>
                         <a>{props.data.name}</a>
@@ -225,7 +236,7 @@ export default function GallaryCard(props) {
                         <Rating name="read-only" value={props.data.rank} precision={0.5} max={5} readOnly />
                     </div>
                     <div style={{ backgroundColor: colormap[props.data.category], }} className={classes.category}>
-                        <a style={{color:"#ffffff"}}  >{props.data.category.toUpperCase()}</a>
+                        <a style={{ color: "#ffffff" }}  >{props.data.category.toUpperCase()}</a>
                     </div>
                     <div className={classes.upload_time}>{props.data.uploadtime}</div>
                     <div className={classes.details}>

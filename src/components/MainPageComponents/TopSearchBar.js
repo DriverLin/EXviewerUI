@@ -170,9 +170,12 @@ export default function TopSearchBar(props) {
                 backgroundColor: "#00000000",
                 boxShadow: "None"
             }}>
-                <Paper sx={{ margin: "0 auto", overflow: "hidden", backgroundColor: "search.color", color: "search.text" }}>
+                <Paper
+                    sx={{ margin: "0 auto", overflow: "hidden", backgroundColor: "search.color", color: "search.text" }}>
                     <div>
-                        <ButtonBase sx={{
+                        <ButtonBase
+                            name='clickable'
+                            sx={{
                             width: 50,
                             height: 50,
                             backgroundColor: "search.color",
@@ -213,7 +216,10 @@ export default function TopSearchBar(props) {
 
                             }}
                         />
-                        <ButtonBase sx={{
+                        <ButtonBase
+                            name='clickable'
+
+                            sx={{
                             width: 50,
                             height: 50,
                             backgroundColor: "search.color",
