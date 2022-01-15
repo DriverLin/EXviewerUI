@@ -50,6 +50,7 @@ export default function DeleteButton(props) {
     return (
         <div>
             <IconButton
+                name='clickable'
                 disabled={props.forceControlDisabled}
                 onClick={handleClickOpen}
                 sx={{
@@ -103,7 +104,6 @@ export default function DeleteButton(props) {
                     }}
                 >
                     <Button
-                        
                         onClick={handelCheck}
                         variant="text"
                         startIcon={<DeleteOutlineIcon />}

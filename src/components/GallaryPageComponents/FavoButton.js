@@ -77,6 +77,7 @@ export default function FavoButton(props) {
             </IconButton>,
         "no":
             <IconButton
+                name='clickable'
                 onClick={onClick}
                 sx={{
                     transition: ".5s",
@@ -88,6 +89,8 @@ export default function FavoButton(props) {
             </IconButton>,
         "yes":
             <IconButton
+                name='clickable'
+
                 onClick={onClick}
                 sx={{
                     transition: ".5s",

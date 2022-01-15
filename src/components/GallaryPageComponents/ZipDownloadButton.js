@@ -1,6 +1,6 @@
 
-import React, { useState,} from 'react';
-import { IconButton, CircularProgress  } from '@mui/material';
+import React, { useState, } from 'react';
+import { IconButton, CircularProgress } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import JsZip from 'jszip'
@@ -35,7 +35,7 @@ export default function ZipDownloadButton(props) {
                             if (over === Number(g_data.filecount)) {
                                 console.log("zip over")
                                 new_zip.generateAsync({ type: "blob" }).then(function (content) {
-                                    FileSaver(content, gallaryname+".zip");
+                                    FileSaver(content, gallaryname + ".zip");
                                 });
 
                                 setProcessingOpacity(0)
@@ -80,27 +80,25 @@ export default function ZipDownloadButton(props) {
     const elemMap = {
         "init":
             <IconButton
+                name='clickable'
                 onClick={onClick}
                 sx={{
                     opacity: initOpacity,
                     transition: ".5s",
                     color: "button.iconFunction.main",
-                    width: 42,
-                    height: 42,
                 }}
-                
-                aria-label="share Zip"
                 component="span"
             >
                 <IosShareIcon fontSize="large" />
-            </IconButton>,
+            </IconButton>
+        ,
         "processing":
             <CircularProgress
                 sx={{
                     opacity: processingOpacity,
                     transition: ".5s",
-                    width: 42,
-                    height: 42,
+                    width: 50,
+                    height: 50,
                     color: "button.iconFunction.process",
                 }}
                 variant="determinate"
@@ -113,14 +111,10 @@ export default function ZipDownloadButton(props) {
                     opacity: finishOpacity,
                     transition: ".5s",
                     color: "button.iconFunction.main",
-                    width: 42,
-                    height: 42,
                 }}
                 aria-label="makeOver" component="span">
                 <CheckCircleOutlineIcon fontSize="large" />
             </IconButton>
     }
-    return <div style={{ width: 42, height: 42 }}>
-        {elemMap[stause]}
-    </div>
+    return elemMap[stause]
 }

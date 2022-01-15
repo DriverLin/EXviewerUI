@@ -38,25 +38,39 @@ function App() {
   }
 
 
-
-  const [dark, setDark] = useState(getColorMode());
-
-  const handelDarkModeChanged = (e) => {
-    console.log("handelDarkModeChanged", e)
-    setDark(getColorMode())
+  
+  const darkRef = React.useRef(getColorMode());
+  const [dark, _setDark] = useState(darkRef.current);
+  const setDark = (value) => { 
+    if (value !== darkRef.current) { 
+      console.log("darkMode set",value)
+      _setDark(value);
+      darkRef.current = value;
+    }
   }
 
 
 
+  const handelDarkModeChanged = (e) => {
+    setDark(getColorMode())
+  }
+
+  const handelStorageChanged = (e) => {
+    if (e.type === 'storage' && e.key === 'colorMode') {
+      setDark(getColorMode())
+    }
+  }
+
+
   useEffect(() => {
     window.addEventListener('userDispatchColorModeEvent', handelDarkModeChanged);
-
-    let media = window.matchMedia('(prefers-color-scheme: dark)');
-    media.addEventListener('change', handelDarkModeChanged);
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', handelDarkModeChanged);
+    window.addEventListener('storage', handelStorageChanged);
 
     return () => {
       window.removeEventListener('userDispatchColorModeEvent', handelDarkModeChanged);
-      media.removeEventListener('change', handelDarkModeChanged);
+      window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', handelDarkModeChanged);
+      window.removeEventListener('storage', handelStorageChanged);
     }
   }, [])
 
@@ -140,7 +154,7 @@ function App() {
       :
       {
         primary: {
-          main: "#00796B",
+          main: "#d90051",
         },
         secondary: {
           main: "#00796B",
@@ -162,13 +176,14 @@ function App() {
 
         button: {
           tag: {
+
             type: {
-              main: "#00796b",
-              hover: "#009688"
-            },
-            value: {
               main: "#C2185B",
               hover: "#E91E63"
+            },
+            value: {
+              main: "#00796b",
+              hover: "#009688"
             },
             text: "#ffffff",
           },

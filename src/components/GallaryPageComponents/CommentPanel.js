@@ -70,15 +70,17 @@ export default function CommentPanel(props) {
                     (commentButtonShow ? props.comments.slice(0, 4) : props.comments).map((row, index) => {
                         return (
                             <div key={index} style={{ width: "100%", }}>
-                                <div className={classes.head}>
-                                    <div style={{ float: "left" }}><a>{row.poster}{row.score === "" ? " (上传者)" : " "}</a></div>
-                                    <div style={{ float: "right" }}><a>{row.score}</a></div>
-                                </div    >
-                                {
-                                    !commentButtonShow ?
-                                        <div className={classes.innerHTML}  dangerouslySetInnerHTML={{ __html: row.text }} /> :
-                                        <div className={classes.innerHTML}  >{row.bref}</div>
-                                }
+                                <div name='clickable' style={{ width: "100%", }}>
+                                    <div className={classes.head}>
+                                        <div style={{ float: "left" }}><a>{row.poster}{row.score === "" ? " (上传者)" : " "}</a></div>
+                                        <div style={{ float: "right" }}><a>{row.score}</a></div>
+                                    </div    >
+                                    {
+                                        !commentButtonShow ?
+                                            <div className={classes.innerHTML} dangerouslySetInnerHTML={{ __html: row.text }} /> :
+                                            <div className={classes.innerHTML}  >{row.bref}</div>
+                                    }
+                                </div>
                                 <hr color="#4C4C4C" size={3} />
                             </div>
                         )
@@ -89,6 +91,7 @@ export default function CommentPanel(props) {
                 {
                     commentButtonShow ?
                         <BottomButton
+                            name='clickable'
                             onClick={() => { setCommentButtonShow(false)}} >
                             {'展开'}
                         </BottomButton>

@@ -19,7 +19,10 @@ function PreviewLoadingImg(props) {
 
     const elemMap = {
         'loading':
-            <Skeleton variant="rectangular" style={{
+            <Skeleton
+                name='clickable'
+                variant="rectangular"
+                style={{
                 width: "100%",
                 height: "0",
                 paddingBottom: "139%",
@@ -28,7 +31,9 @@ function PreviewLoadingImg(props) {
             }} />
         ,
         'error':
-            <div style={{
+            <div
+                name='clickable'
+                style={{
                 height: "auto",
                 width: "100%",
                 display: "flex",
@@ -39,6 +44,7 @@ function PreviewLoadingImg(props) {
             </div>,
         'finished':
             <div
+                name='clickable'
                 style={{
                     width: "100%",
                     height: "0",
@@ -142,6 +148,7 @@ export default function PreviewPanel(props) {
                     (previewButtonShow && props.previews.length > 20)
                         ?
                         <BottomButton
+                            name='clickable'
                             onClick={() => {
                                 setPreviewButtonShow(false)
                                 scrollLoadLockRef.current = true

@@ -3,7 +3,7 @@ const loadDataAS = async (callback) => {
     const sqlPromise = initSqlJs({
         locateFile: (file) => `./scripts/sqljs/sql-wasm.wasm`,
     });
-    const dataPromise = fetch("./api/Data.db").then((res) => res.arrayBuffer());
+    const dataPromise = fetch("./api/Data.db",{cache:"no-cache"}).then((res) => res.arrayBuffer());
     const [SQL, buf] = await Promise.all([sqlPromise, dataPromise]);
     const db = new SQL.Database(new Uint8Array(buf));
     stmt = db.prepare(
