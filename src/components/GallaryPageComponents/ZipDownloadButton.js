@@ -1,5 +1,5 @@
 
-import React, { useState, } from 'react';
+import React, { useState } from 'react';
 import { IconButton, CircularProgress } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import IosShareIcon from '@mui/icons-material/IosShare';
@@ -93,17 +93,19 @@ export default function ZipDownloadButton(props) {
             </IconButton>
         ,
         "processing":
-            <CircularProgress
-                sx={{
-                    opacity: processingOpacity,
-                    transition: ".5s",
-                    width: 50,
-                    height: 50,
-                    color: "button.iconFunction.process",
-                }}
-                variant="determinate"
-                value={process}
-            />
+            <div style={{ height: 50.99, width: 50.99, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <CircularProgress
+                    size={"29.17px"}
+                    thickness={4}
+                    sx={{
+                        opacity: processingOpacity,
+                        transition: ".5s",
+                        color: "button.iconFunction.process",
+                    }}
+                    variant="determinate"
+                    value={process}
+                />
+            </div>
         ,
         "success":
             <IconButton

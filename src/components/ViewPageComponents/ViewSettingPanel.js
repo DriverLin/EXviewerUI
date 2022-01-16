@@ -16,6 +16,12 @@ import ScreenRotationIcon from '@mui/icons-material/ScreenRotation';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import Grow from '@mui/material/Grow';
+
+
+const Transition = React.forwardRef(function Transition(props, ref) {
+    return <Grow direction="up" ref={ref} {...props} />;
+});
 
 const BootstrapDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialogContent-root': {
@@ -76,6 +82,7 @@ const handleToggle = (value) => () => {
 return (
     <div>
         <BootstrapDialog
+            TransitionComponent={Transition}
             onClose={props.onClose}
             aria-labelledby="customized-dialog-title"
             open={props.open}
@@ -86,7 +93,7 @@ return (
             }}
         >
             <BootstrapDialogTitle id="customized-dialog-title" onClose={props.onClose}>
-                菜单
+                阅读设置
             </BootstrapDialogTitle>
             <List
                 sx={{
