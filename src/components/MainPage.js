@@ -300,7 +300,7 @@ export default function MainPage(props) {
     }
 
     const handeLongClicked = (g_data,x,y) => { 
-        console.log("长按事件")
+        console.log("长按事件", g_data, x, y)
     }
     const infoCallBack = (g_data) => {
         console.log("infoCallBack", g_data.gid, g_data.token)

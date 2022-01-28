@@ -148,7 +148,7 @@ function App() {
       search: {
         color: "#3a3a3a",
         text: "#ffffff",
-        split:"#3a3a3a"
+        split:"#757575"
       }
     }
       :

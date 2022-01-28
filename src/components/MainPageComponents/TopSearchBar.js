@@ -63,7 +63,7 @@ export default function TopSearchBar(props) {
         })
         let words = tmpInputCopy.match(/[\u0800-\u4e00\u4E00-\u9FA5A-Za-z0-9_]+/g)
         if (words === null) words = [];
- 
+
         if (words.length === 0) {
             return ""//words长度为0 返回空
         }
@@ -114,23 +114,18 @@ export default function TopSearchBar(props) {
 
     const inputFocusStause = useRef(false)
 
-    const AutoCompleteItem = (props) => {
-        return <ButtonBase
-            onClick={
-                () => {
-                    finishAutoComplete(props.data)
-                }
-            }
-            sx={   {
+    const AutoCompleteItem = (props) =>
+        <ButtonBase
+            onClick={() => { finishAutoComplete(props.data) }}
+            sx={{
                 width: matches ? 730 : document.body.clientWidth - 60,
                 height: 55,
                 textAlign: "left",
                 borderTop: "1px solid",
-                borderColor:"search.split",
+                borderColor: "search.split",
                 backgroundColor: "search.color",
                 color: "search.text",
-            }
-            }>
+            }}>
             <div style={{
                 width: "100%",
                 marginLeft: 50,
@@ -141,7 +136,7 @@ export default function TopSearchBar(props) {
                 <div style={{ fontSize: "1rem" }} >{props.data.translated}</div>
             </div>
         </ButtonBase>
-    }
+
 
     const AutoInputElems = <div style={{
         width: "100%",
@@ -155,10 +150,7 @@ export default function TopSearchBar(props) {
             alignItems="center"
         >
             {
-                guess.map((item, index) => {
-                    return <AutoCompleteItem key={index} data={item}
-                    />
-                })
+                guess.map((item, index) => <AutoCompleteItem key={index} data={item} />)
             }
         </Grid>
     </div>
@@ -176,11 +168,11 @@ export default function TopSearchBar(props) {
                         <ButtonBase
                             name='clickable'
                             sx={{
-                            width: 50,
-                            height: 50,
-                            backgroundColor: "search.color",
-                            color: "search.text",
-                        }} onClick={props.leftButtonClick} >
+                                width: 50,
+                                height: 50,
+                                backgroundColor: "search.color",
+                                color: "search.text",
+                            }} onClick={props.leftButtonClick} >
                             <MenuIcon />
                         </ButtonBase>
                         <InputBase
@@ -218,20 +210,16 @@ export default function TopSearchBar(props) {
                         />
                         <ButtonBase
                             name='clickable'
-
                             sx={{
-                            width: 50,
-                            height: 50,
-                            backgroundColor: "search.color",
-                            color: "search.text",
-                        }} onClick={doSearch}>
+                                width: 50,
+                                height: 50,
+                                backgroundColor: "search.color",
+                                color: "search.text",
+                            }} onClick={doSearch}>
                             <SearchIcon />
                         </ButtonBase>
                     </div>
-                    {
-                        autocomplete && guess.length !== 0 ? AutoInputElems : null
-                    }
-
+                    {autocomplete && guess.length !== 0 ? AutoInputElems : null}
                 </Paper>
             </AppBar>
         </HideOnScroll>
