@@ -15,6 +15,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
 import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import { useLocation } from "react-router-dom";
@@ -346,6 +347,12 @@ export default function MainPage(props) {
             },
             icon: <LocalFireDepartmentIcon />,
             text: "热门"
+        }, {
+            onClick: () => {
+                openCurrentTab("/favorites")
+            },
+            icon: <FavoriteIcon />,
+            text: "收藏"
         },
         {
             onClick: () => {
