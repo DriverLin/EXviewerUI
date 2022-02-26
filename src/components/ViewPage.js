@@ -42,7 +42,7 @@ export default function ViewPage() {
     //不需要按照是否双页进行双倍预加载
     
     const prevRange = 4
-    const nextRange = useSettingBind("图片预加载")
+    const nextRange = useSettingBind("图片预加载",7)
 
     
     useEffect(() => {

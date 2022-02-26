@@ -3,8 +3,9 @@ import { useState , useEffect } from 'react';
 const setLocalStorage = (key, value) => localStorage.setItem(key, JSON.stringify(value))
 
 const getLocalStorage = (key, defaultValue) => {
+    console.log("getLocalStorage", key, defaultValue)
     const lsval = localStorage.getItem(key)
-    if (lsval === null) {
+    if (lsval === null || lsval === "undefined") {
         setLocalStorage(key, defaultValue)
         return defaultValue
     }
