@@ -1,0 +1,85 @@
+//开关类型
+
+import { useSetting } from "../Settings"
+import { Grid, Switch } from "@mui/material";
+import { makeStyles } from '@mui/styles';
+
+
+
+
+const useStyles = makeStyles((theme) => ({
+    name_container: {
+        minHeight: "35px",
+        textAlign: "left",
+        display: "grid",
+    },
+    name_text: {
+        color: theme.palette.text.primary,
+        fontSize: "1rem",
+    },
+    help: {
+        color: theme.palette.text.secondary,
+        fontSize: "0.85rem",
+    }
+}));
+
+
+export default function SwitchType(props) {
+    {/* <SwitchType defaultValue={true} displayName={ } help={ }   /> */ }
+    const classes = useStyles();
+    const [value, setValue] = useSetting(props.name, props.defaultValue);
+    return (
+        <Grid
+            container
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{
+                width: "100%",
+            }}
+        >
+            <Grid item >
+                <Grid
+                    container
+                    direction="column"
+                    justifyContent="space-between"
+                    alignItems="flex-start"
+                >
+                    <Grid item>
+                        <div className={classes.name_text}>
+                            <a>{props.name}</a>
+                        </div>
+                    </Grid>
+                    {
+                        props.help ?
+                            <Grid item>
+                                <div className={classes.help}>
+                                    <a>{props.help}</a>
+                                </div>
+                            </Grid>
+                            :
+                            null
+                    }
+                </Grid>
+            </Grid>
+            <Grid item >
+                <Switch
+                    edge="end"
+                    onChange={() => setValue(!value)}
+                    checked={value}
+                    inputProps={{
+                        'aria-labelledby': 'switch-list-label-wifi',
+                    }}
+                />
+            </Grid>
+
+
+        </Grid>
+    )
+
+
+
+
+
+
+}

@@ -4,6 +4,7 @@ import RevSlider from './ViewPageComponents/RevSlider';
 import ViewSettingPanel from './ViewPageComponents/ViewSettingPanel';
 import MultPageSwiper from './ViewPageComponents/MultPageSwiper';
 import { useLocation } from "react-router-dom";
+import { useSettingBind } from './Settings';
 
 
 
@@ -62,8 +63,8 @@ export default function ViewPage() {
 
 
     const handelTap = (event) => {
-        const jmpNum = viewSettings["横屏模式"] ? 2 : 1
-        const postion = viewSettings['切换方向'] ? -1 : 1  
+        const jmpNum = horizontalView ? 2 : 1
+        const postion = switchDirection ? -1 : 1  
         if (event.pageX / document.body.clientWidth > 0.7) {
             setPageNum(pageNum + postion * jmpNum)
         } else if (event.pageX / document.body.clientWidth < 0.3) {
@@ -78,23 +79,12 @@ export default function ViewPage() {
         }
     }
 
-
-    const [viewSettings, setViewSettings] = useState(
-        JSON.parse(localStorage.getItem("global_viewingSettings")) || {
-            "横屏模式": false,
-            "切换分页": false,
-            "切换方向": true
-        }
-    )
+    const horizontalView = useSettingBind("横屏模式", false);
+    const switchPagination = useSettingBind("分页模式", false);
+    const switchDirection = useSettingBind("阅读方向", true);
 
     const onViewSettingPanelClose = () => {
         setSettingPanelOpen(false)
-        const setting = JSON.parse(localStorage.getItem("global_viewingSettings")) || {
-            "横屏模式": false,
-            "切换分页": false,
-            "切换方向": true
-        }
-        setViewSettings(setting)
     }
     const onViewSettingPanelOpen = () => { setSettingPanelOpen(true) }
 
@@ -128,13 +118,13 @@ export default function ViewPage() {
                 <div style={{ height: '100vh', width: '100vw', }} onClick={handelTap}>
                     {
                         <MultPageSwiper
-                            key={viewSettings['横屏模式']}//切换横屏模式  就重新渲染 避免了页数切换的BUG
+                            key={horizontalView}//切换横屏模式  就重新渲染 避免了页数切换的BUG
 
                             value={pageNum}
                             setValue={setPageNum}
-                            reverse={viewSettings["切换方向"]}
-                            double={viewSettings['横屏模式']}
-                            headsingle={viewSettings['切换分页']}
+                            reverse={switchDirection}
+                            double={horizontalView}
+                            headsingle={switchPagination}
                             urls={urls}
                         />
                     }
@@ -144,7 +134,7 @@ export default function ViewPage() {
                     onClose={onSliderClose}
                     value={pageNum}
                     setValue={setPageNum}
-                    reverse={viewSettings["切换方向"]}
+                    reverse={switchDirection}
                     max={pageCount}
                 />
             </div>

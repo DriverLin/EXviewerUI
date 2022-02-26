@@ -16,6 +16,8 @@ import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
 import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import SettingsIcon from '@mui/icons-material/Settings';
+
 import LinearProgress from '@mui/material/LinearProgress';
 
 import { useLocation } from "react-router-dom";
@@ -370,7 +372,7 @@ export default function MainPage(props) {
 
     if (
         window.serverSideConfigure.type === "staticApi"
-        || window.serverSideConfigure === "Data.db"
+        || window.serverSideConfigure.type === "Data.db"
         || localStorage.getItem("offline_mode") === "true"
         || currrentUrl() === "/downloaded"
     ) {
@@ -403,6 +405,13 @@ export default function MainPage(props) {
         })
     }
 
+    menuItems.push({
+        onClick: () => {
+            openCurrentTab("/setting")
+        },
+        icon: <SettingsIcon />,
+        text: "设置"
+    })
 
 
     const doSearch = (text) => {

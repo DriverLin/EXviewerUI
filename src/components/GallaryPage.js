@@ -22,6 +22,7 @@ import FavoButton from './GallaryPageComponents/FavoButton.js';
 
 import KeyboardController from '../KeyboardController.js';
 
+import { useSetting } from './Settings';
 
 
 const formatTime = (time, format) => {
@@ -155,7 +156,10 @@ function GallaryInfoPage(props) {
     const matches = useMediaQuery('(min-width:800px)');
     const small_matches = useMediaQuery('(min-width:560px)');
     const borderWidth = small_matches ? 24 : 12
-    const [deleteButtonDisabled, setdeleteButtonDisabled] = useState(!props.g_data.hasOwnProperty('extended') || props.g_data.extended.downloaded === false);
+
+
+    const canDelete = (props.g_data.hasOwnProperty('extended') && props.g_data.extended.downloaded === true) || (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") === "true")
+    const [deleteButtonDisabled, setdeleteButtonDisabled] = useState(!canDelete);
 
     const disableDeleteButton = () => {
         setdeleteButtonDisabled(true)
@@ -216,21 +220,20 @@ function GallaryInfoPage(props) {
     </Button>
 
 
-
-    const downloadButton = <DownloadButton
-        g_data={props.g_data}
-        enableDelete={enableDeleteButton}
-    />
-
-
-
+    const clickFavo = useRef(null)
+    const setClickFavo = (f) => { clickFavo.current = f }
+        
     const FCBS = <Grid
         container
         direction="row"
         justifyContent="space-evenly"
         alignItems="flex-start">
         <Grid item xs={FCBS_XS(downloadButtonShow)}>{readButton}</Grid>
-        {downloadButtonShow ? <Grid item xs={FCBS_XS(downloadButtonShow)}>{downloadButton}</Grid> : null}
+        {downloadButtonShow ? <Grid item xs={FCBS_XS(downloadButtonShow)}><DownloadButton
+            g_data={props.g_data}
+            enableDelete={enableDeleteButton}
+            clickFavo={clickFavo}
+        /></Grid> : null}
     </Grid>
 
     const [notifyMessage, setNotifyMessage] = useState({
@@ -238,11 +241,9 @@ function GallaryInfoPage(props) {
         text: ""
     })
 
-
-
     return (
         <div className={matches ? classes.borderCard : classes.matches_borderCard} >
-            <KeyboardController/>
+            <KeyboardController />
             <PopoverNotifier
                 message={notifyMessage}
             />
@@ -316,7 +317,6 @@ function GallaryInfoPage(props) {
                         </Grid>
                     </div> : null
             }
-
             <div className={classes.elemContainer} style={{ height: 42 }} >
                 <Grid
                     container
@@ -328,13 +328,14 @@ function GallaryInfoPage(props) {
                     <DeleteButton
                         g_data={props.g_data}
                         setNotifyMessage={setNotifyMessage}
-
                         forceControlDisabled={deleteButtonDisabled}
                         enableDeleteButton={enableDeleteButton}
                         disableDeleteButton={disableDeleteButton}
+                        clickFavo={clickFavo}
                     />
                     <FavoButton
                         g_data={props.g_data}
+                        setClickFavo = {setClickFavo}
                     />
 
                     <ZipDownloadButton

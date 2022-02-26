@@ -7,6 +7,9 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import GallaryPage from './components/GallaryPage';
 import MainPage from './components/MainPage';
 import ViewPage from './components/ViewPage';
+import AppSetting from './components/AppSetting';
+
+
 import { CssBaseline } from '@mui/material';
 import {
   HashRouter,
@@ -239,6 +242,9 @@ function App() {
             <Route path="/downloaded" element={<MainPage />} />
             <Route path="/g/:id/:token/" element={<GallaryPage />} />
             <Route path="/viewing/:id/:token/" element={<ViewPage />} />
+            <Route path="/setting" element={<AppSetting />} />
+          
+          
           </Routes>
         </HashRouter>
       </div >
