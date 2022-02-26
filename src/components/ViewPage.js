@@ -40,9 +40,12 @@ export default function ViewPage() {
 
     //考虑到服务器压力  以及阅读速度
     //不需要按照是否双页进行双倍预加载
+    
+    const prevRange = 4
+    const nextRange = useSettingBind("图片预加载")
+
+    
     useEffect(() => {
-        const prevRange = 4
-        const nextRange = 6
         const start = pageNumRef.current - prevRange > 0 ? pageNumRef.current - prevRange : 1
         const end = pageNumRef.current + nextRange > pageCountRef.current ? pageCountRef.current : pageNumRef.current + nextRange
         for (let i = start; i <= end; i++) { 

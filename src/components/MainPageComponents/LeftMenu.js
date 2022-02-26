@@ -7,33 +7,6 @@ import BrightnessAutoIcon from '@mui/icons-material/BrightnessAuto';
 export default function LeftMenu(props) {
     const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-    const modeIcons = [<DarkModeIcon />, <Brightness4Icon />, <BrightnessAutoIcon />]
-    const modeTexts = ['深色模式', '浅色模式', '自动']
-
-    let initColorMode = 0;
-    if (localStorage.hasOwnProperty('colorMode')) {
-        const index = modeTexts.indexOf(localStorage.getItem('colorMode'))
-        initColorMode = index === -1 ? 0 : index
-    }
-
-
-    const [modeIndex, setModeIndex] = useState(initColorMode);
-
-
-    const switchBetweenLightAndDark = () => {
-        const newIndex = (modeIndex + 1) % 3
-        setModeIndex(newIndex)
-        localStorage.setItem('colorMode', modeTexts[newIndex])
-        var myEvent = new CustomEvent('userDispatchColorModeEvent', {
-            detail: { context: 'modeChanged' },
-        });
-        if (window.dispatchEvent) {
-            window.dispatchEvent(myEvent);
-        } else {
-            window.fireEvent(myEvent);
-        }
-    }
-
     return (
         <SwipeableDrawer
             disableBackdropTransition={!iOS}
@@ -42,10 +15,7 @@ export default function LeftMenu(props) {
             open={props.open}
             onOpen={() => { }}
             onClose={props.onClose}
-            
         >
-
-
             <Grid
                 container
                 direction="column"
@@ -59,18 +29,16 @@ export default function LeftMenu(props) {
             >
 
                 <List >
-
                     {
-                        props.Items.map(row => (
-
+                        props.Items.slice(0, props.Items.length-1).map(row => (
                             <ListItem
                                 button
                                 name='clickable'
                                 key={Math.random()}
                                 onClick={() => {
-                                row.onClick();
-                                props.onClose();
-                            }} >
+                                    row.onClick();
+                                    props.onClose();
+                                }} >
                                 <ListItemIcon
                                     sx={{
                                         color: "text.primary"
@@ -83,18 +51,26 @@ export default function LeftMenu(props) {
                         ))
                     }
                 </List>
-                <ListItem button onClick={switchBetweenLightAndDark} >
-                    <ListItemIcon sx={{
-                        color: "text.primary"
-                    }}>
-                        {modeIcons[modeIndex]}
+
+                <ListItem
+                    button
+                    name='clickable'
+                    key={Math.random()}
+                    onClick={() => {
+                        props.Items[props.Items.length-1].onClick();
+                        props.onClose();
+                    }} >
+                    <ListItemIcon
+                        sx={{
+                            color: "text.primary"
+                        }}
+                    >
+                        {props.Items[props.Items.length - 1].icon}
                     </ListItemIcon>
-                    <ListItemText primary={modeTexts[modeIndex]} />
+                    <ListItemText primary={props.Items[props.Items.length - 1].text} />
                 </ListItem>
+
             </Grid>
-
-
-
         </SwipeableDrawer>
 
     )

@@ -1,7 +1,7 @@
 //开关类型
 
 import { useSetting } from "../Settings"
-import { Grid, Switch } from "@mui/material";
+import { Button, Grid, Switch } from "@mui/material";
 import { makeStyles } from '@mui/styles';
 
 
@@ -25,61 +25,65 @@ const useStyles = makeStyles((theme) => ({
 
 
 export default function SwitchType(props) {
-    {/* <SwitchType defaultValue={true} displayName={ } help={ }   /> */ }
     const classes = useStyles();
     const [value, setValue] = useSetting(props.name, props.defaultValue);
     return (
-        <Grid
-            container
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
+        <Button
             sx={{
+                height: "75px",
+                padding: "10px 20px 10px 20px",
+                borderRadius: "0px",
                 width: "100%",
+                color: "text.primary",
+                "&:hover": {
+                    backgroundColor: "#00000000",
+                }
             }}
+            onClick={() => setValue(!value)}
         >
-            <Grid item >
-                <Grid
-                    container
-                    direction="column"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                >
-                    <Grid item>
-                        <div className={classes.name_text}>
-                            <a>{props.name}</a>
-                        </div>
+            <Grid
+                container
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{
+                    width: "100%",
+                }}
+            >
+                <Grid item >
+                    <Grid
+                        container
+                        direction="column"
+                        justifyContent="space-between"
+                        alignItems="flex-start"
+                    >
+                        <Grid item>
+                            <div className={classes.name_text}>
+                                <a>{props.name}</a>
+                            </div>
+                        </Grid>
+                        {
+                            props.help ?
+                                <Grid item>
+                                    <div className={classes.help}>
+                                        <a>{props.help(value)}</a>
+                                    </div>
+                                </Grid>
+                                :
+                                null
+                        }
                     </Grid>
-                    {
-                        props.help ?
-                            <Grid item>
-                                <div className={classes.help}>
-                                    <a>{props.help}</a>
-                                </div>
-                            </Grid>
-                            :
-                            null
-                    }
+                </Grid>
+                <Grid item >
+                    <Switch
+                        edge="end"
+                        checked={value}
+                        inputProps={{
+                            'aria-labelledby': 'switch-list-label-wifi',
+                        }}
+                    />
                 </Grid>
             </Grid>
-            <Grid item >
-                <Switch
-                    edge="end"
-                    onChange={() => setValue(!value)}
-                    checked={value}
-                    inputProps={{
-                        'aria-labelledby': 'switch-list-label-wifi',
-                    }}
-                />
-            </Grid>
-
-
-        </Grid>
+        </Button>
     )
-
-
-
-
-
-
 }
