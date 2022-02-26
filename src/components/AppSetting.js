@@ -84,7 +84,7 @@ export default function AppSetting(props) {
                 <Grid item sx={12} sx={{ width: "100%" }}>
                     <SelectType
                         name={"图片预加载"}
-                        defaultValue={0}
+                        defaultValue={7}
                         values={[0, 3, 5, 7, 11, 13, 17]}
                         help={(value) => `向后预加载${value}张图片`}
                     />

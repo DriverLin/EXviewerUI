@@ -26,7 +26,7 @@ import {
 
 function App() {
 
-  const colorMode = useSettingBind('色彩主题')
+  const colorMode = useSettingBind('色彩主题','暗色')
   const dark = useMemo(() => { 
     if (colorMode === "跟随系统") {
       return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches

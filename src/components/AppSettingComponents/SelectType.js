@@ -54,8 +54,7 @@ export default function SelectType(props) {
     const [value, setValue] = useSetting(props.name, props.defaultValue);
     const classes = useStyles();
     const [anchorEl, setAnchorEl] = useState(null);
-
-    const open = useMemo(() => anchorEl !== null , [anchorEl]);
+    const open = Boolean(anchorEl);
 
     const handleClick = (e) => {
         setAnchorEl(e.currentTarget);
@@ -69,7 +68,6 @@ export default function SelectType(props) {
         setValue(value);
         handleClose()
     }
-
 
     return (
         <div>
@@ -85,7 +83,6 @@ export default function SelectType(props) {
                         backgroundColor: "#00000000",
                     }
                 }}
-
             >
                 <Grid
                     container
@@ -111,7 +108,6 @@ export default function SelectType(props) {
                 </Grid>
             </Button>
             <Menu
-                id="basic-menu"
                 open={open}
                 onClose={handleClose}
                 className={classes.menu}
