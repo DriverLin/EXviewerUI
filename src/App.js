@@ -1,6 +1,6 @@
 
 import './App.css';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useMemo } from 'react';
 
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
@@ -8,6 +8,9 @@ import GallaryPage from './components/GallaryPage';
 import MainPage from './components/MainPage';
 import ViewPage from './components/ViewPage';
 import AppSetting from './components/AppSetting';
+
+import { useSettingBind} from './components/Settings';
+
 
 
 import { CssBaseline } from '@mui/material';
@@ -23,60 +26,14 @@ import {
 
 function App() {
 
-
-  const getColorMode = () => {
-    if (localStorage.hasOwnProperty('colorMode')) {
-      if (localStorage.getItem('colorMode') === '深色模式') {
-        return true
-      }
-      if (localStorage.getItem('colorMode') === '浅色模式') {
-        return false
-      }
-      if (localStorage.getItem('colorMode') === '自动') {
-        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-      }
-    } else {
-      return true
+  const colorMode = useSettingBind('色彩主题')
+  const dark = useMemo(() => { 
+    if (colorMode === "跟随系统") {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    } else { 
+      return colorMode === "暗色"
     }
-  }
-
-
-  
-  const darkRef = React.useRef(getColorMode());
-  const [dark, _setDark] = useState(darkRef.current);
-  const setDark = (value) => { 
-    if (value !== darkRef.current) { 
-      console.log("darkMode set",value)
-      _setDark(value);
-      darkRef.current = value;
-    }
-  }
-
-
-
-  const handelDarkModeChanged = (e) => {
-    setDark(getColorMode())
-  }
-
-  const handelStorageChanged = (e) => {
-    if (e.type === 'storage' && e.key === 'colorMode') {
-      setDark(getColorMode())
-    }
-  }
-
-
-  useEffect(() => {
-    window.addEventListener('userDispatchColorModeEvent', handelDarkModeChanged);
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', handelDarkModeChanged);
-    window.addEventListener('storage', handelStorageChanged);
-
-    return () => {
-      window.removeEventListener('userDispatchColorModeEvent', handelDarkModeChanged);
-      window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', handelDarkModeChanged);
-      window.removeEventListener('storage', handelStorageChanged);
-    }
-  }, [])
-
+  },[colorMode])
 
   const theme = createTheme({
     components: {
@@ -105,6 +62,20 @@ function App() {
       },
       secondary: {
         main: "#d90051",
+      },
+      background: {
+        main: "#303030",
+        secondary: "#fefefe",
+        mainCard: "#fdfdfd",
+        read: "#9E9E9E",
+        readHover: "#BDBDBD",
+        tag: "#00796b",
+        tagHover: "#009688",
+        pageShadow: "8px 8px 16px #c4c4c4,-8px -8px 16px #ffffff"
+      },
+      iconButton: {
+        main: "#000000",
+        disabled: "#9e9e9e",
       },
       button: {
         tag: {
@@ -163,7 +134,7 @@ function App() {
           main: "#00796B",
         },
         background: {
-          main: "#ffffff",
+          main: "#ECEFF1",
           secondary: "#fefefe",
           mainCard: "#fdfdfd",
           read: "#9E9E9E",
@@ -243,8 +214,6 @@ function App() {
             <Route path="/g/:id/:token/" element={<GallaryPage />} />
             <Route path="/viewing/:id/:token/" element={<ViewPage />} />
             <Route path="/setting" element={<AppSetting />} />
-          
-          
           </Routes>
         </HashRouter>
       </div >

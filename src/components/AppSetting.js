@@ -1,19 +1,17 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import SwitchType from "./AppSettingComponents/SwitchType";
+import SelectType from "./AppSettingComponents/SelectType";
 import { Grid, useMediaQuery } from "@mui/material";
 import { makeStyles } from '@mui/styles';
 
 const useStyles = makeStyles((theme) => ({
-    container: {
-        width: "100%",
-        padding: "10px",
-    },
+
     splitLine: {
-        width: "calc(100% - 20px)",
+        width: "calc(100% - 40px)",
         height: "1px",
-        marginLeft: "10px",
-        marginRight: "10px",
+        marginLeft: "20px",
+        marginRight: "20px",
         backgroundColor: theme.palette.text.secondary,
     },
     borderCard: {
@@ -25,13 +23,15 @@ const useStyles = makeStyles((theme) => ({
         color: theme.palette.background.mainCard,
         boxShadow: theme.palette.page.shadow,
         overflow: "hidden",
-        padding: "10px",
+        // padding: "0px",
     },
     matches_borderCard: {
         margin: "0 auto",
         marginBottom: 40,
+        paddingBottom: "20px",
         color: theme.palette.background.mainCard,
-        overflow: "hidden"
+        overflow: "hidden",
+        // padding: "10 10px 0 10px",
     },
 }));
 
@@ -50,13 +50,45 @@ export default function AppSetting(props) {
                     with: "100%",
                 }}
             >
-                <div className={classes.container} >
-                    <SwitchType name={"下载时添加收藏"} help={"下载画廊时会同步添加到收藏夹"} defaultValue={false} />
-                </div>
+                <Grid item sx={12} sx={{ width: "100%" }} >
+                    <SwitchType
+                        name={"下载时添加收藏"}
+                        defaultValue={false}
+                        help={(value) => value ? "下载画廊时添加到收藏夹" : "下载画廊时不添加到收藏夹"}
+                    />
+                </Grid>
+
                 <div className={classes.splitLine} />
-                <div className={classes.container} >
-                    <SwitchType name={"删除时移除收藏"} help={"删除下载的画廊时会从收藏夹删除"} defaultValue={false} />
-                </div>
+                
+                <Grid item sx={12} sx={{ width: "100%" }}>
+                    <SwitchType
+                        name={"删除时移除收藏"}
+                        defaultValue={false}
+                        help={(value) => value ? "删除下载的画廊时删除收藏" : "删除下载的画廊时不删除收藏"}
+                    />
+                </Grid>
+
+                <div className={classes.splitLine} />
+
+                <Grid item sx={12} sx={{ width: "100%" }}>
+                    <SelectType
+                        name={"色彩主题"}
+                        defaultValue={"暗色"}
+                        values={["跟随系统","暗色","亮色"]}
+                        help={(value) => `${value}`}
+                    />
+                </Grid>
+
+                <div className={classes.splitLine} />
+
+                <Grid item sx={12} sx={{ width: "100%" }}>
+                    <SelectType
+                        name={"图片预加载"}
+                        defaultValue={0}
+                        values={[0, 3, 5, 7, 11, 13, 17]}
+                        help={(value) => `向后预加载${value}张图片`}
+                    />
+                </Grid>
             </Grid>
         </div>
     )
