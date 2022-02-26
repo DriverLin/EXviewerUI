@@ -23,16 +23,40 @@ from starlette.responses import FileResponse
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
+def printPerformance(func):
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print("---:",func.__name__, "耗时", end - start)
+        return result
+    return wrapper
+
+def atomWarpper(func):
+    lock = threading.Lock()
+    def f(*args, **kwargs):
+        lock.acquire()
+        try:
+            result = func(*args, **kwargs)
+        except Exception as e:
+            raise e
+        finally:
+            lock.release()
+        return result
+    return f
+
+
 def asyncWarpper(func):
     async def wrapper(*args, **kwargs):
         return await asyncio.get_event_loop().run_in_executor(
             None, func, *args, **kwargs
         )
-
     return wrapper
 
 
 def checkImg(path):
+    if path == None:
+        return False
     if not os.path.exists(path):
         return False
     with open(path, "rb") as f:
@@ -86,74 +110,114 @@ cache = multhread_cache()
 
 
 class JobScheduler(object):
-    def __init__(self, handeler, maxParallel=5):
-
+    def __init__(
+        self, handeler, maxParallel=5, onChange=lambda action, info, result: None
+    ):
         # handeler不允许报错
-        # 因为没有上报渠道，所以不能报错
-        # 出错直接用闭包的方式处理
-
+        #  出错直接用闭包的方式处理
         self.queue = []  # 任务队列 [并行? 标签 任务]
         self.queueSemaphore = threading.Semaphore(0)  # 队列信号量 等于长度 用于控制调度线程读取任务
-
         self.lock = threading.Lock()  # 锁 用于控制队列的读写
-
         self.handeler = handeler  # 执行器 外部传入
-
         self.MAXPARALLEL = maxParallel  # 最大并行数
         self.parallelJobs = threading.Semaphore(self.MAXPARALLEL)  # 并行任务信号量 用于控制并行任务数量
-
         self.jobsRunning = threading.Lock()  # 当前是否有任务正在运行   并行任务不可与串行任务同时运行
+        self.handelingJobs = {}
+        self.onChange = onChange  # 当任务发生变化时调用 包括添加 删除 修改
 
         def shdule_thread():
+            @atomWarpper
+            def add_handelingJob(key, jobInfo):
+                self.handelingJobs[key] = jobInfo
+                self.onChange("running", jobInfo, None)
+
+            @atomWarpper
+            def finish_handelingJob(key, jobInfo, result):
+                if key in self.handelingJobs:
+                    del self.handelingJobs[key]
+                    self.onChange("finished", jobInfo, result)
+
             while True:
-                [parallel, tag, job] = self.get_job()
+                [job, tag, parallel] = self.get_job()
+
                 if parallel:
                     self.parallelJobs.acquire()
 
                     def run_thread():
-                        self.handeler(job)
+                        jobInfo = {
+                            "job": job,
+                            "tag": tag,
+                            "parallel": parallel,
+                            "timestamp": time.time(),
+                        }
+                        key = id(job)
+                        add_handelingJob(key, jobInfo)
+                        result = self.handeler(job)
+                        finish_handelingJob(key, jobInfo, result)
                         self.parallelJobs.release()
 
                     threading.Thread(target=run_thread).start()
                 else:
-                    [self.parallelJobs.acquire() for i in range(self.MAXPARALLEL)]
-                    self.handeler(job)
-                    [self.parallelJobs.release() for i in range(self.MAXPARALLEL)]
+                    [self.parallelJobs.acquire() for _ in range(self.MAXPARALLEL)]
+                    jobInfo = {
+                        "job": job,
+                        "tag": tag,
+                        "parallel": parallel,
+                        "timestamp": time.time(),
+                    }
+                    key = id(job)
+                    add_handelingJob(key, jobInfo)
+                    result = self.handeler(job)
+                    finish_handelingJob(key, jobInfo, result)
+                    [self.parallelJobs.release() for _ in range(self.MAXPARALLEL)]
 
         threading.Thread(target=shdule_thread).start()
 
     def add_job(self, job, tag, parallel=False):
         self.lock.acquire()
-        self.queue.append([parallel, tag, job])
+        self.queue.append([job, tag, parallel])
+        self.onChange("add", [[job, tag, parallel]], None)
         self.lock.release()
         self.queueSemaphore.release()
 
     def add_jobs(self, jobs):
         self.lock.acquire()
         for [job, tag, parallel] in jobs:
-            self.queue.append([parallel, tag, job])
+            self.queue.append([job, tag, parallel])
+            self.queueSemaphore.release()
+        self.onChange("add", jobs, None)
         self.lock.release()
-        self.queueSemaphore.release()
 
     def insert_job(self, job, tag, parallel=False):
         self.lock.acquire()
-        self.queue.insert(0, [parallel, tag, job])
+        self.queue.insert(0, [job, tag, parallel])
+        self.onChange("insert", [[job, tag, parallel]], None)
         self.lock.release()
         self.queueSemaphore.release()
 
     def get_job(self):
         self.queueSemaphore.acquire()
         self.lock.acquire()
-        [parallel, tag, job] = self.queue.pop(0)
+        [job, tag, parallel] = self.queue.pop(0)
         self.lock.release()
-        return [parallel, tag, job]
+        return [job, tag, parallel]
 
     def rm_job(self, tag):
         self.lock.acquire()
         original_len = len(self.queue)
         self.queue = [job for job in self.queue if job[1] != tag]
-        [self.queueSemaphore.acquire() for i in range(original_len - len(self.queue))]
+        [self.queueSemaphore.acquire() for _ in range(original_len - len(self.queue))]
+        self.onChange("remove", tag, None)
         self.lock.release()
+
+    def listJobs(self):
+        return {
+            "timestamp": time.time(),
+            "handeling": list(self.handelingJobs.values()),
+            "queue": [
+                {"job": job[0], "tag": job[1], "parallel": job[2]} for job in self.queue
+            ],
+        }
 
 
 class proxyAccessor:
@@ -168,11 +232,22 @@ class proxyAccessor:
         self.gallaryPath = gallaryPath
         self.db = sqlite3.connect(dbPath, check_same_thread=False)
         self.downloadNotifyer = downloadNotifyer
-        self.msgSendLock = threading.Lock()
-        self.JobSchedulerInstance = JobScheduler(self.handeler)
-        self.tmpDownloadProcess = [0,0,999]
+        self.JobSchedulerInstance = JobScheduler(
+            handeler=self.handeler, maxParallel=5, onChange=self.onJobChange
+        )
+        self.currendDownloadProcess = [0, 0, -1]  # finished error total
 
- 
+    @atomWarpper
+    def updateCurrentDownloadProcess(self, action, total=-1):
+        if action == "reset":
+            self.currendDownloadProcess = [0, 0, -1]
+        elif action == "success":
+            self.currendDownloadProcess[0] += 1
+        elif action == "failed":
+            self.currendDownloadProcess[1] += 1
+        elif action == "set":
+            self.currendDownloadProcess[2] = total
+
     def setCache(self, gid, token, key, value):
         self.cachedMap.add("{}_{}:{}".format(gid, token, key), value)
 
@@ -376,29 +451,32 @@ class proxyAccessor:
             return None
 
     def g_data_official(self, gid, token):
-        apiUrl = urljoin(self.root, "/api.php")
-        r = (
-            urllib.request.urlopen(
-                urllib.request.Request(
-                    url=apiUrl,
-                    data=json.dumps(
-                        {
-                            "method": "gdata",
-                            "gidlist": [[gid, token]],
-                            "namespace": 1,
-                        }
-                    ).encode("UTF-8"),
-                    headers=self.headers,
+        try:
+            apiUrl = urljoin(self.root, "/api.php")
+            r = (
+                urllib.request.urlopen(
+                    urllib.request.Request(
+                        url=apiUrl,
+                        data=json.dumps(
+                            {
+                                "method": "gdata",
+                                "gidlist": [[gid, token]],
+                                "namespace": 1,
+                            }
+                        ).encode("UTF-8"),
+                        headers=self.headers,
+                    )
                 )
+                .read()
+                .decode("utf-8")
             )
-            .read()
-            .decode("utf-8")
-        )
-        g_data = json.loads(r)["gmetadata"][0]
-        self.setCache(
-            gid, token, "cover", g_data["thumb"].replace("exhentai.org", "ehgt.org")
-        )
-        return g_data
+            g_data = json.loads(r)["gmetadata"][0]
+            self.setCache(
+                gid, token, "cover", g_data["thumb"].replace("exhentai.org", "ehgt.org")
+            )
+            return g_data
+        except Exception as e:
+            return None
 
     def get_g_data(self, gid, token):
         try:
@@ -432,8 +510,7 @@ class proxyAccessor:
             infos = []
             mainElem = html.select("div.gl1t")
             for elem in mainElem:
-                
-                
+
                 herf = elem.select_one("a:nth-child(1)").get("href")
 
                 gid = herf.split("/")[-3]
@@ -448,7 +525,9 @@ class proxyAccessor:
 
                 self.setCache(gid, token, "cover", rawSrc)
 
-                nameElem = elem.select_one("div.gl4t.glname.glink") or elem.select_one("span.glink")
+                nameElem = elem.select_one("div.gl4t.glname.glink") or elem.select_one(
+                    "span.glink"
+                )
                 name = nameElem.text
                 rankText = elem.select(
                     "div.gl5t > div:nth-child(2) > div:nth-child(1)"
@@ -513,31 +592,29 @@ class proxyAccessor:
         # 3.直接查g_data 一定有
         # 返回文件地址
         filename = "{}_{}.jpg".format(gid, token)
-        if os.path.exists(os.path.join(self.coverPath, filename)):
+        cachedCover = os.path.join(self.cachePath, filename)
+        downloadCover = os.path.join(self.coverPath, filename) 
+        if checkImg(downloadCover):
             print("封面", filename, "已下载")
-            return os.path.join(self.coverPath, filename)
-        elif os.path.exists(os.path.join(self.cachePath, filename)):
+            return downloadCover
+        elif checkImg(cachedCover):
             print("封面", filename, "已缓存")
-            return os.path.join(self.cachePath, filename)
+            return cachedCover
         else:
             start = time.time()
-
             url = self.getCache(gid, token, "cover")
-
             if url is None:
                 print("封面", filename, "从页面获取中...")
                 g_data = self.get_g_data(gid, token)
                 if g_data is None:
                     return None
                 url = g_data["thumb"].replace("exhentai.org", "ehgt.org")
-            else:
-                print("封面", filename, "地址已获取")
-            if url is None:
-                return None
             try:
-                self.downloadFile(url, os.path.join(self.cachePath, filename))
+                self.downloadFile(url, cachedCover)
                 print("封面", filename, "下载完成,用时", time.time() - start)
-                return os.path.join(self.cachePath, filename)
+                if checkImg(cachedCover):
+                    return cachedCover
+                return None
             except Exception as e:
                 print(e)
                 return None
@@ -584,13 +661,15 @@ class proxyAccessor:
                 raw_comment_text = str(comment.select_one("div.c6"))
                 comment_text = raw_comment_text
                 comment_text = comment_text.replace("https://exhentai.org/g/", "/#/g/")
-                comment_text = comment_text.replace("https://exhentai.org/t/", "https://ehgt.org/t/")
-                comment_text = comment_text.replace("<a href=", '<a target="_blank" href=')
-                
-                
+                comment_text = comment_text.replace(
+                    "https://exhentai.org/t/", "https://ehgt.org/t/"
+                )
+                comment_text = comment_text.replace(
+                    "<a href=", '<a target="_blank" href='
+                )
+
                 comment_bref = comment.select_one("div.c6").text
-                
-                
+
                 if len(comment_bref) > 40:
                     comment_bref = comment_bref[:40] + "..."
                 poster = comment.select_one("div.c3 > a").text
@@ -638,7 +717,7 @@ class proxyAccessor:
         pageHtml = self._getHtml_ignore_cache(pageUrl)
 
         if pageHtml == "Error":
-            return cachePath
+            return cachePath  # 返回不存在的路径 外部自动识别报错
 
         skipHathKey = re.findall(r"onclick=\"return nl\('([^\)]+)'\)", pageHtml)
         if len(skipHathKey) != 0:
@@ -662,10 +741,9 @@ class proxyAccessor:
         print("图片", gid, token, index, "下载完成,用时", time.time() - start)
         return cachePath
 
+    @atomWarpper
     def notifyDownloadProcess(self, obj):
-        self.msgSendLock.acquire()
         self.downloadNotifyer(obj)
-        self.msgSendLock.release()
 
     def checkDownload(self, gid, token):
         coverPath = os.path.join(self.coverPath, "{}_{}.jpg".format(gid, token))
@@ -698,6 +776,7 @@ class proxyAccessor:
                 print("图片", gid, token, i, "检测不通过")
         return flag
 
+    @atomWarpper
     def updateDownloadREC(self, gid, token, g_data=None, over=0):
         id_token = "{}_{}".format(gid, token)
         recExists = (
@@ -713,22 +792,87 @@ class proxyAccessor:
         else:
             if g_data == None:
                 g_data = self.g_data_official(gid, token)
+            if g_data == None:
+                print("g_data无法获取", gid, token)
+                return
             self.db.execute(
                 "INSERT INTO downloaded (id_token,over,total,g_data) VALUES (?,?,?,?)",
                 (id_token, over, int(g_data["filecount"]), json.dumps(g_data)),
             )
         self.db.commit()
 
+    def onJobChange(self, action, info, result):
+        if action == "running":
+            pass
+        elif action == "finished":
+            gid = result["gid"]
+            token = result["token"]
+            if result["type"] == "init":
+                self.updateCurrentDownloadProcess("set", result["result"])
+                self.notifyDownloadProcess(
+                    {"gid": gid, "token": token, "tag": "notify", "msg": "开始下载"}
+                )
+            elif result["type"] == "over":
+                print("下载完成", gid, token, result["result"])
+                self.notifyDownloadProcess(
+                    {
+                        "gid": gid,
+                        "token": token,
+                        "tag": "notify",
+                        "msg": result["result"],
+                    }
+                )
+                self.updateDownloadREC(gid, token, None, self.currendDownloadProcess[0])
+                self.updateCurrentDownloadProcess("reset")
+            elif result["type"] == "delete":
+                print("已删除", result["gid"], result["token"])
+                self.notifyDownloadProcess(
+                    {
+                        "gid": gid,
+                        "token": token,
+                        "tag": "notify",
+                        "msg": "deleteSuccess",
+                    }
+                )
+            
+            elif result["type"] == "download":
+                self.updateCurrentDownloadProcess(result["result"])
+                self.updateDownloadREC(gid, token, None, self.currendDownloadProcess[0])
+                self.notifyDownloadProcess(
+                    {
+                        "gid": gid,
+                        "token": token,
+                        "tag": "reportProcess",
+                        "msg": self.currendDownloadProcess,
+                    }
+                )
+            else:
+                print("未知type", result["type"])
+        elif action == "add":
+            pass
+        elif action == "insert":
+            pass
+        elif action == "remove":
+            pass
+        else:
+            print("未知action", action)
 
     def handeler(self, job):
-        gid,token,g_data,arg = job
+        try:
+            return self.__handeler(job)
+        except Exception as e:
+            return {
+                "type": "error",
+                "index": -1,
+                "result": e.__str__(),
+                "job": job,
+            }
+
+    def __handeler(self, job):
+        gid, token, g_data, arg = job
         downloadDir = os.path.join(self.gallaryPath, "{}_{}".format(gid, token))
         if arg == "init":
             print("开始下载", gid, token)
-            self.notifyDownloadProcess(
-                {"gid": gid, "token": token, "tag": "notify", "msg": "开始下载"}
-            )
-            self.tmpDownloadProcess = [0,0,int(g_data["filecount"])]
             self.updateDownloadREC(gid, token, g_data, 0)
             os.makedirs(downloadDir, exist_ok=True)
             json.dump(
@@ -740,40 +884,24 @@ class proxyAccessor:
             coverDst = os.path.join(self.coverPath, "{}_{}.jpg".format(gid, token))
             coverSrc = self.get_cover(gid, token)
             shutil.move(coverSrc, coverDst)
+            return {
+                "type": "init",
+                "gid": gid,
+                "token": token,
+                "index": -1,
+                "result": int(g_data["filecount"]),
+            }
 
         elif arg == "over":
-            print("下载完成", gid, token,self.tmpDownloadProcess)
-            self.updateDownloadREC(gid, token, g_data, self.tmpDownloadProcess[0])
-            if self.tmpDownloadProcess[1] == 0:
-                self.notifyDownloadProcess(
-                    {
-                        "gid": gid,
-                        "token": token,
-                        "tag": "notify",
-                        "msg": "downloadSuccess",
-                    }
-                )
-            else:
-                self.notifyDownloadProcess(
-                    {
-                        "gid": gid,
-                        "token": token,
-                        "tag": "notify",
-                        "msg": "downloadFailed",
-                    }
-                )
+            return {
+                "type": "over",
+                "gid": gid,
+                "token": token,
+                "index": -1,
+                "result": "downloadSuccess" if self.checkDownload(gid, token) else "downloadFailed",
+            }
         elif arg == "delete":
             print("删除", gid, token)
-            
-            self.notifyDownloadProcess(
-                    {
-                        "gid": gid,
-                        "token": token,
-                        "tag": "notify",
-                        "msg": "downloadFailed",
-                    }
-                )
-            
             self.db.execute(
                 "DELETE FROM downloaded WHERE id_token = ?",
                 ("{}_{}".format(gid, token),),
@@ -782,63 +910,69 @@ class proxyAccessor:
             coverPath = os.path.join(self.coverPath, "{}_{}.jpg".format(gid, token))
             os.remove(coverPath) if os.path.exists(coverPath) else None
             shutil.rmtree(downloadDir) if os.path.exists(downloadDir) else None
-
+            return {
+                "type": "delete",
+                "gid": gid,
+                "token": token,
+                "index": -1,
+                "result": "success",
+            }
         else:
             index = arg
             src = self.get_img(gid, token, index)
             if checkImg(src):
-                print("图片", gid, token, index, "下载完成")
                 dst = os.path.join(downloadDir, "{0:08d}.jpg".format(index))
                 shutil.move(src, dst)
-                self.tmpDownloadProcess[0] += 1
-                self.notifyDownloadProcess(
-                    {
-                        "gid": gid,
-                        "token": token,
-                        "tag": "reportProcess",
-                        "msg": self.tmpDownloadProcess,
-                    }
-                )
+                return {
+                    "type": "download",
+                    "gid": gid,
+                    "token": token,
+                    "index": index,
+                    "result": "success",
+                }
             else:
-                print("图片", gid, token, index, "下载失败")
-                self.tmpDownloadProcess[1] += 1
-                self.notifyDownloadProcess(
-                    {
-                        "gid": gid,
-                        "token": token,
-                        "tag": "reportProcess",
-                        "msg": self.tmpDownloadProcess,
-                    }
-                )
-
-
+                return {
+                    "type": "download",
+                    "gid": gid,
+                    "token": token,
+                    "index": index,
+                    "result": "failed",
+                }
 
     def download(self, gid, token):
         g_data = self.g_data_official(gid, token)
-        self.updateDownloadREC(gid, token, g_data, -1)
-        
-        #初始over = -1 代表还未开始  
-        #下载中的时候 over = 0 代表正在下载
-        #下载完成的时候 over = success （期望是filecount） 代表下载完成数量
-
-        self.JobSchedulerInstance.add_job(
-            [gid, token,g_data,"init"], "{}_{}".format(gid, token)
-        )
-        for i in range(1, int(g_data["filecount"]) + 1):
+        if g_data == None:
+            print("g_data无法获取", gid, token)
             self.JobSchedulerInstance.add_job(
-                [gid, token,g_data,i], "{}_{}".format(gid, token),True
-            )   
+                [gid, token, g_data, "over"], "{}_{}".format(gid, token)
+            )  # 直接设置完成 然后经过检查 在通知前端
+            return
 
+        self.updateDownloadREC(gid, token, g_data, -1)
         self.JobSchedulerInstance.add_job(
-            [gid, token,g_data, "over"], "{}_{}".format(gid, token)
+            [gid, token, g_data, "init"], "{}_{}".format(gid, token)
         )
 
+        self.JobSchedulerInstance.add_jobs(
+            [
+                [[gid, token, None, i], "{}_{}".format(gid, token), True]
+                for i in range(1, int(g_data["filecount"]) + 1)
+            ]
+        )
+
+        self.JobSchedulerInstance.add_job(
+            [gid, token, g_data, "over"], "{}_{}".format(gid, token)
+        )
 
     def deleteDownload(self, gid, token):
         self.JobSchedulerInstance.rm_job("{}_{}".format(gid, token))
         self.JobSchedulerInstance.insert_job(
-            [gid, token, None,"delete"], "{}_{}".format(gid, token)
+            [gid, token, None, "delete"], "{}_{}".format(gid, token)
         )
+
+    def listJobs(self):
+        return self.JobSchedulerInstance.listJobs()
+
 
 ROOT_PATH = r"./"
 CONFIG_PATH = os.path.join(ROOT_PATH, r"config.json")
@@ -852,7 +986,7 @@ CONFIG = json.load(open(CONFIG_PATH))
 DOWNLOAD_PATH = CONFIG["DOWNLOAD_PATH"]
 
 if DOWNLOAD_PATH == "":
-    DOWNLOAD_PATH = os.environ.get("EH_DOWNLOAD_PATH","")
+    DOWNLOAD_PATH = os.environ.get("EH_DOWNLOAD_PATH", "")
     print("using downloadpath from env")
 
 if DOWNLOAD_PATH == "":
@@ -961,7 +1095,8 @@ pa = proxyAccessor(
 app = FastAPI(async_request_limit=1000)
 
 
-ispublic =  os.environ.get("PUBLIC_ENV") == "true"
+ispublic = os.environ.get("PUBLIC_ENV") == "true"
+
 
 @app.get("/addfavo/{gid_token}/{index}")
 def addfavo(gid_token, index):
@@ -1013,19 +1148,26 @@ def getfile(gid_token, filename, nocache=None):
     else:
         index = int(filename.split(".")[0])
         filepath = pa.get_img(gid, token, index)
-        return FileResponse(filepath,headers={"Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000"})
-
+        if checkImg(filepath):
+            return FileResponse(
+                filepath,
+                headers={"Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000"},
+            )
+        else:
+            return None
 
 @app.get("/previews/{gid_token}/{filename}")
 def getfile(gid_token, filename):
     gid, token = gid_token.split("_")
     index = int(filename.split(".")[0])
-    bytes = pa.get_preview(gid, token, index)
-    return Response(
-        bytes,
-        headers={"Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000"},
-    )
-
+    try:
+        bytes = pa.get_preview(gid, token, index)
+        return Response(
+            bytes,
+            headers={"Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000"},
+        )
+    except Exception as e:
+        return None
 
 @app.get("/comments/{gid_token}")
 def comment(gid_token):
@@ -1060,10 +1202,17 @@ def gallaryListNoPath(request: Request):
 def cover(filename):
     gid, token = filename.split(".")[0].split("_")
     filepath = pa.get_cover(gid, token)
-    return FileResponse(
-        filepath,
-        headers={"Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000"},
-    )
+    if filepath != None:
+        return FileResponse(
+            filepath,
+            headers={"Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000"},
+        )
+    else:# return error 
+        return None
+
+@app.get("/jobs")
+def get_sheduled_jobs():
+    return pa.listJobs()
 
 
 @app.get("/")
@@ -1083,6 +1232,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
 app.mount("/", StaticFiles(directory=SERVER_FILE), name="static")
 
-uvicorn.run(
-    app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)), log_level="error"
-)
+
+if __name__ == "__main__":
+    uvicorn.run(
+        app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)), log_level="error"
+    )

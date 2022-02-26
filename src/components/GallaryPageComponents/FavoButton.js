@@ -4,7 +4,7 @@
 //由于cache设计为3秒 所以只要不是太短就会一直是最新的
 //重新设计接口 让其处于full状态且不是离线模式的时候 使用参数 强制获取最新数据
 //如果是离线模式 则收藏按钮为禁用状态
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef,useEffect } from 'react';
 import { IconButton} from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -56,9 +56,15 @@ export default function FavoButton(props) {
                 console.log("FavoButton error", err)
             })
         }, 500)
-
-
     }
+    useEffect(() => {
+        props.setClickFavo(
+            {
+                stause: stause,
+                func: onClick
+            }
+        )
+    }, [stause])
 
 
     const elemMap = {

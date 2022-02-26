@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button, LinearProgress} from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { useSettingBind } from '../Settings';
 
 export default function DownloadButton(props) {
     let initButtonText = ""
@@ -28,7 +29,7 @@ export default function DownloadButton(props) {
 
 
     useEffect(() => {
-        console.log("stause", stause)
+        console.log("download button props", props)
     }, [stause])
 
 
@@ -70,6 +71,9 @@ export default function DownloadButton(props) {
     },[])
 
     const lock = useRef(false)
+
+    const addFavoWhenDownload = useSettingBind("下载时添加收藏",false)
+
     const onClick = () => {
         if (window.serverSideConfigure.type !== "full" || localStorage.getItem("offline_mode") === "true") return
         //只有full and not offline mode才能下载
@@ -92,8 +96,16 @@ export default function DownloadButton(props) {
         
         props.enableDelete()
 
+
+        if (addFavoWhenDownload === true && props.clickFavo.current !== null) { 
+            if (props.clickFavo.current.stause !== "yes") { 
+                props.clickFavo.current.func()
+            }
+        }
         
-    
+        
+        
+        
         fetch(`/download/${gid_token}`)
             .then(res => {
                 try { 
