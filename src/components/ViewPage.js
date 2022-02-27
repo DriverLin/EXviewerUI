@@ -5,6 +5,7 @@ import ViewSettingPanel from './ViewPageComponents/ViewSettingPanel';
 import MultPageSwiper from './ViewPageComponents/MultPageSwiper';
 import { useLocation } from "react-router-dom";
 import { useSettingBind } from './Settings';
+import { notifyMessage } from './utils/PopoverNotifier';
 
 
 
@@ -92,18 +93,32 @@ export default function ViewPage() {
     const onViewSettingPanelOpen = () => { setSettingPanelOpen(true) }
 
 
-    useEffect(() => {
-        fetch(`/gallarys/${gid}_${token}/g_data.json`).then(res => res.json()).then(res => {
-            document.title = res.title_jpn || res.title
+    const init = async () => { 
+        const response = await fetch(`/gallarys/${gid}_${token}/g_data.json`)
+        if (response.ok) {
+            const data = await response.json()
+            document.title = data.title_jpn || data.title
             const tmpUrl = []
-            for (let i = 1; i <= Number(res.filecount); i++) {
+            for (let i = 1; i <= Number(data.filecount); i++) {
                 tmpUrl.push(`/gallarys/${gid}_${token}/${(Array(8).join(0) + i).slice(-8)}.jpg`)
             }
             setUrls(tmpUrl)
-            setPageCount(Number(res.filecount))
-        }).catch(err => {
-            console.log("err", err)
-        })
+            setPageCount(Number(data.filecount))
+        } else { 
+            const text = await response.text()
+            try {
+                const info = JSON.parse(text)
+                notifyMessage("error", JSON.parse(info.detail))
+            } catch (error) {
+                notifyMessage("error", text)
+            }
+        }
+    }
+
+
+
+    useEffect(() => {
+        init()
     }, [])
 
     return (
@@ -122,7 +137,6 @@ export default function ViewPage() {
                     {
                         <MultPageSwiper
                             key={horizontalView}//切换横屏模式  就重新渲染 避免了页数切换的BUG
-
                             value={pageNum}
                             setValue={setPageNum}
                             reverse={switchDirection}

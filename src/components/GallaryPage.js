@@ -102,60 +102,58 @@ export default function GallaryPage(props) {
     }
 
 
-    useEffect(() => {
+    const getComment = async (gid, token) => {
+        if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
+            const response = await fetch(`/comments/${gid}_${token}`)
+            if (response.ok) {
+                const data = await response.json()
+                setComments(data)
+            } else {
+                const text = await response.text()
+                try {
+                    const info = JSON.parse(text)
+                    notifyMessage("error", JSON.parse(info.detail))
+                } catch (error) {
+                    notifyMessage("error", text)
+                }
+            }
+        }
+    }
+
+    const init = async () => {
         setLoading(true)
         const gid = location.pathname.split("/")[2]
         const token = location.pathname.split("/")[3]
-
         let g_data_url = `/gallarys/${gid}_${token}/g_data.json`
         if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
             g_data_url = g_data_url + "?nocache=true"
         }
-        console.log("g_data_url", g_data_url)
-
-        fetch(g_data_url)
-            .then(res => {
-                if (res.ok) {
-                    return res.json()
-                } else {
-                    res.json().then(data => {
-                        notifyMessage("error", JSON.parse(data.detail))
-                    })
-                    return Promise.reject(res.status)
-                }
-            })
-            .then(res => {
-                document.title = res.title_jpn || res.title
-                setG_data(res)
-                g_data_ref.current = res
-                seTags(transformTags(res))
-                setPreviewSteped()
-                setLoading(false)
-                if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
-                    fetch(`/comments/${gid}_${token}`)
-                        .then(res => {
-                            if (res.ok) {
-                                return res.json()
-                            } else {
-                                res.json().then(data => {
-                                    notifyMessage("error", JSON.parse(data.detail))
-                                })
-                                return Promise.reject(res.status)
-                            }
-                        }
-                        )
-                        .then(res => {
-                            setComments(res)
-                        }).catch(err => {
-                            console.log("err", err)
-                        })
-                }
-            }).catch(err => {
-                console.log("err", err)
-            })
+        const response = await fetch(g_data_url)
+        if (response.ok) {
+            const data = await response.json()
+            document.title = data.title_jpn || data.title
+            setG_data(data)
+            g_data_ref.current = data
+            seTags(transformTags(data))
+            setPreviewSteped()
+            setLoading(false)
+            getComment(gid, token)
+        } else {
+            const text = await response.text()
+            try {
+                const info = JSON.parse(text)
+                notifyMessage("error", JSON.parse(info.detail))
+            } catch (error) {
+                notifyMessage("error", text)
+            }
+        }
+    }
 
 
 
+
+    useEffect(() => {
+        init()
     }, [])
     return (
         loading ?
