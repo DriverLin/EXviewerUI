@@ -23,6 +23,8 @@ import LinearProgress from '@mui/material/LinearProgress';
 import { useLocation } from "react-router-dom";
 import KeyboardController from '../KeyboardController';
 
+import { notifyMessage } from './utils/PopoverNotifier.js';
+
 
 
 const formatTime = (time, format) => {
@@ -106,7 +108,6 @@ export default function MainPage(props) {
             .then(res => res.json())
             .then(data => {
                 cacheAll.current = data.map(item => translateGdata2CardData(item));
-                // console.log(cacheAll.current)
                 localSearchAction()
                 requestNextPage()
             })
@@ -140,7 +141,20 @@ export default function MainPage(props) {
             const targetUrl = apiUrl.current + `&page=${currentPageNum.current}`
             console.log("开始请求nextPage...", targetUrl)
             fetch(targetUrl)
-                .then(res => res.json())
+                .then(res => { 
+                    if (res.ok) {
+                        currentPageNum.current = currentPageNum.current + 1
+                        return res.json()
+                    } else {
+                        // currentPageNum.current = currentPageNum.current + 1
+                        res.json().then(data => {
+                            notifyMessage("error", JSON.parse(data.detail))
+                        })
+                        lock.current = false;
+                        setLoadingBar(false)
+                        return Promise.reject(res.status)
+                    }
+                })
                 .then(res => {
                     console.log("storedApiFlag", storedApiFlag)
                     console.log("currentApiFlag", currentApiFlag())
@@ -167,7 +181,7 @@ export default function MainPage(props) {
                 }).catch(err => {
                     console.log(err)
                 })
-            currentPageNum.current = currentPageNum.current + 1
+            
         } else {
             console.log("静态加载...")
             setLoadingBar(false)

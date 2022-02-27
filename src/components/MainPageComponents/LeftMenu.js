@@ -30,7 +30,7 @@ export default function LeftMenu(props) {
 
                 <List >
                     {
-                        props.Items.slice(0, props.Items.length-1).map(row => (
+                        props.Items.map(row => (
                             <ListItem
                                 button
                                 name='clickable'
@@ -52,24 +52,7 @@ export default function LeftMenu(props) {
                     }
                 </List>
 
-                <ListItem
-                    button
-                    name='clickable'
-                    key={Math.random()}
-                    onClick={() => {
-                        props.Items[props.Items.length-1].onClick();
-                        props.onClose();
-                    }} >
-                    <ListItemIcon
-                        sx={{
-                            color: "text.primary"
-                        }}
-                    >
-                        {props.Items[props.Items.length - 1].icon}
-                    </ListItemIcon>
-                    <ListItemText primary={props.Items[props.Items.length - 1].text} />
-                </ListItem>
-
+              
             </Grid>
         </SwipeableDrawer>
 
