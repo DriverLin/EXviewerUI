@@ -3,6 +3,7 @@ import { Button, LinearProgress} from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useSettingBind } from '../Settings';
+import { notifyMessage } from '../utils/PopoverNotifier';
 
 export default function DownloadButton(props) {
     let initButtonText = ""
@@ -77,13 +78,9 @@ export default function DownloadButton(props) {
     const onClick = () => {
         if (window.serverSideConfigure.type !== "full" || localStorage.getItem("offline_mode") === "true") return
         //只有full and not offline mode才能下载
-
         if (lock.current) return
         lock.current = true
-        
         setDownloadProgress([0, 0, 999])
-        
-        
         const wssOrWS = window.location.protocol === "https:" ? "wss:" : "ws:"
         let wsUrl = `${wssOrWS}//${window.location.host}/ws`
         if (window.location.host.includes(":3000")) {
@@ -93,73 +90,57 @@ export default function DownloadButton(props) {
         }
         switchToProcessing()
         const gid_token = `${props.g_data.gid}_${props.g_data.token}`
-        
         props.enableDelete()
-
-
         if (addFavoWhenDownload === true && props.clickFavo.current !== null) { 
             if (props.clickFavo.current.stause !== "yes") { 
                 props.clickFavo.current.func()
             }
         }
-        
-        
-        
-        
         fetch(`/download/${gid_token}`)
-            .then(res => {
-                try { 
-                    const ws = new WebSocket(wsUrl)
-                    ws.onmessage = (e) => {
-                        try {
-                            const recvData = JSON.parse(e.data)
-                            console.log("recvData", recvData)
-                            if (`${recvData.gid}_${recvData.token}` === gid_token) {
-                                if (recvData.tag === "notify") {
-                                    if (recvData.msg === "downloadSuccess") {
-                                        switchToText("success")
-                                        ws.close()
+        try { 
+            const ws = new WebSocket(wsUrl)
+            ws.onmessage = (e) => {
+                try {
+                    const recvData = JSON.parse(e.data)
+                    console.log("recvData", recvData)
+                    if (`${recvData.gid}_${recvData.token}` === gid_token) {
+                        if (recvData.tag === "notify") {
+                            if (recvData.msg === "downloadSuccess") {
+                                switchToText("success")
+                                ws.close()
 
-                                    } else if (recvData.msg === "downloadFailed") {
-                                        switchToText("failed")
-                                        lock.current = false
-                                        ws.close()
-                                    }
-                                } else if (recvData.tag === "reportProcess") {
-                                    const process = recvData.msg
-                                    const prevSuccss = downloadProgressRef.current[0]
-                                    const prevFailed = downloadProgressRef.current[1]
-                                    if (prevSuccss <= process[0] && prevFailed <= process[1]) {
-                                        setDownloadProgress(process)
-                                    } else {
-                                        console.log("olderprocess", process, prevSuccss, prevFailed)
-                                    }
-                                } else if (recvData.tag === "error") {
-                                    switchToText("failed")
-                                    lock.current = false
-                                    ws.close()
-                                }
-                            } else {
-                                console.log("not match")
+                            } else if (recvData.msg === "downloadFailed") {
+                                switchToText("failed")
+                                lock.current = false
+                                ws.close()
                             }
-                        } catch (err) {
-                            console.log("err", err)
-                            ws.close()
+                        } else if (recvData.tag === "reportProcess") {
+                            const process = recvData.msg
+                            const prevSuccss = downloadProgressRef.current[0]
+                            const prevFailed = downloadProgressRef.current[1]
+                            if (prevSuccss <= process[0] && prevFailed <= process[1]) {
+                                setDownloadProgress(process)
+                            } else {
+                                console.log("olderprocess", process, prevSuccss, prevFailed)
+                            }
+                        } else if (recvData.tag === "error") {
                             switchToText("failed")
                             lock.current = false
+                            ws.close()
                         }
+                    } else {
+                        console.log("not match")
                     }
-                }catch(err) {
+                } catch (err) {
                     console.log("err", err)
+                    ws.close()
                     switchToText("failed")
                     lock.current = false
                 }
-            })
-            .catch(err => {
-                console.log(err)
-                switchToText("failed")
-                lock.current = false
-            })
+            }
+        }catch(err) {
+            notifyMessage("error", String(err))
+        }
     }
 
 

@@ -131,7 +131,7 @@ export default function MainPage(props) {
     const currentApiFlag = () => `${apiUrl.current}_${cacheAll.current === null}`
 
 
-    const requestNextPage = () => {
+    const requestNextPage = async () => {
         if (lock.current) return;
         lock.current = true;
         const storedApiFlag = currentApiFlag()
@@ -140,30 +140,18 @@ export default function MainPage(props) {
             setLoadingBar(true)
             const targetUrl = apiUrl.current + `&page=${currentPageNum.current}`
             console.log("开始请求nextPage...", targetUrl)
-            fetch(targetUrl)
-                .then(res => { 
-                    if (res.ok) {
-                        currentPageNum.current = currentPageNum.current + 1
-                        return res.json()
-                    } else {
-                        // currentPageNum.current = currentPageNum.current + 1
-                        res.json().then(data => {
-                            notifyMessage("error", JSON.parse(data.detail))
-                        })
-                        lock.current = false;
-                        setLoadingBar(false)
-                        return Promise.reject(res.status)
-                    }
-                })
-                .then(res => {
-                    console.log("storedApiFlag", storedApiFlag)
+            const response = await fetch(targetUrl)
+            if (response.ok) {
+                currentPageNum.current = currentPageNum.current + 1
+                const data = await response.json()
+                console.log("storedApiFlag", storedApiFlag)
                     console.log("currentApiFlag", currentApiFlag())
 
                     if (storedApiFlag === currentApiFlag()) {
-                        if (res.length === 0) {
+                        if (data.length === 0) {
                             loadover.current = true
                         }
-                        res.forEach(item => {
+                        data.forEach(item => {
                             if (!gidSet.current.has(item.gid)) {
                                 gallaryListRef.current.push(item)
                                 gidSet.current.add(item.gid)
@@ -177,10 +165,20 @@ export default function MainPage(props) {
                     }
                     lock.current = false;
                     setLoadingBar(false)
-                    console.log("请求结束", res)
-                }).catch(err => {
-                    console.log(err)
-                })
+                    console.log("请求结束", data)
+             
+            } else {
+                lock.current = false;
+                setLoadingBar(false)
+                const text = await response.text()
+                try {
+                    const info = JSON.parse(text)
+                    notifyMessage("error", JSON.parse(info.detail))
+                } catch (error) {
+                    notifyMessage("error", text)
+                }
+            }
+            
             
         } else {
             console.log("静态加载...")

@@ -10,6 +10,7 @@ import ssl
 import threading
 import time
 import urllib.request
+import urllib.error
 from typing import List
 from urllib.parse import urljoin
 
@@ -53,7 +54,7 @@ def makeTrackableExcption(e, appendE):
         exceptions = json.loads(str(e))
         exceptions.append(str(appendE))
         return Exception(json.dumps(exceptions))
-    except Exception as e:
+    except Exception as jsonError:
         return Exception(json.dumps([str(e),str(appendE)]))
 
 def printPerformance(func):
@@ -69,7 +70,6 @@ def printPerformance(func):
 
 def atomWarpper(func):
     lock = threading.Lock()
-
     def f(*args, **kwargs):
         lock.acquire()
         try:
@@ -79,7 +79,6 @@ def atomWarpper(func):
         finally:
             lock.release()
         return result
-
     return f
 
 
@@ -375,27 +374,18 @@ class proxyAccessor:
     def _getHtml_ignore_cache(self, url):
         try:
             start = time.time()
-            result = (
-                urllib.request.urlopen(
-                    urllib.request.Request(
-                        url=urljoin(self.root, url),
-                        headers=self.headers,
-                    ),
-                    timeout=15,
-                )
-                .read()
-                .decode("utf-8")
-            )
+            req = urllib.request.Request(url=urljoin(self.root, url),headers=self.headers)
+            resp = urllib.request.urlopen(req,timeout=15)
             print("get html", url, time.time() - start)
-            return result
-        except Exception as e:
+            return resp.read().decode("utf-8")
+        except urllib.error.URLError as e:
+            # logger.warning("get html error"+ str(e))
             raise makeTrackableExcption(e,f"获取HTML{url} 失败 ")
 
     def g_data_from_pageHtml(self, gid, token):
         try:
             html = self.get_gallary_html_ignore_cache(gid, token)
         except Exception as e:
-            # raise e
             raise makeTrackableExcption(e,f"从html获取g_data {gid}_{token} 失败 ")
         try:
             pageElem = BeautifulSoup(html, features="html.parser")
@@ -554,9 +544,8 @@ class proxyAccessor:
         try:
             print("爬取主页画廊列表中,url=", url)
             start = time.time()
-            html = BeautifulSoup(self._getHtml(url), features="html.parser")
+            html = BeautifulSoup(self._getHtml_ignore_cache(url), features="html.parser")
         except Exception as e:
-            # raise Exception(f"{e.__str__()}\n获取主页画廊列表失败")
             raise makeTrackableExcption(e,f"获取主页画廊列表失败 url={url}")
 
         infos = []
@@ -1231,7 +1220,10 @@ def getfile(gid_token, filename, nocache=None):
             if nocache == None:
                 return pa.get_g_data(gid, token)
             else:
-                return pa.g_data_from_pageHtml(gid, token)
+                try:
+                    return pa.g_data_from_pageHtml(gid, token)#nocache模式 优先去获取HTML
+                except Exception as e:#获取失败则尝试其他方法 例如尝试访问一个被删除的画廊
+                    return pa.get_g_data(gid, token)#其他方法页失败则raise
         else:
             index = int(filename.split(".")[0])
             filepath = pa.get_img(gid, token, index)
