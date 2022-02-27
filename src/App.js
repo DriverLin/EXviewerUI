@@ -11,7 +11,7 @@ import AppSetting from './components/AppSetting';
 
 import { useSettingBind} from './components/Settings';
 
-
+import PopoverNotifier from "./components/utils/PopoverNotifier";
 
 import { CssBaseline } from '@mui/material';
 import {
@@ -202,6 +202,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <PopoverNotifier/>
       <div id='mainContainer' style={{ backgroundColor: theme.palette.page.background, width: "100%" }}    >
         <HashRouter>
           <Routes>

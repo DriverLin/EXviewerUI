@@ -17,13 +17,12 @@ import { useLocation, } from "react-router-dom";
 import DownloadButton from './GallaryPageComponents/DownloadButton.js';
 import ZipDownloadButton from './GallaryPageComponents/ZipDownloadButton.js';
 import DeleteButton from './GallaryPageComponents/DeleteButton.js';
-import PopoverNotifier from './GallaryPageComponents/PopoverNotifier.js';
 import FavoButton from './GallaryPageComponents/FavoButton.js';
 
 import KeyboardController from '../KeyboardController.js';
 
 import { useSetting } from './Settings';
-
+import { notifyMessage } from './utils/PopoverNotifier.js';
 
 const formatTime = (time, format) => {
     const date = new Date(Number(time + "000"))
@@ -114,24 +113,48 @@ export default function GallaryPage(props) {
         }
         console.log("g_data_url", g_data_url)
 
-        fetch(g_data_url).then(res => res.json()).then(res => {
-            document.title = res.title_jpn || res.title
-            setG_data(res)
-            g_data_ref.current = res
-            seTags(transformTags(res))
-            setPreviewSteped()
-            setLoading(false)
-        }).catch(err => {
-            console.log("err", err)
-        })
-
-        if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
-            fetch(`/comments/${gid}_${token}`).then(res => res.json()).then(res => {
-                setComments(res)
+        fetch(g_data_url)
+            .then(res => {
+                if (res.ok) {
+                    return res.json()
+                } else {
+                    res.json().then(data => {
+                        notifyMessage("error", JSON.parse(data.detail))
+                    })
+                    return Promise.reject(res.status)
+                }
+            })
+            .then(res => {
+                document.title = res.title_jpn || res.title
+                setG_data(res)
+                g_data_ref.current = res
+                seTags(transformTags(res))
+                setPreviewSteped()
+                setLoading(false)
+                if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
+                    fetch(`/comments/${gid}_${token}`)
+                        .then(res => {
+                            if (res.ok) {
+                                return res.json()
+                            } else {
+                                res.json().then(data => {
+                                    notifyMessage("error", JSON.parse(data.detail))
+                                })
+                                return Promise.reject(res.status)
+                            }
+                        }
+                        )
+                        .then(res => {
+                            setComments(res)
+                        }).catch(err => {
+                            console.log("err", err)
+                        })
+                }
             }).catch(err => {
                 console.log("err", err)
             })
-        }
+
+
 
     }, [])
     return (
@@ -222,7 +245,7 @@ function GallaryInfoPage(props) {
 
     const clickFavo = useRef(null)
     const setClickFavo = (f) => { clickFavo.current = f }
-        
+
     const FCBS = <Grid
         container
         direction="row"
@@ -236,17 +259,12 @@ function GallaryInfoPage(props) {
         /></Grid> : null}
     </Grid>
 
-    const [notifyMessage, setNotifyMessage] = useState({
-        severity: "success",
-        text: ""
-    })
+
 
     return (
         <div className={matches ? classes.borderCard : classes.matches_borderCard} >
             <KeyboardController />
-            <PopoverNotifier
-                message={notifyMessage}
-            />
+
             <div className={classes.elemContainer}>
                 <Grid
                     container
@@ -327,7 +345,6 @@ function GallaryInfoPage(props) {
                 >
                     <DeleteButton
                         g_data={props.g_data}
-                        setNotifyMessage={setNotifyMessage}
                         forceControlDisabled={deleteButtonDisabled}
                         enableDeleteButton={enableDeleteButton}
                         disableDeleteButton={disableDeleteButton}
@@ -335,7 +352,7 @@ function GallaryInfoPage(props) {
                     />
                     <FavoButton
                         g_data={props.g_data}
-                        setClickFavo = {setClickFavo}
+                        setClickFavo={setClickFavo}
                     />
 
                     <ZipDownloadButton

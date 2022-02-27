@@ -8,27 +8,19 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSettingBind } from '../Settings';
-
+import { notifyMessage} from '../utils/PopoverNotifier';
 
 export default function DeleteButton(props) {
-
     const [open, setOpen] = useState(false);
-    
-    
-    
     const handleClickOpen = () => {
         setOpen(true);
     };
-
     const handleClose = () => {
         setOpen(false);
     };
-
     const removeFavoWhenDelete = useSettingBind("删除时移除收藏",false)
-
     const handelCheck = () => {
         setOpen(false);
-
         if (removeFavoWhenDelete === true && props.clickFavo.current !== null) {
             if (props.clickFavo.current.stause === "yes") {
                 props.clickFavo.current.func()
@@ -38,21 +30,11 @@ export default function DeleteButton(props) {
         fetch(`/delete/${props.g_data.gid}_${props.g_data.token}`)
             .then(res => res.json())
             .then(data => {
-                props.setNotifyMessage(
-                    {
-                        severity: "success",
-                        text: "已发送删除信号"
-                    }
-                )
+                notifyMessage("success", "删除成功")
                 props.disableDeleteButton();
              })
             .catch(err => { 
-                props.setNotifyMessage(
-                    {
-                        severity: "error",
-                        text: "删除失败"
-                    }
-                )
+                notifyMessage("error", "删除失败")
                 props.enableDeleteButton();
             })
     }
