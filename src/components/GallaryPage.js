@@ -46,7 +46,6 @@ const formatTime = (time, format) => {
 
 
 const transformTags = (g_data) => {
-    console.log("transformTags", g_data)
     let tags = {}
     g_data.tags.forEach(tagStr => {
         if (tagStr.split(":").length === 2) {
@@ -103,11 +102,11 @@ export default function GallaryPage(props) {
 
 
     const getComment = async (gid, token) => {
+        console.log("getComment", gid, token)
         if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
             const response = await fetch(`/comments/${gid}_${token}`)
             if (response.ok) {
-                const data = await response.json()
-                setComments(data)
+                return await response.json()
             } else {
                 const text = await response.text()
                 try {
@@ -116,9 +115,29 @@ export default function GallaryPage(props) {
                 } catch (error) {
                     notifyMessage("error", text)
                 }
+                return false
             }
         }
     }
+
+    const getG_data = async (g_data_url) => { 
+        console.log("getG_data", g_data_url)
+        const response = await fetch(g_data_url)
+        if (response.ok) {
+            return await response.json()
+            
+        } else {
+            const text = await response.text()
+            try {
+                const info = JSON.parse(text)
+                notifyMessage("error", JSON.parse(info.detail))
+            } catch (error) {
+                notifyMessage("error", text)
+            }
+            return false
+        }
+    }
+
 
     const init = async () => {
         setLoading(true)
@@ -128,25 +147,24 @@ export default function GallaryPage(props) {
         if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
             g_data_url = g_data_url + "?nocache=true"
         }
-        const response = await fetch(g_data_url)
-        if (response.ok) {
-            const data = await response.json()
-            document.title = data.title_jpn || data.title
-            setG_data(data)
-            g_data_ref.current = data
-            seTags(transformTags(data))
+        const dataRes = await getG_data(g_data_url)
+        const commentRes = await getComment(gid, token)
+        console.log("initing............")
+        console.log(dataRes , commentRes)
+        if (commentRes) { 
+            setComments(commentRes)
+        }
+        if (dataRes) {
+            document.title = dataRes.title_jpn || dataRes.title
+            setG_data(dataRes)
+            g_data_ref.current = dataRes
+            seTags(transformTags(dataRes))
             setPreviewSteped()
             setLoading(false)
-            getComment(gid, token)
-        } else {
-            const text = await response.text()
-            try {
-                const info = JSON.parse(text)
-                notifyMessage("error", JSON.parse(info.detail))
-            } catch (error) {
-                notifyMessage("error", text)
-            }
+        } else { 
+
         }
+
     }
 
 

@@ -1,20 +1,33 @@
 import Grid from '@mui/material/Grid';
-import React, { useState, } from 'react';
+import React, { useState, useEffect } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 
 
 function SkeImg(props) {
     const [stause, setStause] = useState('loading')//loading error finished
-    let img = new Image()
-    img.onload = () => {
-        setStause('finished')
-        img = null
+    const loadImg = (e) => {
+        if (e) {
+            e.stopPropagation();
+        }
+        setStause('loading')
+        let img = new Image()
+        img.onload = () => {
+            setStause('finished')
+            img = null
+        }
+        img.onerror = () => {
+            setStause('error')
+        }
+        img.src = props.src
     }
-    img.onerror = () => {
-        setStause('error')
-    }
-    img.src = props.src
+
+    useEffect(() => {
+        loadImg()
+        // setTimeout(() => {
+        //     setStause('error')
+        // }, 1000)
+    }, [props.src])
 
     const elemMap = {
         'loading':
@@ -29,13 +42,24 @@ function SkeImg(props) {
             </div>,
         'error':
             <div style={{
-                height: "auto",
+                height: "100%",
                 width: props.maxWidth,
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-            }} >
-                <BrokenImageIcon />
+            }}
+            >
+                <div style={{
+                    width: "40%",
+                    height: "40%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                }}
+                    onClick={loadImg}
+                >
+                    <BrokenImageIcon />
+                </div>
             </div>,
         'finished':
             <img src={props.src} style={{ maxHeight: "100vh", maxWidth: props.maxWidth }} />

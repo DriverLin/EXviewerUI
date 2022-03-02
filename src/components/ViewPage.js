@@ -74,10 +74,10 @@ export default function ViewPage() {
         } else if (event.pageX / document.body.clientWidth < 0.3) {
             setPageNum(pageNum - postion * jmpNum)
         } else {
-            if (event.pageY / document.body.clientHeight < 0.5) {
+            if (event.pageY / document.body.clientHeight < 0.3) {
                 setSettingPanelOpen(settingPanelOpen => !settingPanelOpen)
             }
-            else {
+            else if (event.pageY / document.body.clientHeight > 0.7) {
                 setSliderOpen(sliderOpen => !sliderOpen)
             }
         }

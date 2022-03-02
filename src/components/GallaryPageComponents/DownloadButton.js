@@ -29,9 +29,9 @@ export default function DownloadButton(props) {
     // const [stause, setStause] = useState("processing")
 
 
-    useEffect(() => {
-        console.log("download button props", props)
-    }, [stause])
+    // useEffect(() => {
+    //     console.log("download button props", props)
+    // }, [stause])
 
 
     const [downloadProgress, _setDownloadProgress] = useState([0, 0, 999])
@@ -64,12 +64,12 @@ export default function DownloadButton(props) {
         }, 600)
     }
 
-    useEffect(() => {
-        console.log("amount DownloadButton")
-        return () => {
-            console.log("unmount DownloadButton")
-        }
-    },[])
+    // useEffect(() => {
+    //     console.log("amount DownloadButton")
+    //     return () => {
+    //         console.log("unmount DownloadButton")
+    //     }
+    // },[])
 
     const lock = useRef(false)
 
@@ -102,20 +102,9 @@ export default function DownloadButton(props) {
             ws.onmessage = (e) => {
                 try {
                     const recvData = JSON.parse(e.data)
-                    console.log("recvData", recvData)
-                    if (`${recvData.gid}_${recvData.token}` === gid_token) {
-                        if (recvData.tag === "notify") {
-                            if (recvData.msg === "downloadSuccess") {
-                                switchToText("success")
-                                ws.close()
-
-                            } else if (recvData.msg === "downloadFailed") {
-                                switchToText("failed")
-                                lock.current = false
-                                ws.close()
-                            }
-                        } else if (recvData.tag === "reportProcess") {
-                            const process = recvData.msg
+                    if (recvData.type === "process") {
+                        if (`${recvData.data.gid}_${recvData.data.token}` === gid_token) {
+                            const process = recvData.data.process
                             const prevSuccss = downloadProgressRef.current[0]
                             const prevFailed = downloadProgressRef.current[1]
                             if (prevSuccss <= process[0] && prevFailed <= process[1]) {
@@ -123,16 +112,23 @@ export default function DownloadButton(props) {
                             } else {
                                 console.log("olderprocess", process, prevSuccss, prevFailed)
                             }
-                        } else if (recvData.tag === "error") {
-                            switchToText("failed")
-                            lock.current = false
-                            ws.close()
                         }
-                    } else {
-                        console.log("not match")
+                    }
+                    else if (recvData.type === "over") { 
+                        if (`${recvData.data.gid}_${recvData.data.token}` === gid_token) {
+                            const process = recvData.data.process
+                            if (process[0] === process[2]) {
+                                switchToText("success")
+                                ws.close()
+                            } else { 
+                                switchToText("failed")
+                                lock.current = false
+                                ws.close()
+                            }
+                        }
                     }
                 } catch (err) {
-                    console.log("err", err)
+                    notifyMessage("error", String(err))
                     ws.close()
                     switchToText("failed")
                     lock.current = false
