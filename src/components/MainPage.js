@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import GallaryCard from './MainPageComponents/GallaryCard'
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Paper from '@mui/material/Paper';
@@ -59,7 +59,7 @@ const translateGdata2CardData = (g_data) => {
         lang: g_data.tags.indexOf("language:chinese") !== -1 ? "chinese" : "",
         pages: Number(g_data.filecount),
         tags: g_data.tags,
-        process: g_data.hasOwnProperty("process") ? g_data.process : [0, 0]
+        process: g_data.hasOwnProperty("extended") ? g_data.extended.process : [0, 0]
         //在前段判断是否有process字段  避免了对于DB模式的改造以及污染
         //没有则是[0,0]
     }
@@ -67,7 +67,7 @@ const translateGdata2CardData = (g_data) => {
 
 export default function MainPage(props) {
     const locationProps = useLocation()
-    const currrentUrl = () => locationProps.pathname
+    const currrentUrl = useMemo(() => locationProps.pathname, [locationProps])
 
     const matches = useMediaQuery('(min-width:830px)');
     const small_matches = useMediaQuery('(min-width:560px)');
@@ -145,28 +145,29 @@ export default function MainPage(props) {
                 currentPageNum.current = currentPageNum.current + 1
                 const data = await response.json()
                 console.log("storedApiFlag", storedApiFlag)
-                    console.log("currentApiFlag", currentApiFlag())
+                console.log("currentApiFlag", currentApiFlag())
 
-                    if (storedApiFlag === currentApiFlag()) {
-                        if (data.length === 0) {
-                            loadover.current = true
-                        }
-                        data.forEach(item => {
-                            if (!gidSet.current.has(item.gid)) {
-                                gallaryListRef.current.push(item)
-                                gidSet.current.add(item.gid)
-                            } else {
-                                console.log("duplicate", item.gid)
-                            }
-                        })
-                        setgalaryList([...gallaryListRef.current])
-                    } else {
-                        console.log("数据已过期")
+                if (storedApiFlag === currentApiFlag()) {
+                    if (data.length === 0) {
+                        loadover.current = true
                     }
-                    lock.current = false;
-                    setLoadingBar(false)
-                    console.log("请求结束", data)
-             
+                    data.forEach(item => {
+                        if (!gidSet.current.has(item.gid)) {
+                            gallaryListRef.current.push(item)
+                            gidSet.current.add(item.gid)
+                        } else {
+                            console.log("duplicate", item.gid)
+                        }
+                    })
+                    console.log("gidSet.current", gidSet.current)
+                    setgalaryList([...gallaryListRef.current])
+                } else {
+                    console.log("数据已过期")
+                }
+                lock.current = false;
+                setLoadingBar(false)
+                console.log("请求结束", data)
+
             } else {
                 lock.current = false;
                 setLoadingBar(false)
@@ -178,8 +179,8 @@ export default function MainPage(props) {
                     notifyMessage("error", text)
                 }
             }
-            
-            
+
+
         } else {
             console.log("静态加载...")
             setLoadingBar(false)
@@ -188,6 +189,7 @@ export default function MainPage(props) {
             const endlen = currentlen + 25 > totalLen ? totalLen : currentlen + 25;
             for (let i = currentlen; i < endlen; i++) {
                 gallaryListRef.current.push(cacheAll.current[i])
+                gidSet.current.add(cacheAll.current[i].gid)
             }
             setgalaryList([...gallaryListRef.current])
             lock.current = false;
@@ -265,7 +267,6 @@ export default function MainPage(props) {
         loadover.current = false;
         setgalaryList([])
 
-        const usingUrl = currrentUrl()
 
         console.log("初始化页面")
         console.log("window.serverSideConfigure.type", window.serverSideConfigure.type)
@@ -273,7 +274,7 @@ export default function MainPage(props) {
         console.log("static ? ",
             (window.serverSideConfigure.type === "staticApi"
                 || localStorage.getItem("offline_mode") === "true"
-                || usingUrl === "/downloaded")
+                || currrentUrl === "/downloaded")
         )
 
         if (window.serverSideConfigure.type === "Data.db") {
@@ -281,7 +282,7 @@ export default function MainPage(props) {
         } else if (
             window.serverSideConfigure.type === "staticApi"
             || localStorage.getItem("offline_mode") === "true"
-            || usingUrl === "/downloaded"
+            || currrentUrl === "/downloaded"
         ) {
             init_AllDATA_API()
         } else {
@@ -292,12 +293,12 @@ export default function MainPage(props) {
                 "/popular": "/list/popular?0=0",
                 "/favorites": "/list/favorites.php?0=0",
             }
-            apiUrl.current = urlMap[usingUrl]
-            console.log("apiUrl.current", usingUrl, "->", apiUrl.current)
+            apiUrl.current = urlMap[currrentUrl]
+            console.log("apiUrl.current", currrentUrl, "->", apiUrl.current)
             requestNextPage()
         }
     }
-    
+
 
     const lastE = useRef(0);
     const handelScroll = (e) => {
@@ -314,15 +315,15 @@ export default function MainPage(props) {
         lastE.current = end
     }
 
-    const handeLongClicked = (g_data,x,y) => { 
+    const handeLongClicked = (g_data, x, y) => {
         console.log("长按事件", g_data, x, y)
     }
     const infoCallBack = (g_data) => {
         console.log("infoCallBack", g_data.gid, g_data.token)
         openNewTab(`/g/${g_data.gid}/${g_data.token}/`)
-     }
+    }
 
-    const viewCallBack = (g_data) => { 
+    const viewCallBack = (g_data) => {
         console.log("viewCallBack", g_data.gid, g_data.token)
         openNewTab(`/viewing/${g_data.gid}/${g_data.token}/`)
     }
@@ -338,7 +339,7 @@ export default function MainPage(props) {
         setLeftMenuOpen(true)
     }
 
-    const handelLeftMenuClick = () => { 
+    const handelLeftMenuClick = () => {
         setLeftMenuOpen(leftMenuOpen => !leftMenuOpen)
     }
 
@@ -386,7 +387,7 @@ export default function MainPage(props) {
         window.serverSideConfigure.type === "staticApi"
         || window.serverSideConfigure.type === "Data.db"
         || localStorage.getItem("offline_mode") === "true"
-        || currrentUrl() === "/downloaded"
+        || currrentUrl === "/downloaded"
     ) {
         menuItems.push({
             onClick: randomSort,
@@ -432,6 +433,83 @@ export default function MainPage(props) {
 
 
 
+    const ws = useRef(null)
+
+    const [processInfo, setProcessInfo] = useState({
+        gid: "",
+        token: "",
+        process: [0, 0, 1]
+    })
+
+    const getCardInfo = async (gid, token) => {
+        const response = await fetch(`/gallarys/${gid}_${token}/g_data.json`)
+        const data = await response.json()//不需要异常处理 一切都在计划之中
+        const info = translateGdata2CardData(data)
+        info.process = [-1, info.pages]
+        return info
+    }
+
+    const initWebsocketConnection = () => {
+        if (ws.current !== null) {
+            ws.current.close()
+            ws.current = null
+        }
+        if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true" && currrentUrl === "/downloaded") {
+            try {
+                const wssOrWS = window.location.protocol === "https:" ? "wss:" : "ws:"
+                let wsUrl = `${wssOrWS}//${window.location.host}/ws`
+                if (window.location.host.includes(":3000")) {
+                    console.log("dev")
+                    //别部署在3000
+                    wsUrl = wsUrl.replace(":3000", ":8080")
+                }
+                console.log("wsUrl", wsUrl)
+                ws.current = new WebSocket(wsUrl)
+                ws.current.onmessage = async (msg) => {
+                    const recvData = JSON.parse(msg.data)
+                    // console.log("recvData", recvData)
+                    if (recvData.type === "queueChange") {//添加或完成时的服务端下载队列 取并后渲染到列表
+                        console.log(gidSet.current)
+                        const jobs = recvData.data.map(async (gid_token) => {
+                            const gid = Number(gid_token[0])
+                            const token = gid_token[1]
+                            if (!gidSet.current.has(gid)) {
+                                gidSet.current.add(gid)
+                                const cardInfo = await getCardInfo(gid, token)
+                                gallaryListRef.current.unshift(cardInfo)
+                            } else {
+                                console.log("duplicate", gid)
+                            }
+                        })
+                        await Promise.all(jobs)
+                        setgalaryList([...gallaryListRef.current])
+                    } else if (recvData.type === "process") {//进度变化
+                        setProcessInfo(recvData.data)
+                    } else if (recvData.type === "over") {//下载结束
+                        setProcessInfo({
+                            gid: "",
+                            token: "",
+                            process: [0, 0, 1]
+                        })//画廊卡片会记录每一次自己对应时的数据变化 processInfo对应自己时显示进度条 其他时间显示下载完成情况
+                    } else if (recvData.type === "delete") {//删除了一个画廊
+                        //如果有 则删除
+                        const gid = Number(recvData.data.gid)
+                        const token = recvData.data.token
+                        console.log("delete", gid, "has?", gidSet.current.has(gid))
+                        if (gidSet.current.has(gid)) {
+                            gidSet.current.delete(gid)
+                            gallaryListRef.current = gallaryListRef.current.filter(cardInfo => cardInfo.gid !== gid)
+                            setgalaryList([...gallaryListRef.current])
+                        }
+                    }
+                }
+            } catch (err) {
+                notifyMessage("error", String(err))
+            }
+        }
+    }
+
+
 
     useEffect(() => {
         window.addEventListener('scroll', handelScroll, true)
@@ -440,20 +518,15 @@ export default function MainPage(props) {
 
     useEffect(() => {
         initPageFunc()
+        initWebsocketConnection()
     }, [locationProps])
-
-
-
-
 
     return (
         <React.Fragment >
-            <KeyboardController/>
+            <KeyboardController />
             <TopSearchBar leftButtonClick={handelLeftMenuClick} doSearch={doSearch} />
             <div style={{ width: "100%", height: "60px" }} ></div>
-
             <LeftMenu open={leftMenuOpen} onClose={handelLeftMenuClose} Items={menuItems}  ></LeftMenu>
-
             <div className={classes.root}>
                 <Grid container spacing={small_matches ? 6 : 1}>
                     {
@@ -470,6 +543,7 @@ export default function MainPage(props) {
                                             infoCallBack={viewCallBack}
                                             viewCallBack={infoCallBack}
                                             data={row}
+                                            processInfo={processInfo}
                                         />
                                     </Paper>
                                 </Grid>

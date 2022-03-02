@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { makeStyles } from '@mui/styles';
 
 import { ButtonBase } from '@mui/material';
@@ -11,7 +11,7 @@ import { styled } from '@mui/material/styles';
 import DownloadIcon from '@mui/icons-material/Download';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 
-
+import DownloadProcessbar from './DownloadProcessbar';
 
 const small_matches = true;
 const height = small_matches ? 200 : 160;
@@ -129,37 +129,66 @@ export default function GallaryCard(props) {
     const classes = useStyles();
     const touchEvent = useRef({})
 
-    let cardText = ""
+    let cardTextInit = ""
     const process = props.data.process
-    let downloadIcon = props.data.downloaded//下载按钮显示 初始等于下载状态
+    // let downloadIcon = props.data.downloaded//下载按钮显示 初始等于下载状态
+    
+    const [downloadIcon, setDownloadIcon] = useState(props.data.downloaded)
+    
+    
     let langText = ""
+
     if (props.data.lang in languageMap) {
         langText = languageMap[props.data.lang]
     }
     //未知 下载中 下载完成 未完成 未开始
-    if (process[1] === 0) {
-        cardText = langText + " " + props.data.pages + "P"
+    // [x,0] 未知
+    // [-1,pages] 未开始
+    // [0,pages] 下载中
+    // [x,pages] 下载结束 x==pages则完成 否则显示多少未下载
+    if (process[1] === 0 || process[0] === process[1] ) {
+        cardTextInit = langText + " " + props.data.pages + "P"
     }
     else {
-        if (process[1] === 0) {
-            cardText = "下载中"
-        }
-        else if (process[1] === -1) {
-            cardText = "未开始"
-        }
-        else if (process[1] === process[0]) {
-            downloadIcon = true
-            cardText = langText + " " + props.data.pages + "P"
-        } else {
-            downloadIcon = false
-            cardText = `${process[1] - process[0]} 项未下载`
+        if (process[0] === -1) {
+            cardTextInit = "未开始"
+        }else {
+            setDownloadIcon(false)
+            cardTextInit = `${process[1] - process[0]} 项未下载`
         }
     }
 
+    const [cardTextShow, setCardTextShow] = useState(cardTextInit)
+    const inProcess = useMemo(() => Number(props.processInfo.gid) === props.data.gid, [props.processInfo])
+    const [porcessData, setPorcessData] = useState([0,1])
+    const processRec = useRef([-1, 0])
+    useEffect(() => {//外部进度变化时
+        if (Number(props.processInfo.gid) === props.data.gid) {//对=对应自己 则记录
+            const over = props.processInfo.process[0]
+            const total = props.processInfo.process[2]
+            
+            setPorcessData([over, total]) //进度显示
+            
+            let tmpCardText = ""//文字显示 便于在进度显示完成之后 显示结果
+            if (total === 0 || over === total) {
+                setDownloadIcon(true)
+                tmpCardText = langText + " " + props.data.pages + "P"
+            }
+            else {
+                if (over === -1) {
+                    tmpCardText = "未开始"
+                } else {
+                    setDownloadIcon(false)
+                    tmpCardText = `${total-over} 项未下载`
+                }
+            }
+            setCardTextShow(tmpCardText)
+        }
+    }, [props.processInfo]);
+    
     return (
         <GallaryContainer
             name='clickable'
-
             style={
                 small_matches ?
                     {
@@ -171,7 +200,6 @@ export default function GallaryCard(props) {
                         fontSize: "16px"
                     }
             }
-            
             onContextMenu={(e) => {
                 e.preventDefault();
                 props.longClickCallback(props.data, e.clientX, e.clientY)
@@ -214,7 +242,7 @@ export default function GallaryCard(props) {
                     width: relative_height / 1.39,
                 }}
                 className={classes.imgContainer}
-                onClick={() => { 
+                onClick={() => {
                     props.infoCallBack(props.data)
                 }}
             >
@@ -239,23 +267,33 @@ export default function GallaryCard(props) {
                         <a style={{ color: "#ffffff" }}  >{props.data.category.toUpperCase()}</a>
                     </div>
                     <div className={classes.upload_time}>{props.data.uploadtime}</div>
-                    <div className={classes.details}>
-                        {
-                            downloadIcon ?
-                                <div className={classes.d_icon}>
-                                    <DownloadIcon fontSize={small_matches ? "medium" : "small"} />
-                                </div>
-                                : null
-                        }
-                        {
-                            props.data.favo ?
-                                <div className={classes.d_icon}>
-                                    <FavoriteIcon fontSize={small_matches ? "medium" : "small"} />
-                                </div>
-                                : null
-                        }
-                        <div className={classes.d_icon}>{cardText}</div>
-                    </div>
+
+                    {inProcess ?
+                        <div className={classes.details}>
+                            <a>{porcessData[0] + "/" + porcessData[1]}</a>
+                            <div className={classes.d_icon}>
+                                <DownloadProcessbar process={100 * porcessData[0] / porcessData[1] } small={!small_matches} />
+                            </div>
+                        </div>
+                        :
+                        <div className={classes.details}>
+                            {
+                                downloadIcon ?
+                                    <div className={classes.d_icon}>
+                                        <DownloadIcon fontSize={small_matches ? "medium" : "small"} />
+                                    </div>
+                                    : null
+                            }
+                            {
+                                props.data.favo ?
+                                    <div className={classes.d_icon}>
+                                        <FavoriteIcon fontSize={small_matches ? "medium" : "small"} />
+                                    </div>
+                                    : null
+                            }
+                            <div className={classes.d_icon}>{cardTextShow}</div>
+                        </div>
+                    }
                 </div>
             </div>
         </GallaryContainer>

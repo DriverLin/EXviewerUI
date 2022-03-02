@@ -36,9 +36,15 @@ export default function CommentPanel(props) {
     const [commentButtonShow, setCommentButtonShow] = useState(false)
     useEffect(() => {
         if (props.comments.length <= 4) {
-            setCommentButtonShow(false)
+            let flag = false;
+            for (let comment of props.comments) { 
+                if (comment.text.length > 40) { 
+                    flag = true;
+                }
+            }
+            setCommentButtonShow(flag)//评论小于4条 且每条长度小于40 则直接显示
         } else { 
-            setCommentButtonShow(true)
+            setCommentButtonShow(true)//否则显示查看更多按钮
         }
     }, [props.comments]);
     

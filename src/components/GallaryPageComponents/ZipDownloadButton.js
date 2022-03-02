@@ -26,7 +26,7 @@ export default function ZipDownloadButton(props) {
         const gallaryname = g_data.title_jpn || g_data.title
         new_zip.file("g_data.json", JSON.stringify(g_data, null, 4))
         let over = 0
-        Array.from(Array(Number(g_data.filecount)), (v, k) => k + 1).forEach(async (i) => {
+        const jobs =  Array.from(Array(Number(g_data.filecount)), (v, k) => k + 1).map(async (i) => {
             const pic = await fetch(`/gallarys/${g_data.gid}_${g_data.token}/${(Array(8).join(0) + i).slice(-8)}.jpg`)
             if (!pic.ok) {
                 notifyMessage("error", `${(Array(8).join(0) + i).slice(-8)}.jpg 下载失败`)
@@ -35,29 +35,32 @@ export default function ZipDownloadButton(props) {
                 new_zip.file(`${(Array(8).join(0) + i).slice(-8)}.jpg`, blob)
                 over++
                 setProcess(100 * over / Number(g_data.filecount))
-                if (over === Number(g_data.filecount)) {
-                    const content = await new_zip.generateAsync({ type: "blob" })
-                    FileSaver(content, gallaryname + ".zip")
-                    setProcessingOpacity(0)
-                    setInitOpacity(0)
-                    setTimeout(() => {
-                        setStause("success")
-                    }, 500);
-                    setTimeout(() => {
-                        setFinishOpacity(1)
-                    }, 600);
-                    setTimeout(() => {
-                        setFinishOpacity(0)
-                    }, 1100);
-                    setTimeout(() => {
-                        setStause("init")
-                    }, 1600);
-                    setTimeout(() => {
-                        setInitOpacity(1)
-                    }, 1700);
-                }
             }
         })
+        await Promise.all(jobs)
+        if (over === Number(g_data.filecount)) {
+            const content = await new_zip.generateAsync({ type: "blob" })
+            FileSaver(content, gallaryname + ".zip")
+            setProcessingOpacity(0)
+            setInitOpacity(0)
+            setTimeout(() => {
+                setStause("success")
+            }, 500);
+            setTimeout(() => {
+                setFinishOpacity(1)
+            }, 600);
+            setTimeout(() => {
+                setFinishOpacity(0)
+            }, 1100);
+            setTimeout(() => {
+                setStause("init")
+            }, 1600);
+            setTimeout(() => {
+                setInitOpacity(1)
+            }, 1700);
+        }else{
+            //clearup
+        }
     }
 
 

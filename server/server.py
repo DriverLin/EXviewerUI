@@ -9,6 +9,7 @@ import sqlite3
 import ssl
 import threading
 import time
+from turtle import down
 import urllib.request
 import urllib.error
 from typing import List
@@ -44,10 +45,11 @@ def printTrackableException(e):
     try:
         for excTrack in json.loads(str(e)):
             logger.error(str(excTrack))
-        logger.info("="*40)
+        logger.info("=" * 40)
     except Exception as e:
         logger.error(str(e))
-        logger.info("="*40)
+        logger.info("=" * 40)
+
 
 def makeTrackableExcption(e, appendE):
     try:
@@ -55,14 +57,15 @@ def makeTrackableExcption(e, appendE):
         exceptions.append(str(appendE))
         return Exception(json.dumps(exceptions))
     except Exception as jsonError:
-        return Exception(json.dumps([str(e),str(appendE)]))
+        return Exception(json.dumps([str(e), str(appendE)]))
+
 
 def printPerformance(func):
     def wrapper(*args, **kwargs):
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
-        print("---:", func.__name__, "耗时", end - start)
+        logger.debug(f"{func.__name__}{args[1:]} 耗时 {end - start}")
         return result
 
     return wrapper
@@ -70,6 +73,7 @@ def printPerformance(func):
 
 def atomWarpper(func):
     lock = threading.Lock()
+
     def f(*args, **kwargs):
         lock.acquire()
         try:
@@ -79,6 +83,7 @@ def atomWarpper(func):
         finally:
             lock.release()
         return result
+
     return f
 
 
@@ -106,7 +111,7 @@ def checkImg(img):
     elif type(img) == bytes:
         lastBytes = img[-2:]
     else:
-        print("checkImg: unknow arg type", type(img))
+        logger.warning("checkImg: unknow arg type", type(img))
     return lastBytes in [b"\xff\xd9", b"\x60\x82", b"\x00\x3b"]
 
 
@@ -274,6 +279,7 @@ class proxyAccessor:
             handeler=self.handeler, maxParallel=5, onChange=self.onJobChange
         )
         self.currendDownloadProcess = [0, 0, -1]  # finished error total
+        self.downloading = []  # 下载中的任务
 
     @atomWarpper
     def updateCurrentDownloadProcess(self, action, total=-1):
@@ -311,8 +317,8 @@ class proxyAccessor:
         try:
             bytes = urllib.request.urlopen(url, timeout=15).read()
         except Exception as e:
-            print(e)
-            raise makeTrackableExcption(e,f"图片下载失败{filePath}")
+            logger.error(e.__str__())
+            raise makeTrackableExcption(e, f"图片下载失败{filePath}")
         if checkImg(bytes):
             with open(filePath, "wb") as f:
                 f.write(bytes)
@@ -336,7 +342,7 @@ class proxyAccessor:
             )
             return response.status_code == 200
         except Exception as e:
-            print("添加收藏 失败", e)
+            logger.error(f"添加收藏 失败{e.__str__()}")
             return False
 
     def rmFavorite(self, gid, token):
@@ -361,7 +367,7 @@ class proxyAccessor:
             )
             return response.status_code == 200
         except Exception as e:
-            print("删除收藏 失败", e)
+            logger.error(f"删除收藏 失败{e.__str__()}")
             return False
 
     @cache.memoize
@@ -371,22 +377,38 @@ class proxyAccessor:
         except Exception as e:
             raise e
 
+    @printPerformance
     def _getHtml_ignore_cache(self, url):
         try:
-            start = time.time()
-            req = urllib.request.Request(url=urljoin(self.root, url),headers=self.headers)
-            resp = urllib.request.urlopen(req,timeout=15)
-            print("get html", url, time.time() - start)
+            req = urllib.request.Request(
+                url=urljoin(self.root, url), headers=self.headers
+            )
+            resp = urllib.request.urlopen(req, timeout=15)
             return resp.read().decode("utf-8")
         except urllib.error.URLError as e:
-            # logger.warning("get html error"+ str(e))
-            raise makeTrackableExcption(e,f"获取HTML{url} 失败 ")
+            raise makeTrackableExcption(e, f"获取HTML{url} 失败 ")
 
+    #查询数据库 获取额外的下载信息
+    def getDownloadExtend(self,gid,token):
+        downloadedProcess = [0, 0]
+        downloaded = None
+        queryProcess = self.db.execute(
+                "SELECT over,total FROM downloaded WHERE id_token =?",
+                ("{}_{}".format(gid, token),),
+            ).fetchone()
+        if queryProcess == None:
+            downloaded = False
+        else:
+            downloadedProcess = queryProcess
+            downloaded = True
+        return downloaded,downloadedProcess
+
+    @printPerformance
     def g_data_from_pageHtml(self, gid, token):
         try:
             html = self.get_gallary_html_ignore_cache(gid, token)
         except Exception as e:
-            raise makeTrackableExcption(e,f"从html获取g_data {gid}_{token} 失败 ")
+            raise makeTrackableExcption(e, f"从html获取g_data {gid}_{token} 失败 ")
         try:
             pageElem = BeautifulSoup(html, features="html.parser")
             urlSplit = pageElem.select_one("td.ptds > a").get("href").split("/")
@@ -439,20 +461,9 @@ class proxyAccessor:
             for row in pageElem.select("#taglist > table > tr"):
                 rowname = row.select_one("td.tc").text
                 tags.extend([rowname + x.text for x in row.select("td > div > a")])
+
             favo = pageElem.select_one("#favoritelink").text
-            downloaded = (
-                self.db.execute(
-                    "SELECT COUNT(*) FROM downloaded WHERE id_token =?",
-                    ("{}_{}".format(gid, token),),
-                ).fetchone()[0]
-                == 1
-            )
-            downloadedProcess = [0, 0]
-            if downloaded:
-                downloadedProcess = self.db.execute(
-                    "SELECT over,total FROM downloaded WHERE id_token =?",
-                    ("{}_{}".format(gid, token),),
-                ).fetchone()
+            downloaded,downloadedProcess = self.getDownloadExtend(gid,token)
 
             g_data = {
                 "gid": gid,
@@ -484,7 +495,7 @@ class proxyAccessor:
             return g_data
         except Exception as e:
             # raise Exception(f"解析失败,{html}")
-            raise makeTrackableExcption(e,f"创建g_data 解析失败,{html}")
+            raise makeTrackableExcption(e, f"创建g_data 解析失败,{html}")
 
     def g_data_official(self, gid, token):
         try:
@@ -509,15 +520,15 @@ class proxyAccessor:
             g_data = json.loads(r)["gmetadata"][0]
             self.setCache(
                 gid, token, "cover", g_data["thumb"].replace("exhentai.org", "ehgt.org")
-            )
+            )#只有下载时 才会请求官方API 紧接着就会需要下载分娩
             return g_data
         except Exception as e:
             # raise Exception(f"{e.__str__()}\n官方API获取g_data {gid}_{token} 失败")
-            raise makeTrackableExcption(e,f"官方API获取g_data {gid}_{token} 失败")
+            raise makeTrackableExcption(e, f"官方API获取g_data {gid}_{token} 失败")
 
     def get_g_data(self, gid, token):
         if self.getCache(gid, token, "g_data") != None:
-            print("get g_data from cache", gid, token)
+            logger.info(f"get g_data from cache {gid}_{token}")
             return self.getCache(gid, token, "g_data")
         queryres = self.db.execute(
             "select g_data from downloaded where id_token == ?",
@@ -525,8 +536,15 @@ class proxyAccessor:
         ).fetchone()
         if queryres is not None:
             query_g_data = json.loads(queryres[0])
+            favo = False
+            downloaded,downloadedProcess = self.getDownloadExtend(gid,token)
+            query_g_data["extended"] = {
+                "favo": favo,
+                "downloaded": downloaded,
+                "process": downloadedProcess,
+            }
             self.setCache(gid, token, "g_data", query_g_data)
-            print("get g_data from db", gid, token)
+            logger.info(f"get g_data from db {gid}_{token}")
             return query_g_data
         try:
             g_data = self.g_data_from_pageHtml(gid, token)
@@ -534,19 +552,21 @@ class proxyAccessor:
             self.setCache(
                 gid, token, "cover", g_data["thumb"].replace("exhentai.org", "ehgt.org")
             )
+            logger.info(f"get g_data from pageHtml {gid}_{token}")
             return g_data
         except Exception as e:
             # raise Exception(f"{e.__str__()}\n获取g_data {gid}_{token} 失败 ")
-            raise makeTrackableExcption(e,f"获取g_data {gid}_{token} 失败 ")
+            raise makeTrackableExcption(e, f"获取g_data {gid}_{token} 失败 ")
 
     def get_main_gallarys(self, url=""):
         html = None
         try:
-            print("爬取主页画廊列表中,url=", url)
-            start = time.time()
-            html = BeautifulSoup(self._getHtml_ignore_cache(url), features="html.parser")
+            logger.info(f"爬取主页 url={url}")
+            html = BeautifulSoup(
+                self._getHtml_ignore_cache(url), features="html.parser"
+            )
         except Exception as e:
-            raise makeTrackableExcption(e,f"获取主页画廊列表失败 url={url}")
+            raise makeTrackableExcption(e, f"获取主页画廊列表失败 url={url}")
 
         infos = []
         mainElem = html.select("div.gl1t")
@@ -611,40 +631,36 @@ class proxyAccessor:
                     "pages": pages,
                 }
             )
-        print("爬取主页画廊列表", url, "完成耗时", time.time() - start)
         return infos
 
+    @printPerformance
     def get_cover(self, gid, token):
         filename = "{}_{}.jpg".format(gid, token)
         cachedCover = os.path.join(self.cachePath, filename)
         downloadCover = os.path.join(self.coverPath, filename)
         if os.path.exists(downloadCover):  # 存在 则一定通过检查 就不需要多此一举了
-            print("封面", filename, "已下载")
+            # logger.debug(f"封面 {filename} 已下载")
             return downloadCover
         elif os.path.exists(cachedCover):
-            print("封面", filename, "已缓存")
+            # logger.debug(f"封面 {filename} 已缓存")
             return cachedCover
         else:
-            start = time.time()
             url = self.getCache(gid, token, "cover")
             if url is None:
-                print("封面", filename, "从页面获取中...")
+                logger.debug(f"封面 {filename} 从页面获取中...")
                 try:
                     g_data = self.get_g_data(gid, token)
                     url = g_data["thumb"].replace("exhentai.org", "ehgt.org")
                 except Exception as e:
-                    print("封面", filename, "从页面获取失败", e)
-                    # raise Exception(f"{e.__str__()}\n封面 {filename} 下载失败")
-                    raise makeTrackableExcption(e,f"封面 {filename} 下载失败")
-
+                    logger.error(f"封面 {filename} 从页面获取失败")
+                    raise makeTrackableExcption(e, f"封面 {filename} 下载失败")
             try:
                 self.downloadImgFile(url, cachedCover)
-                print("封面", filename, "下载完成,用时", time.time() - start)
+                logger.debug(f"封面 {filename} 下载完成")
                 return cachedCover
             except Exception as e:
-                print(e)
-                # raise Exception(f"{e.__str__()}\n封面 {filename} 下载失败")
-                raise makeTrackableExcption(e,f"封面 {filename} 下载失败")
+                logger.error(f"封面 {filename} 下载失败")
+                raise makeTrackableExcption(e, f"封面 {filename} 下载失败")
 
     def get_gallary_html(self, gid, token, index=0):
         page_key = "P_{}".format(index)
@@ -654,9 +670,9 @@ class proxyAccessor:
         try:
             return self.get_gallary_html_ignore_cache(gid, token, index)
         except Exception as e:
-            # raise e
-            raise makeTrackableExcption(e,f"获取页面{gid}_{token}:{index} 失败")
+            raise makeTrackableExcption(e, f"获取页面{gid}_{token}:{index} 失败")
 
+    @printPerformance
     def get_gallary_html_ignore_cache(self, gid, token, index=0):
         page_key = "P_{}".format(index)
         url = "/g/{}/{}/?p={}".format(gid, token, index)
@@ -666,8 +682,7 @@ class proxyAccessor:
             return result
         except Exception as e:
             # raise e
-            raise makeTrackableExcption(e,f"忽略缓存获取页面{gid}_{token}:{index} 失败")
-
+            raise makeTrackableExcption(e, f"忽略缓存获取页面{gid}_{token}:{index} 失败")
 
     def get_preview(self, gid, token, index):
         html = None
@@ -675,7 +690,7 @@ class proxyAccessor:
             html = self.get_gallary_html(gid, token, (index - 1) // 20)
         except Exception as e:
             # raise Exception(f"{e.__str__()}\n预览图 {gid}_{token}:{index} 画廊页面获取失败")
-            raise makeTrackableExcption(e,f"预览图 {gid}_{token}:{index} 画廊页面获取失败")
+            raise makeTrackableExcption(e, f"预览图 {gid}_{token}:{index} 画廊页面获取失败")
         soup = BeautifulSoup(html, features="html.parser")
         picUrl = (
             soup.select("div.gdtl > a > img")[(index - 1) % 20]
@@ -685,18 +700,16 @@ class proxyAccessor:
         try:
             return urllib.request.urlopen(picUrl).read()
         except Exception as e:
-            # raise Exception(f"{e.__str__()}\n预览图 {gid}_{token}:{index} 数据下载失败")
-            raise makeTrackableExcption(e,f"预览图 {gid}_{token}:{index} 数据下载失败")
+            raise makeTrackableExcption(e, f"预览图 {gid}_{token}:{index} 数据下载失败")
 
+    @printPerformance
     def get_comment(self, gid, token):
         html = None
-        start = time.time()
-        print("获取评论", gid, token)
+        logger.debug(f"获取评论 {gid}_{token}")
         try:
             html = self.get_gallary_html(gid, token)
         except Exception as e:
-            # raise Exception(f"{e.__str__()}\n评论 {gid}_{token} 画廊页面获取失败")
-            raise makeTrackableExcption(e,f"评论 {gid}_{token} 画廊页面获取失败")
+            raise makeTrackableExcption(e, f"评论 {gid}_{token} 画廊页面获取失败")
         try:
             result = []
             for comment in BeautifulSoup(html, features="html.parser").select("div.c1"):
@@ -730,18 +743,17 @@ class proxyAccessor:
                         "bref": comment_bref,
                     }
                 )
-            print("获取评论完成", gid, token, "用时", time.time() - start)
             return result
         except Exception as e:
-            # raise Exception(f"解析失败,{html}")
-            raise makeTrackableExcption(e,f"获取评论 html解析失败,{html}")
+            raise makeTrackableExcption(e, f"获取评论 html解析失败,{html}")
 
+    @printPerformance
     def get_img(self, gid, token, index):
         formatedindex = "{0:08d}".format(int(index))
         filename = "{}_{}_{}.jpg".format(gid, token, formatedindex)
         cachePath = os.path.join(self.cachePath, filename)
         if os.path.exists(cachePath):
-            print("图片", gid, token, index, "已缓存")
+            logger.debug(f"图片 {gid}_{token}:{index} 已缓存")
             return cachePath
         localPath = os.path.join(
             self.gallaryPath,
@@ -749,18 +761,14 @@ class proxyAccessor:
         )
 
         if os.path.exists(localPath):
-            print("图片", gid, token, index, "已下载")
+            logger.debug(f"图片 {gid}_{token}:{index} 已下载")
             return localPath
-        start = time.time()
-
-        print("图片", gid, token, index, "缓存中...")
         html = None
-
+        logger.debug(f"获取图片 {gid}_{token}:{index}")
         try:
             html = self.get_gallary_html(gid, token, (index - 1) // 20)
         except Exception as e:
-            # raise Exception(f"{e.__str__()}\n获取图片 {gid}_{token}:{index} 画廊页面获取失败")
-            raise makeTrackableExcption(e,f"获取图片 {gid}_{token}:{index} 画廊页面获取失败")
+            raise makeTrackableExcption(e, f"获取图片 {gid}_{token}:{index} 画廊页面获取失败")
 
         soup = BeautifulSoup(html, features="html.parser")
         pageUrl = (
@@ -773,8 +781,7 @@ class proxyAccessor:
         try:
             pageHtml = self._getHtml_ignore_cache(pageUrl)
         except Exception as e:
-            # raise Exception(f"{e.__str__()}\n获取图片 {gid}_{token}:{index} 图片页面获取失败")
-            raise makeTrackableExcption(e,f"获取图片 {gid}_{token}:{index} 图片页面获取失败")
+            raise makeTrackableExcption(e, f"获取图片 {gid}_{token}:{index} 图片页面获取失败")
 
         skipHathKey = re.findall(r"onclick=\"return nl\('([^\)]+)'\)", pageHtml)
         if len(skipHathKey) != 0:
@@ -794,43 +801,33 @@ class proxyAccessor:
 
         if flag == False:
             pageUrl = pageUrl + "?nl=" + skipHathKey
-            print("图片", gid, token, index, "下载失败 ,  尝试跳过h@h  Url = ", pageUrl)
+            logger.debug(f"图片 {gid}_{token}:{index} 下载失败 ,  尝试跳过h@h  Url = {pageUrl}")
             try:
                 pageHtml = self._getHtml(pageUrl)
                 pageSoup = BeautifulSoup(pageHtml, features="html.parser")
                 imgSrc = pageSoup.select_one("#img").get("src")
                 self.downloadImgFile(imgSrc, cachePath)
             except Exception as e:
-                # raise Exception(f"{e.__str__()}\n获取图片 {gid}_{token}:{index} 跳过h@h失败")
-                raise makeTrackableExcption(e,f"获取图片 {gid}_{token}:{index} 跳过h@h失败")
-        print("图片", gid, token, index, "下载完成,用时", time.time() - start)
+                raise makeTrackableExcption(e, f"获取图片 {gid}_{token}:{index} 跳过h@h失败")
         return cachePath
-
-    @atomWarpper
-    def notifyDownloadProcess(self, obj):
-        self.downloadNotifyer(obj)
 
     def checkDownload(self, gid, token):
         coverPath = os.path.join(self.coverPath, "{}_{}.jpg".format(gid, token))
         if not checkImg(coverPath):
             os.remove(coverPath) if os.path.exists(coverPath) else None
-            print(
-                "封面检测不通过",
-                gid,
-                token,
-            )
+            logger.error(f"封面 {gid}_{token} 检测不通过")
             return False
         downloadDir = os.path.join(self.gallaryPath, "{}_{}".format(gid, token))
         g_dataPath = os.path.join(downloadDir, "g_data.json")
         if not os.path.exists(g_dataPath):
-            print("g_data.json不存在", gid, token)
+            logger.error(f"g_data.json不存在 {gid}_{token}")
             return False
         g_data = json.load(open(g_dataPath))
         if str(g_data["gid"]) != str(gid) or str(g_data["token"]) != str(
             g_data["token"]
         ):
             os.remove(g_dataPath)
-            print("g_data检测不通过", gid, token)
+            logger.error(f"g_data.json不匹配 {gid}_{token}")
             return False
         flag = True
         for i in range(1, int(g_data["filecount"]) + 1):
@@ -838,82 +835,65 @@ class proxyAccessor:
             if not checkImg(imgPath):
                 os.remove(imgPath) if os.path.exists(imgPath) else None
                 flag = False
-                print("图片", gid, token, i, "检测不通过")
+                logger.error(f"图片 {gid}_{token}:{i} 检测不通过")
         return flag
 
     @atomWarpper
+    @printPerformance
     def updateDownloadREC(self, gid, token, g_data=None, over=0):
         id_token = "{}_{}".format(gid, token)
-        recExists = (
-            self.db.execute(
-                "SELECT count(*) FROM downloaded WHERE id_token = ?", (id_token,)
-            ).fetchone()[0]
-            == 1
-        )
-        if recExists:
+        if g_data == None:
             self.db.execute(
                 "UPDATE downloaded SET over = ? WHERE id_token = ?", (over, id_token)
             )
         else:
-            if g_data == None:
-                try:
-                    g_data = self.g_data_official(gid, token)
-                except Exception as e:
-                    print(e.__str__())
-                    return
-            self.db.execute(
-                "INSERT INTO downloaded (id_token,over,total,g_data) VALUES (?,?,?,?)",
-                (id_token, over, int(g_data["filecount"]), json.dumps(g_data)),
+            recExists = (
+                self.db.execute(
+                    "SELECT count(*) FROM downloaded WHERE id_token = ?", (id_token,)
+                ).fetchone()[0]
+                == 1
             )
+            if recExists:
+                self.db.execute(
+                    "UPDATE downloaded SET over = ? WHERE id_token = ?",
+                    (over, id_token),
+                )
+            else:
+                self.db.execute(
+                    "INSERT INTO downloaded (id_token,over,total,g_data) VALUES (?,?,?,?)",
+                    (id_token, over, int(g_data["filecount"]), json.dumps(g_data)),
+                )
         self.db.commit()
 
     def onJobChange(self, action, info, result):
         if action == "running":
             pass
-        elif action == "finished":
+        elif action == "finished":  # job完成
             gid = result["gid"]
             token = result["token"]
-            if result["type"] == "init":
-                self.updateCurrentDownloadProcess("set", result["result"])
-                self.notifyDownloadProcess(
-                    {"gid": gid, "token": token, "tag": "notify", "msg": "开始下载"}
-                )
+            if result["type"] == "init":  # 下载初始化job完成
+                self.updateCurrentDownloadProcess("set", result["result"])  # 更新当前下载进度
+                self.reportDownloadProcess("queueChange")  # 报告当前下载进度
             elif result["type"] == "over":
-                print("下载完成", gid, token, result["result"])
-                self.notifyDownloadProcess(
-                    {
-                        "gid": gid,
-                        "token": token,
-                        "tag": "notify",
-                        "msg": result["result"],
-                    }
-                )
+                logger.debug(f"下载完成 {gid}_{token}")
+                # 下载结束
+                # 先报告进度，会用到成功失败计数器
+                # 再更新数据库记录
+                # 最后清空成功失败计数器
+                self.reportDownloadProcess("over", gid, token)
                 self.updateDownloadREC(gid, token, None, self.currendDownloadProcess[0])
-                self.updateCurrentDownloadProcess("reset")
+                self.updateCurrentDownloadProcess("reset", None)
             elif result["type"] == "delete":
-                print("已删除", result["gid"], result["token"])
-                self.notifyDownloadProcess(
-                    {
-                        "gid": gid,
-                        "token": token,
-                        "tag": "notify",
-                        "msg": "deleteSuccess",
-                    }
-                )
-
+                logger.debug(f"已删除 {result['gid']}_{result['token']}")
+                self.reportDownloadProcess("delete", gid, token)
             elif result["type"] == "download":
-                self.updateCurrentDownloadProcess(result["result"])
-                self.updateDownloadREC(gid, token, None, self.currendDownloadProcess[0])
-                self.notifyDownloadProcess(
-                    {
-                        "gid": gid,
-                        "token": token,
-                        "tag": "reportProcess",
-                        "msg": self.currendDownloadProcess,
-                    }
-                )
+                self.updateCurrentDownloadProcess(result["result"], None)
+                self.reportDownloadProcess("process", gid,token)
+                # self.updateDownloadREC(gid, token, None, self.currendDownloadProcess[0])
+                # 下载中 不再实时更新数据库进度
+                # 仅在添加下载时 over = -1 下载中 over = 0 下载结束 over = downloadCount
             else:
-                print("未知type", result["type"])
+                logger.warning(f"未知type {result['type']}")
         elif action == "add":
             pass
         elif action == "insert":
@@ -921,7 +901,7 @@ class proxyAccessor:
         elif action == "remove":
             pass
         else:
-            print("未知action", action)
+            logger.warning(f"未知action {action}")
 
     def handeler(self, job):
         try:
@@ -938,8 +918,8 @@ class proxyAccessor:
         gid, token, g_data, arg = job
         downloadDir = os.path.join(self.gallaryPath, "{}_{}".format(gid, token))
         if arg == "init":
-            print("开始下载", gid, token)
-            self.updateDownloadREC(gid, token, g_data, 0)
+            logger.info(f"开始下载 {gid}_{token}")
+            self.updateDownloadREC(gid, token, None, 0)
             os.makedirs(downloadDir, exist_ok=True)
             json.dump(
                 g_data,
@@ -961,6 +941,7 @@ class proxyAccessor:
             except Exception as e:
                 raise Exception(f"{e}\n下载{gid}_{token}时 封面下载失败")
         elif arg == "over":
+            self.downloadingListHaneler(gid, token, "remove")
             return {
                 "type": "over",
                 "gid": gid,
@@ -971,7 +952,7 @@ class proxyAccessor:
                 else "downloadFailed",
             }
         elif arg == "delete":
-            print("删除", gid, token)
+            logger.info(f"删除 {gid}_{token}")
             self.db.execute(
                 "DELETE FROM downloaded WHERE id_token = ?",
                 ("{}_{}".format(gid, token),),
@@ -1010,18 +991,36 @@ class proxyAccessor:
                 "result": "success",
             }
 
+    @atomWarpper
+    def downloadingListHaneler(self, gid, token, action):
+        if action == "add":
+            self.downloading.append((gid, token))
+        elif action == "remove":
+            self.downloading.remove((gid, token))
+        elif action == "include":
+            return (gid, token) in self.downloading
+        else:
+            logger.error(f"未知action {action}")
+
     def download(self, gid, token):
+        if self.downloadingListHaneler(gid, token, "include"):
+            logger.warning(f"{gid}_{token} 已在下载列表中")
+            return
         g_data = None
         try:
             g_data = self.g_data_official(gid, token)
         except Exception as e:
-            print("g_data无法获取", gid, token)
+            logger.warning(f"下载画廊时 g_data无法获取 {gid}_{token}")
             self.JobSchedulerInstance.add_job(
                 [gid, token, g_data, "over"], "{}_{}".format(gid, token)
             )  # 直接设置完成 然后经过检查 在通知前端
             return
 
         self.updateDownloadREC(gid, token, g_data, -1)
+
+        # 添加正在下载标识 然后不响应同个画廊的下载请求
+        self.downloadingListHaneler(gid, token, "add")
+
         self.JobSchedulerInstance.add_job(
             [gid, token, g_data, "init"], "{}_{}".format(gid, token)
         )
@@ -1046,12 +1045,67 @@ class proxyAccessor:
     def listJobs(self):
         return self.JobSchedulerInstance.listJobs()
 
+    def downloadMany(self, gid_token_list):
+        for gid_token in gid_token_list:
+            gid, token = gid_token.split("_")
+            self.download(gid, token)
+
+    def reDownloadAllFailed(self):
+        needDownload = self.db.execute(
+            "SELECT id_token FROM downloaded WHERE over != total"
+        ).fetchall()
+        gid_tokens = [gid_token for (gid_token,) in needDownload]
+        threading.Thread(target=self.downloadMany, args=(gid_tokens,)).start()
+        return gid_tokens
+
+    def reportDownloadProcess(
+        self, action, gid=None, token=None
+    ):  # 在添加下载 下载进度变化 下载结束时 通知
+        if action == "queueChange":
+            self.downloadNotifyer(
+                {
+                    "type": "queueChange",
+                    "data": self.downloading,  # 在提交下载的时候，self.downloading就已经更新，当下载初始化job完成时，才会报告
+                }
+            )
+        elif action == "process":
+            self.downloadNotifyer(
+                {
+                    "type": "process",
+                    "data": {
+                        "gid": gid,
+                        "token": token,
+                        "process": self.currendDownloadProcess,
+                    },
+                }
+            )
+        elif action == "over":
+            self.downloadNotifyer(
+                {
+                    "type": "over",
+                    "data": {
+                        "gid": gid,
+                        "token": token,
+                        "process": self.currendDownloadProcess,
+                    },
+                }
+            )
+        elif action == "delete":
+            self.downloadNotifyer(
+                {
+                    "type": "delete",
+                    "data": {
+                        "gid": gid,
+                        "token": token,
+                    },
+                }
+            )
 
 ROOT_PATH = r"./"
 CONFIG_PATH = os.path.join(ROOT_PATH, r"config.json")
 
 if not os.path.exists(CONFIG_PATH):
-    print("配置文件不存在")
+    logger.error("配置文件不存在")
     exit(0)
 
 CONFIG = json.load(open(CONFIG_PATH))
@@ -1060,10 +1114,10 @@ DOWNLOAD_PATH = CONFIG["DOWNLOAD_PATH"]
 
 if DOWNLOAD_PATH == "":
     DOWNLOAD_PATH = os.environ.get("EH_DOWNLOAD_PATH", "")
-    print("using downloadpath from env")
+    logger.info("using downloadpath from env")
 
 if DOWNLOAD_PATH == "":
-    print("下载目录不存在")
+    logger.error("下载目录不存在")
     exit(0)
 
 SERVER_FILE = os.path.join(ROOT_PATH, r"server")
@@ -1080,10 +1134,10 @@ COVER_PATH = os.path.join(DOWNLOAD_PATH, r"cover")
 for pathName in [os.path.split(DB_PATH)[0], CACHE_PATH, GALLARY_PATH, COVER_PATH]:
     if not os.path.exists(pathName):
         os.makedirs(pathName)
-        print("创建了目录", pathName)
+        logger.info(f"创建了目录 {pathName}")
 
 if not os.path.exists(DB_PATH):
-    print("数据库文件不存在,创建中...")
+    logger.info("数据库文件不存在,创建中...")
     with open(DB_PATH, "w") as f:
         f.write("")
 
@@ -1093,7 +1147,7 @@ if not os.path.exists(DB_PATH):
     )
     db.commit()
     db.close()
-    print("数据库文件创建完成")
+    logger.info("创建数据库成功")
 
 
 logger.info(f"ROOT_PATH {ROOT_PATH}")
@@ -1111,12 +1165,12 @@ if cookie == "":
     logger.info("using cookie from env")
 
 if cookie == "":
-    logger.warning("cookie未设置")
+    logger.error("cookie未设置")
     exit(1)
 # 如果config存在，优先使用config提供的cookie
 # 否则使用环境变量
 # 如果都不存在，则报错
-# print("using cookie", cookie)
+# logger.info(f"using cookie {cookie}")
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36",
@@ -1132,6 +1186,7 @@ class ConnectionManager:
         await ws.accept()
         self.active_connections.append(ws)
         logger.info(f"{str(ws)}连接成功")
+        pa.reportDownloadProcess("queueChange")
 
     def disconnect(self, ws: WebSocket):
         logger.info(f"{str(ws)}断开连接")
@@ -1145,11 +1200,12 @@ class ConnectionManager:
 wsManager = ConnectionManager()
 
 
+@atomWarpper
 def nofityDownloadMessage(message):
     global wsManager
 
     async def sendMessage():
-        logger.info(f"发送消息 {message} 到 {len(wsManager.active_connections)} 个连接")
+        # logger.info(f"发送消息 {message} 到 {len(wsManager.active_connections)} 个连接")
         await wsManager.broadcast(message)
 
     asyncio.run(sendMessage())
@@ -1212,6 +1268,11 @@ def delete(gid_token):
     return {"msg": "已提交删除"}
 
 
+@app.get("/redownloadall")
+def redownloadall():
+    return pa.reDownloadAllFailed()
+
+
 @app.get("/gallarys/{gid_token}/{filename}")
 def getfile(gid_token, filename, nocache=None):
     gid, token = gid_token.split("_")
@@ -1221,9 +1282,9 @@ def getfile(gid_token, filename, nocache=None):
                 return pa.get_g_data(gid, token)
             else:
                 try:
-                    return pa.g_data_from_pageHtml(gid, token)#nocache模式 优先去获取HTML
-                except Exception as e:#获取失败则尝试其他方法 例如尝试访问一个被删除的画廊
-                    return pa.get_g_data(gid, token)#其他方法页失败则raise
+                    return pa.g_data_from_pageHtml(gid, token)  # nocache模式 优先去获取HTML
+                except Exception as e:  # 获取失败则尝试其他方法 例如尝试访问一个被删除的画廊
+                    return pa.get_g_data(gid, token)  # 其他方法页失败则raise
         else:
             index = int(filename.split(".")[0])
             filepath = pa.get_img(gid, token, index)
@@ -1235,7 +1296,7 @@ def getfile(gid_token, filename, nocache=None):
                 },
             )
     except Exception as e:
-        trackE = makeTrackableExcption(e,f"请求文件 {gid_token} {filename} 失败")
+        trackE = makeTrackableExcption(e, f"请求文件 {gid_token} {filename} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=417, detail=str(trackE))
 
@@ -1251,7 +1312,7 @@ def getfile(gid_token, filename):
             headers={"Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000"},
         )
     except Exception as e:
-        trackE = makeTrackableExcption(e,f"请求预览 {gid_token} {filename} 失败")
+        trackE = makeTrackableExcption(e, f"请求预览 {gid_token} {filename} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=404, detail=str(trackE))
 
@@ -1263,7 +1324,7 @@ def comment(gid_token):
         comment = pa.get_comment(gid, token)
         return comment
     except Exception as e:
-        trackE = makeTrackableExcption(e,f"请求评论 {gid_token} 失败")
+        trackE = makeTrackableExcption(e, f"请求评论 {gid_token} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=417, detail=str(trackE))
 
@@ -1282,7 +1343,7 @@ def gallaryList(path, request: Request):
         result = pa.get_main_gallarys(url)
         return result
     except Exception as e:
-        trackE = makeTrackableExcption(e,f"请求列表 {url} 失败")
+        trackE = makeTrackableExcption(e, f"请求列表 {url} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=417, detail=str(trackE))
 
@@ -1295,7 +1356,7 @@ def gallaryListNoPath(request: Request):
         result = pa.get_main_gallarys(url)
         return result
     except Exception as e:
-        trackE = makeTrackableExcption(e,f"请求列表 {url} 失败")
+        trackE = makeTrackableExcption(e, f"请求列表 {url} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=417, detail=str(trackE))
 
@@ -1310,7 +1371,7 @@ def cover(filename):
             headers={"Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000"},
         )
     except Exception as e:
-        trackE = makeTrackableExcption(e,f"请求封面 {filename} 失败")
+        trackE = makeTrackableExcption(e, f"请求封面 {filename} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=404, detail=str(trackE))
 
