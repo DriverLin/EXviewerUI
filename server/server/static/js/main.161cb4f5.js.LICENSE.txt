@@ -5,13 +5,16 @@ object-assign
 */
 
 /*!
- * The buffer module from node.js, for the browser.
- *
- * @author   Feross Aboukhadijeh <http://feross.org>
- * @license  MIT
- */
 
-/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+JSZip v3.7.1 - A JavaScript class for generating and reading zip files
+<http://stuartk.com/jszip>
+
+(c) 2009-2016 Stuart Knightley <stuart [at] stuartk.com>
+Dual licenced under the MIT license or GPLv3. See https://raw.github.com/Stuk/jszip/master/LICENSE.markdown.
+
+JSZip uses the library pako released under the MIT license :
+https://github.com/nodeca/pako/blob/master/LICENSE
+*/
 
 /**
  * A better abstraction over CSS.
@@ -22,7 +25,7 @@ object-assign
  */
 
 /**
- * React Router v6.1.1
+ * React Router v6.2.2
  *
  * Copyright (c) Remix Software Inc.
  *
@@ -32,7 +35,7 @@ object-assign
  * @license MIT
  */
 
-/** @license MUI v5.2.0
+/** @license MUI v5.4.4
  *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
