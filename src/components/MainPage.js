@@ -72,7 +72,6 @@ export default function MainPage(props) {
 
     const matches = useMediaQuery('(min-width:830px)');
     const small_matches = useMediaQuery('(min-width:560px)');
-    const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
     const useStyles = makeStyles((theme) => ({
         root: {
             flexGrow: 1,
@@ -427,12 +426,10 @@ export default function MainPage(props) {
         text: "设置"
     })
 
-    const searhLocal = useSettingBind("搜索本地并合并结果")
+    const searhLocal = useSettingBind("搜索本地并合并结果",false)
     const doSearch = (text) => {
         openCurrentTab(`/search?f_search=${encodeURIComponent(text)}`)
     }
-
-
 
     const ws = useRef(null)
 
