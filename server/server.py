@@ -1161,10 +1161,9 @@ if not os.path.exists(CONFIG_PATH):
 
 CONFIG = json.load(open(CONFIG_PATH))
 
-DOWNLOAD_PATH = CONFIG["DOWNLOAD_PATH"]
-
+DOWNLOAD_PATH = os.environ.get("EH_DOWNLOAD_PATH", "")
 if DOWNLOAD_PATH == "":
-    DOWNLOAD_PATH = os.environ.get("EH_DOWNLOAD_PATH", "")
+    DOWNLOAD_PATH = CONFIG["DOWNLOAD_PATH"]
     logger.info("using downloadpath from env")
 
 if DOWNLOAD_PATH == "":
