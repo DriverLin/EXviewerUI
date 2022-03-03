@@ -13,7 +13,7 @@ from turtle import down
 import urllib.request
 import urllib.error
 from typing import List
-from urllib.parse import urljoin
+from urllib.parse import urljoin,parse_qs
 
 import coloredlogs
 import requests
@@ -39,6 +39,7 @@ fmt = f"%(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
 coloredlogs.install(
     level=logging.DEBUG, logger=logger, milliseconds=True, datefmt="%X", fmt=fmt
 )
+
 
 
 def printTrackableException(e):
@@ -113,6 +114,9 @@ def checkImg(img):
     else:
         logger.warning("checkImg: unknow arg type", type(img))
     return lastBytes in [b"\xff\xd9", b"\x60\x82", b"\x00\x3b"]
+
+def timestamp_to_str(formatstr, timestamp):
+    return time.strftime(formatstr, time.localtime(timestamp))
 
 
 class multhread_cache(object):  # 等重写吧。。。
@@ -1058,18 +1062,18 @@ class proxyAccessor:
         threading.Thread(target=self.downloadMany, args=(gid_tokens,)).start()
         return gid_tokens
 
-    def reportDownloadProcess(
+    def getDownloadProcess(
         self, action, gid=None, token=None
-    ):  # 在添加下载 下载进度变化 下载结束时 通知
+    ):
         if action == "queueChange":
-            self.downloadNotifyer(
+            return (
                 {
                     "type": "queueChange",
                     "data": self.downloading,  # 在提交下载的时候，self.downloading就已经更新，当下载初始化job完成时，才会报告
                 }
             )
         elif action == "process":
-            self.downloadNotifyer(
+            return (
                 {
                     "type": "process",
                     "data": {
@@ -1080,7 +1084,7 @@ class proxyAccessor:
                 }
             )
         elif action == "over":
-            self.downloadNotifyer(
+            return (
                 {
                     "type": "over",
                     "data": {
@@ -1091,7 +1095,7 @@ class proxyAccessor:
                 }
             )
         elif action == "delete":
-            self.downloadNotifyer(
+            return (
                 {
                     "type": "delete",
                     "data": {
@@ -1100,6 +1104,53 @@ class proxyAccessor:
                     },
                 }
             )
+        return None
+
+    def reportDownloadProcess(self, action, gid=None, token=None):  
+        msg = self.getDownloadProcess(action, gid, token)
+        self.downloadNotifyer(msg) if msg is not None else None
+
+    def localSearch(self,query):
+        logger.info(f"搜索 {query}")
+        str = parse_qs(query)['f_search'][0]
+        tagRe = '[A-Za-z0-9]+:"[^\$]+\$"'
+        wordRe = '[\u0800-\u4e00\u4E00-\u9FA5A-Za-z0-9_]+'
+        tags = []
+        for tagRes in re.findall(tagRe, str):
+            str = str.replace(tagRes, '')
+            tags.append( re.sub('\$|"', '', tagRes))
+        words = [json.dumps(x,ensure_ascii=True)[1:-1] for x  in  re.findall(wordRe, str)]
+        sql = "SELECT g_data FROM downloaded WHERE 1 == 1 "
+        for tag in tags:
+            sql += f"AND g_data LIKE '%{tag}%' "
+        for word in words:
+            sql += f"AND g_data LIKE '%{word}%' "
+        sql += "ORDER BY addSerial DESC"
+        # print(sql)
+        result = []
+        for (g_data_json,) in self.db.execute(sql).fetchall():
+            g_data = json.loads(g_data_json) 
+            gid = g_data["gid"]
+            token = g_data["token"]
+            result.append(
+                {
+                    "gid": f"{gid}",
+                    "token": token,
+                    "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
+                    "name": g_data["title_jpn"] if g_data["title_jpn"] != "" else g_data["title"],
+                    "rank": float(g_data["rating"]) ,
+                    "category": g_data["category"],
+                    "uploadtime": timestamp_to_str("%Y-%m-%d %H:%M",  int(g_data["posted"])),
+                    "downloaded": True,
+                    "favo": False,
+                    "process": [0, 0],
+                    "lang": "chinese"  if "language:chinese" in g_data["tags"] else "",
+                    "pages": g_data["filecount"],
+                }
+            )
+        return result
+
+
 
 ROOT_PATH = r"./"
 CONFIG_PATH = os.path.join(ROOT_PATH, r"config.json")
@@ -1185,11 +1236,14 @@ class ConnectionManager:
     async def connect(self, ws: WebSocket):
         await ws.accept()
         self.active_connections.append(ws)
-        logger.info(f"{str(ws)}连接成功")
-        pa.reportDownloadProcess("queueChange")
+        logger.info(f"WebSocket[{ws.client.host}:{ws.client.port}] 连接成功")
+        msg = pa.getDownloadProcess("queueChange")
+        await ws.send_json(msg) if msg is not None else None
+
+
 
     def disconnect(self, ws: WebSocket):
-        logger.info(f"{str(ws)}断开连接")
+        logger.info(f"WebSocket[{ws.client.host}:{ws.client.port}] 断开链接")
         self.active_connections.remove(ws)
 
     async def broadcast(self, message):
@@ -1203,12 +1257,13 @@ wsManager = ConnectionManager()
 @atomWarpper
 def nofityDownloadMessage(message):
     global wsManager
-
     async def sendMessage():
         # logger.info(f"发送消息 {message} 到 {len(wsManager.active_connections)} 个连接")
         await wsManager.broadcast(message)
-
-    asyncio.run(sendMessage())
+    try:
+        asyncio.run(sendMessage())
+    except Exception as e:
+        logger.error(f"发送消息失败 {e}")
 
 
 pa = proxyAccessor(
@@ -1353,7 +1408,10 @@ def gallaryListNoPath(request: Request):
     query = str(request.scope["query_string"], encoding="utf-8")
     url = "" if query == "" else "?" + query
     try:
-        result = pa.get_main_gallarys(url)
+        extendResult = []
+        if "f_search" in query and "page=0" in query and "search_and_merge_local=true" in query:
+            extendResult = pa.localSearch(query)
+        result = extendResult + pa.get_main_gallarys(url) 
         return result
     except Exception as e:
         trackE = makeTrackableExcption(e, f"请求列表 {url} 失败")
