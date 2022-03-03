@@ -68,7 +68,6 @@ const translateGdata2CardData = (g_data) => {
 
 export default function MainPage(props) {
     const locationProps = useLocation()
-    const currrentUrl = useMemo(() => locationProps.pathname, [locationProps])
 
     const matches = useMediaQuery('(min-width:830px)');
     const small_matches = useMediaQuery('(min-width:560px)');
@@ -274,7 +273,7 @@ export default function MainPage(props) {
         console.log("static ? ",
             (window.serverSideConfigure.type === "staticApi"
                 || localStorage.getItem("offline_mode") === "true"
-                || currrentUrl === "/downloaded")
+                || locationProps.pathname === "/downloaded")
         )
 
         if (window.serverSideConfigure.type === "Data.db") {
@@ -282,7 +281,7 @@ export default function MainPage(props) {
         } else if (
             window.serverSideConfigure.type === "staticApi"
             || localStorage.getItem("offline_mode") === "true"
-            || currrentUrl === "/downloaded"
+            || locationProps.pathname === "/downloaded"
         ) {
             init_AllDATA_API()
         } else {
@@ -293,8 +292,8 @@ export default function MainPage(props) {
                 "/popular": "/list/popular?0=0",
                 "/favorites": "/list/favorites.php?0=0",
             }
-            apiUrl.current = urlMap[currrentUrl]
-            console.log("apiUrl.current", currrentUrl, "->", apiUrl.current)
+            apiUrl.current = urlMap[locationProps.pathname]
+            console.log("locationProps.pathname -> apiUrl.current : ", locationProps.pathname, "->", apiUrl.current)
             requestNextPage()
         }
     }
@@ -387,7 +386,7 @@ export default function MainPage(props) {
         window.serverSideConfigure.type === "staticApi"
         || window.serverSideConfigure.type === "Data.db"
         || localStorage.getItem("offline_mode") === "true"
-        || currrentUrl === "/downloaded"
+        || locationProps.pathname === "/downloaded"
     ) {
         menuItems.push({
             onClick: randomSort,
@@ -452,7 +451,7 @@ export default function MainPage(props) {
             ws.current.close()
             ws.current = null
         }
-        if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true" && currrentUrl === "/downloaded") {
+        if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true" && locationProps.pathname === "/downloaded") {
             try {
                 const wssOrWS = window.location.protocol === "https:" ? "wss:" : "ws:"
                 let wsUrl = `${wssOrWS}//${window.location.host}/ws`

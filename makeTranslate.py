@@ -4,11 +4,13 @@ import requests
 
 
 try:
-    jsdata = json.loads(requests.get("https://github.com/EhTagTranslation/Database/releases/latest/download/db.text.json").text)
+    jsdata = requests.get("https://github.com/EhTagTranslation/Database/releases/latest/download/db.text.json").json()
 except Exception as e:
         print("Failed to download newleast",e)
         exit(1)
+
 outDict = {}
+
 
 for item in jsdata["data"]:
     tagtype = item["namespace"]
