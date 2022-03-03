@@ -89,6 +89,16 @@ export default function AppSetting(props) {
                         help={(value) => `向后预加载${value}张图片`}
                     />
                 </Grid>
+
+                <div className={classes.splitLine} />
+
+                <Grid item sx={12} sx={{ width: "100%" }}>
+                    <SwitchType
+                        name={"搜索本地并合并结果"}
+                        defaultValue={false}
+                        help={(value) => value ? "搜索画廊时同时搜索本地数据库,合并后优先展示在最前面" : "仅搜索在线画廊"}
+                    />
+                </Grid>
             </Grid>
         </div>
     )

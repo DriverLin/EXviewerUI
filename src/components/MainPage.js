@@ -24,6 +24,7 @@ import { useLocation } from "react-router-dom";
 import KeyboardController from '../KeyboardController';
 
 import { notifyMessage } from './utils/PopoverNotifier.js';
+import { useSettingBind } from './Settings';
 
 
 
@@ -288,7 +289,7 @@ export default function MainPage(props) {
         } else {
             const urlMap = {
                 "/": "/list/?0=0",
-                "/search": "/list/" + locationProps.search,
+                "/search": `/list/${locationProps.search}${searhLocal ? "&search_and_merge_local=true" : ""}`     ,
                 "/watched": "/list/watched?0=0",
                 "/popular": "/list/popular?0=0",
                 "/favorites": "/list/favorites.php?0=0",
@@ -426,7 +427,7 @@ export default function MainPage(props) {
         text: "设置"
     })
 
-
+    const searhLocal = useSettingBind("搜索本地并合并结果")
     const doSearch = (text) => {
         openCurrentTab(`/search?f_search=${encodeURIComponent(text)}`)
     }
