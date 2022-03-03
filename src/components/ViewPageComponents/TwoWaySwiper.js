@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { Swiper, SwiperSlide } from 'swiper/react/swiper-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
 import SwiperCore, { Virtual, Controller, Keyboard, Mousewheel } from 'swiper';
-import 'swiper/swiper.scss';
+// import 'swiper/swiper.scss';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/scrollbar';
+
 SwiperCore.use([Virtual, Controller, Keyboard, Mousewheel]);
 
 //反向滑动

@@ -5,12 +5,11 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import BrightnessAutoIcon from '@mui/icons-material/BrightnessAuto';
 
 export default function LeftMenu(props) {
-    const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     return (
         <SwipeableDrawer
-            disableBackdropTransition={!iOS}
-            disableDiscovery={iOS}
+            // disableBackdropTransition={!iOS}
+            // disableDiscovery={iOS}
             anchor={"left"}
             open={props.open}
             onOpen={() => { }}
