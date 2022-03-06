@@ -4,13 +4,18 @@ import RevSlider from './ViewPageComponents/RevSlider';
 import ViewSettingPanel from './ViewPageComponents/ViewSettingPanel';
 import MultPageSwiper from './ViewPageComponents/MultPageSwiper';
 import { useLocation } from "react-router-dom";
-import { useSettingBind } from './Settings';
+import { useSettingBind } from './utils/Settings';
 import { notifyMessage } from './utils/PopoverNotifier';
 
 
 
 export default function ViewPage() {
-    const [urls, setUrls] = useState([])
+    const [urls, _setUrls] = useState([])
+    const urlsRef = useRef([])
+    const setUrls = (v) => {
+        _setUrls(v)
+        urlsRef.current = v
+    } 
 
     const location = useLocation();
     const gid = location.pathname.split("/")[2]
@@ -44,9 +49,7 @@ export default function ViewPage() {
     
     const prevRange = 4
     const nextRange = useSettingBind("图片预加载",7)
-
-    
-    useEffect(() => {
+    const preload = () => {
         const start = pageNumRef.current - prevRange > 0 ? pageNumRef.current - prevRange : 1
         const end = pageNumRef.current + nextRange > pageCountRef.current ? pageCountRef.current : pageNumRef.current + nextRange
         for (let i = start; i <= end; i++) { 
@@ -54,9 +57,14 @@ export default function ViewPage() {
             img.onload = () => { 
                 img = null
             }
-            img.src = urls[i - 1]
+            img.src = urlsRef.current[i - 1]
         }
+    }
+
+    useEffect(() => {
+        preload()
     }, [pageNum])
+
 
     const [sliderOpen, setSliderOpen] = useState(false)
     const onSliderClose = () => {
@@ -104,6 +112,7 @@ export default function ViewPage() {
             }
             setUrls(tmpUrl)
             setPageCount(Number(data.filecount))
+            preload()
         } else { 
             const text = await response.text()
             try {

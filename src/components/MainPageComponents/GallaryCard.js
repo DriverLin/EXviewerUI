@@ -128,64 +128,41 @@ export default function GallaryCard(props) {
     const relative_height = small_matches ? 200 : 160;
     const classes = useStyles();
     const touchEvent = useRef({})
-
-    let cardTextInit = ""
-    const process = props.data.process
-    // let downloadIcon = props.data.downloaded//下载按钮显示 初始等于下载状态
-    
-    const [downloadIcon, setDownloadIcon] = useState(props.data.downloaded)
-    
-    
+    // let cardTextInit = ""
+    const [downloadIcon, setDownloadIcon] = useState(props.stause[2])
     let langText = ""
-
     if (props.data.lang in languageMap) {
         langText = languageMap[props.data.lang]
     }
-    //未知 下载中 下载完成 未完成 未开始
-    // [x,0] 未知
-    // [-1,pages] 未开始
-    // [0,pages] 下载中
-    // [x,pages] 下载结束 x==pages则完成 否则显示多少未下载
-    if (process[1] === 0 || process[0] === process[1] ) {
-        cardTextInit = langText + " " + props.data.pages + "P"
-    }
-    else {
-        if (process[0] === -1) {
-            cardTextInit = "未开始"
-        }else {
-            setDownloadIcon(false)
-            cardTextInit = `${process[1] - process[0]} 项未下载`
-        }
-    }
+    
+    const [cardTextShow, setCardTextShow] = useState("")
 
-    const [cardTextShow, setCardTextShow] = useState(cardTextInit)
-    const inProcess = useMemo(() => Number(props.processInfo.gid) === props.data.gid, [props.processInfo])
-    const [porcessData, setPorcessData] = useState([0,1])
-    const processRec = useRef([-1, 0])
+    const inProcess = useMemo(() => props.stause[0], [props.stause])
+    const favorited = useMemo( () => props.stause[1] > -1   ,[props.stause] )
+    const porcessData = useMemo( () => [props.stause[2],props.data.pages],[props.stause])
+
     useEffect(() => {//外部进度变化时
-        if (Number(props.processInfo.gid) === props.data.gid) {//对=对应自己 则记录
-            const over = props.processInfo.process[0]
-            const total = props.processInfo.process[2]
-            
-            setPorcessData([over, total]) //进度显示
-            
-            let tmpCardText = ""//文字显示 便于在进度显示完成之后 显示结果
-            if (total === 0 || over === total) {
+        const [downloading,favo,download] = props.stause
+        let tmpCardText = ""//文字显示 便于在进度显示完成之后 显示结果
+        if (download > -2) {
+            if(download === Number(props.data.pages)){
                 setDownloadIcon(true)
                 tmpCardText = langText + " " + props.data.pages + "P"
-            }
-            else {
-                if (over === -1) {
+            }else{
+                setDownloadIcon(false)
+                if(download === -1){
                     tmpCardText = "未开始"
-                } else {
-                    setDownloadIcon(false)
-                    tmpCardText = `${total-over} 项未下载`
-                }
+                }else{
+                    tmpCardText = `${Number(props.data.pages)-download} 项未下载`
+                } 
             }
-            setCardTextShow(tmpCardText)
         }
-    }, [props.processInfo]);
-    
+        else {
+            setDownloadIcon(false)
+            tmpCardText = langText + " " + props.data.pages + "P"
+        }
+        setCardTextShow(tmpCardText)
+    }, [props.stause]);
     return (
         <GallaryContainer
             name='clickable'
@@ -285,7 +262,7 @@ export default function GallaryCard(props) {
                                     : null
                             }
                             {
-                                props.data.favo ?
+                                favorited ?
                                     <div className={classes.d_icon}>
                                         <FavoriteIcon fontSize={small_matches ? "medium" : "small"} />
                                     </div>

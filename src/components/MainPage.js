@@ -24,8 +24,9 @@ import { useLocation } from "react-router-dom";
 import KeyboardController from '../KeyboardController';
 
 import { notifyMessage } from './utils/PopoverNotifier.js';
-import { useSettingBind } from './Settings';
+import { useSettingBind } from './utils/Settings';
 
+import { useStateStorageChange, dispathStateStorage } from './utils/StateSync';
 
 
 const formatTime = (time, format) => {
@@ -47,6 +48,12 @@ const formatTime = (time, format) => {
 }
 
 const translateGdata2CardData = (g_data) => {
+    let download = -2
+    let favo = -1
+    if (g_data.hasOwnProperty('extended')) {
+        download = g_data.extended.download
+        favo = g_data.extended.favo
+    }
     return {
         gid: g_data.gid,
         token: g_data.token,
@@ -55,14 +62,13 @@ const translateGdata2CardData = (g_data) => {
         rank: Number(g_data.rating),
         category: g_data.category,
         uploadtime: formatTime(Number(g_data.posted), 'yy-MM-dd hh:mm'),
-        downloaded: true,
-        favo: false,//下载页面 不显示是否收藏过
         lang: g_data.tags.indexOf("language:chinese") !== -1 ? "chinese" : "",
         pages: Number(g_data.filecount),
         tags: g_data.tags,
-        process: g_data.hasOwnProperty("extended") ? g_data.extended.process : [0, 0]
+        download:download,
+        favo:favo
+        // process: g_data.hasOwnProperty("extended") ? g_data.extended.process : [0, 0]
         //在前段判断是否有process字段  避免了对于DB模式的改造以及污染
-        //没有则是[0,0]
     }
 }
 
@@ -81,8 +87,34 @@ export default function MainPage(props) {
     const classes = useStyles();
 
     const [loadingBar, setLoadingBar] = useState(true)
-    const [galaryList, setgalaryList] = useState([]);
+    const [galaryList, _setGalaryList] = useState([])
 
+    const [gallaryState, setGallaryState] = useState({})//全局状态 保存收藏 下载 进度信息
+    const gallaryStateRef = useRef({})
+
+    const lastGallaryState = useRef([])
+    const setGalaryList = (value) => {
+        value.forEach(
+            item => {
+                if (!lastGallaryState.current.includes(item)) {
+                    const stause = [false, item["favo"], item["download"]]//downloading favonum downloadnum
+                    gallaryStateRef.current[item["gid"]] = stause
+                    dispathStateStorage(item["gid"], JSON.stringify(stause))
+                }
+            }
+        )
+        setGallaryState({ ...gallaryStateRef.current })
+        _setGalaryList(value)
+        lastGallaryState.current = value
+    }
+
+    useStateStorageChange((key, value) => {
+        if (key in gallaryStateRef.current && JSON.stringify(gallaryStateRef.current[key]) !== value) {
+            gallaryStateRef.current[key] = JSON.parse(value)
+            setGallaryState({ ...gallaryStateRef.current })
+            console.log("update gallaryState",JSON.stringify(gallaryStateRef.current[key]),"==>",value)
+        }
+    })
 
     const gallaryListRef = useRef(null)
     const gidSet = useRef(null)
@@ -158,14 +190,14 @@ export default function MainPage(props) {
                             console.log("duplicate", item.gid)
                         }
                     })
-                    console.log("gidSet.current", gidSet.current)
-                    setgalaryList([...gallaryListRef.current])
+                    // console.log("gidSet.current", gidSet.current)
+                    setGalaryList([...gallaryListRef.current])
                 } else {
                     console.log("数据已过期")
                 }
                 lock.current = false;
                 setLoadingBar(false)
-                console.log("请求结束", data)
+                // console.log("请求结束", data)
 
             } else {
                 lock.current = false;
@@ -190,7 +222,7 @@ export default function MainPage(props) {
                 gallaryListRef.current.push(cacheAll.current[i])
                 gidSet.current.add(cacheAll.current[i].gid)
             }
-            setgalaryList([...gallaryListRef.current])
+            setGalaryList([...gallaryListRef.current])
             lock.current = false;
             setLoadingBar(false)
         }
@@ -226,7 +258,6 @@ export default function MainPage(props) {
             })
         }
     }
-
     //对当前画廊进行按名字的hash排序
     const currentHashSort = () => {
         const nameDict = {}
@@ -253,7 +284,7 @@ export default function MainPage(props) {
             newList.push(...nameDict[hashName])
         }
         gallaryListRef.current = newList
-        setgalaryList(newList)
+        setGalaryList(newList)
     }
 
     const initPageFunc = () => {
@@ -264,7 +295,10 @@ export default function MainPage(props) {
         currentPageNum.current = 0;
         apiUrl.current = null
         loadover.current = false;
-        setgalaryList([])
+        lastGallaryState.current = []
+        gallaryStateRef.current = {}
+        setGalaryList([])
+        setGallaryState({})
 
 
         console.log("初始化页面")
@@ -287,7 +321,7 @@ export default function MainPage(props) {
         } else {
             const urlMap = {
                 "/": "/list/?0=0",
-                "/search": `/list/${locationProps.search}${searhLocal ? "&search_and_merge_local=true" : ""}`     ,
+                "/search": `/list/${locationProps.search}${searhLocal ? "&search_and_merge_local=true" : ""}`,
                 "/watched": "/list/watched?0=0",
                 "/popular": "/list/popular?0=0",
                 "/favorites": "/list/favorites.php?0=0",
@@ -326,9 +360,6 @@ export default function MainPage(props) {
         console.log("viewCallBack", g_data.gid, g_data.token)
         openNewTab(`/viewing/${g_data.gid}/${g_data.token}/`)
     }
-
-
-
 
     const [leftMenuOpen, setLeftMenuOpen] = useState(false)
     const handelLeftMenuClose = () => {
@@ -425,7 +456,7 @@ export default function MainPage(props) {
         text: "设置"
     })
 
-    const searhLocal = useSettingBind("搜索本地并合并结果",false)
+    const searhLocal = useSettingBind("搜索本地并合并结果", false)
     const doSearch = (text) => {
         openCurrentTab(`/search?f_search=${encodeURIComponent(text)}`)
     }
@@ -479,7 +510,7 @@ export default function MainPage(props) {
                             }
                         })
                         await Promise.all(jobs)
-                        setgalaryList([...gallaryListRef.current])
+                        setGalaryList([...gallaryListRef.current])
                     } else if (recvData.type === "process") {//进度变化
                         setProcessInfo(recvData.data)
                     } else if (recvData.type === "over") {//下载结束
@@ -496,7 +527,7 @@ export default function MainPage(props) {
                         if (gidSet.current.has(gid)) {
                             gidSet.current.delete(gid)
                             gallaryListRef.current = gallaryListRef.current.filter(cardInfo => cardInfo.gid !== gid)
-                            setgalaryList([...gallaryListRef.current])
+                            setGalaryList([...gallaryListRef.current])
                         }
                     }
                 }
@@ -505,6 +536,7 @@ export default function MainPage(props) {
             }
         }
     }
+
 
 
 
@@ -517,6 +549,7 @@ export default function MainPage(props) {
         initPageFunc()
         initWebsocketConnection()
     }, [locationProps])
+
 
     return (
         <React.Fragment >
@@ -540,7 +573,7 @@ export default function MainPage(props) {
                                             infoCallBack={viewCallBack}
                                             viewCallBack={infoCallBack}
                                             data={row}
-                                            processInfo={processInfo}
+                                            stause={gallaryState[row.gid]}
                                         />
                                     </Paper>
                                 </Grid>

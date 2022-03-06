@@ -18,7 +18,7 @@ import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import Grow from '@mui/material/Grow';
 
-import { useSetting } from '../Settings';
+import { useSetting } from '../utils/Settings';
 
 
 const Transition = React.forwardRef(function Transition(props, ref) {
