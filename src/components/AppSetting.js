@@ -93,6 +93,18 @@ export default function AppSetting(props) {
                 <div className={classes.splitLine} />
 
                 <Grid item sx={12} sx={{ width: "100%" }}>
+                    <SelectType
+                        name={"收藏夹"}
+                        defaultValue={9}
+                        values={[0,1,2,3,4,5,6,7,8,9]}
+                        help={(value) => `使用收藏夹${value}`}
+                    />
+                </Grid>
+
+
+                <div className={classes.splitLine} />
+
+                <Grid item sx={12} sx={{ width: "100%" }}>
                     <SwitchType
                         name={"搜索本地并合并结果"}
                         defaultValue={false}

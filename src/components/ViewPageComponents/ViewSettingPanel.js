@@ -154,8 +154,6 @@ export default function ViewSettingPanel(props) {
                             重置设置
                         </Button>
                     </ListItem>
-
-
                 </List>
             </BootstrapDialog>
         </div>

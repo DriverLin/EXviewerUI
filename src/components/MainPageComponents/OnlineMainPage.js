@@ -1,79 +1,169 @@
-import { useEffect, useRef } from "react";
-import {notifyMessage} from "../utils/PopoverNotifier";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import GallaryCard from "./GallaryCard";
+import useMediaQuery from '@mui/material/useMediaQuery';
+import 'react-virtualized/styles.css';
+import { Collection } from 'react-virtualized';
+import LinearProgress from '@mui/material/LinearProgress';
+
+const openNewTab = (url) => {
+    window.open("/#" + url, "_blank")
+}
+
+
 export default function OnlineManinPage(props) {
-    const [gallaryList, setGalaryList] = useState([])
-    const [loadingBar, setLoadingBar] = useState(true)
-    const pageIndex = useRef(props.offset || 0)
-    const lock = useRef(false)
-    
-    
-    const mergeGallary = (arr1,arr2) => {
-        const result = []
-        const set = new Set()
-        for(let arr of [arr1,arr2]){
-            for(let item of arr){
-                if(!set.has(item.gid)){
-                    set.add(item.gid)
-                    result.push(item)
-                }
-            }
-        }
-    }
-    
+    const break_matches = useMediaQuery('(min-width:840px)');//是否双列展示
+    const small_matches = useMediaQuery('(min-width:560px)');//是否小尺寸
+    const [documentWidth, setDocumentWidth] = useState(document.body.clientWidth)
+    const [documentHeight, setDocumentHeight] = useState(document.body.clientHeight)
     
     const requestNextPage = async () => {
-        if (lock.current) return
-        lock.current = true
-        console.log("apiurl", props.apiUrl)
-        //apiurl 类似  /watched?0=0 
-        //或者 /?f_search=abcd&0=0
-        //因为拼接页数 所以无论如何都有?
-        const response = await fetch(props.apiUrl + `&page=${pageIndex.current}`)
-        if (response.ok) {
-            pageIndex.current += 1
-            const data = await response.json()
-            setGalaryList(prev =>   mergeGallary(prev,data)   )
-        } else {
-            lock.current = false;
-            setLoadingBar(false)
-            const text = await response.text()
-            try {
-                const info = JSON.parse(text)
-                notifyMessage("error", JSON.parse(info.detail))
-            } catch (error) {
-                notifyMessage("error", text)
-            }
-        }
+        await props.requestData()
+    }
+
+    const viewCallBack = (gid,token) => {
+        openNewTab(`/g/${gid}/${token}/`)
+
+    }
+    const infoCallBack = (gid,token) => {
+        openNewTab(`/viewing/${gid}/${token}/`)
 
     }
 
-
-    const lastE = useRef(0);
-    const handelScroll = (e) => {
-        const dis2trigger = 3
-        if (e.target !== document) {
-            return
+    const cellRenderer = ({ index, key, style }) => {
+        const newStyle = {
+            ...style,
+            width: cardWidth,
+            height: cardHeight + (small_matches ? 30 : 10),//这里实际是边框加高度 这样再加载到最底部的时候就不会紧贴下面了
+            left: calLeft(index),
+            // top: calTop(index),//不行 ，如果更新 则虚拟滚动的设置越要更新  所以干脆直接重新加载
         }
-        const end = e.target.documentElement.scrollHeight - e.target.documentElement.scrollTop - e.target.documentElement.clientHeight
+        const cardData = props.gallarys[index]
+        const gid = Number(cardData.gid)
+        return <div key={key} style={newStyle}>
+            <GallaryCard
+                {...cardData}
+                inprocess={props.states[gid] === undefined ? false :  props.states[gid][0]}
+                favo={props.states[gid] === undefined ? -1 :  props.states[gid][1]}
+                download={props.states[gid] === undefined ? -2 :  props.states[gid][2]}
+                small_matches={small_matches}
+                infoCallBack={infoCallBack}
+                viewCallBack={viewCallBack}
+                longClickCallback={props.longClickCallback}
+            />
+        </div>
+    }
+
+
+    const cardWidth = useMemo(() => {
+        if (break_matches) {
+            return (document.body.clientWidth - 90) / 2
+        } else {
+            if (small_matches) {
+                return document.body.clientWidth - 60
+            } else {
+                return document.body.clientWidth - 20
+            }
+        }
+    }, [documentWidth, break_matches, small_matches])
+    const cardHeight = useMemo(() => small_matches ? 200 : 160, [small_matches])
+    const calLeft = useCallback((index) => {
+        const border = small_matches ? 30 : 10
+        if (break_matches) {
+            if (index % 2 === 0) {
+                return border
+            } else {
+                return border * 2 + (document.body.clientWidth - 90) / 2
+            }
+        } else {
+            return border
+        }
+    }, [break_matches, small_matches])
+
+    const calTop = useCallback((index) => { //60 搜索框空出来
+        const border = small_matches ? 30 : 10
+        const cellHeight = small_matches ? 230 : 170
+        const topOfffset = small_matches ? 60 : 80
+        if (break_matches) {
+            return Math.floor(index / 2) * cellHeight + border + topOfffset
+        } else {
+            return index * cellHeight + border + topOfffset
+        }
+    }, [break_matches, small_matches])
+
+
+    function cellSizeAndPositionGetter({ index }) {
+        return {
+            height: cardHeight,
+            width: cardWidth,
+            x: calLeft(index),
+            y: calTop(index),
+        };
+    }
+
+    useEffect(() => {
+        requestNextPage()
+    }, [])
+    const lastE = useRef(0);
+    const handelVscroll = (e) => {
+        const dis2trigger = 3
+        const end = e.scrollHeight - e.scrollTop - e.clientHeight
         if (lastE.current > dis2trigger && end <= dis2trigger) {
-            console.log("触底触发加载")
+            console.log("触发加载")
             requestNextPage()
         }
         lastE.current = end
+        const vScrollEvent = new Event("vScrollEvent");
+        vScrollEvent.e = e;
+        window.dispatchEvent(vScrollEvent);
+    }
+
+    const resizeWindow = (e) => {
+        setDocumentWidth(document.body.clientWidth)
+        setDocumentHeight(document.body.clientHeight)
     }
 
     useEffect(() => {
-        window.addEventListener('scroll', handelScroll, true)
-        return () => { window.removeEventListener('scroll', handelScroll, true) }
+        window.addEventListener("resize", resizeWindow);
+        return () => {
+            window.removeEventListener("resize", resizeWindow);
+        }
     }, [])
 
-    useEffect(() => {
-        fetchData()
-    }, [])
+    const scallkey = useMemo(() => (small_matches ? 1 : 0) * 10 + (break_matches ? 0 : 1), [small_matches, break_matches])
+
+    useEffect( () => {
+        console.log(scallkey)
+    },[scallkey])
 
 
-    return <div>{
-        }</div>
 
-
+    return (
+        <div
+            style={{
+                width: "100vw",
+                height: "100vh",
+                overflow: "hidden",
+            }}
+        >
+            <Collection
+                key={scallkey}
+                cellCount={props.gallarys.length}
+                cellRenderer={cellRenderer}
+                cellSizeAndPositionGetter={cellSizeAndPositionGetter}
+                onScroll={handelVscroll}
+                height={(documentHeight || document.body.clientHeight)}
+                width={(documentWidth || document.body.clientWidth) + 100}
+                verticalOverscanSize={25}
+            />
+            {
+                props.loading ? <div
+                    style={{
+                        position: "fixed",
+                        bottom: "0px",
+                        width: "100%",
+                    }}
+                ><LinearProgress color='primary' /></div> : null
+            }
+        </div>
+    )
 }

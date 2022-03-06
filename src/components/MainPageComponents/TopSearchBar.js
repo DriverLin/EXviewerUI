@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState ,useEffect} from 'react';
 import { Grid, InputBase, ButtonBase, useScrollTrigger, Paper, AppBar, Slide, useMediaQuery, } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -7,9 +7,31 @@ import PropTypes from 'prop-types';
 import { useLocation } from "react-router-dom";
 import { getGuess } from "../GetTranslate"
 
+
+
+
+
 function HideOnScroll(props) {
-    const { children, window } = props;
-    const trigger = useScrollTrigger({ target: window ? window() : undefined });
+    const { children, __window } = props;
+    const [trigger,setTrigger] = useState(false)
+
+    const lastTop = useRef(0);
+    const handelScroll = (event) => {
+        if (event.e.scrollTop > lastTop.current) {
+            setTrigger(true)
+        }else{
+            setTrigger(false)
+        }
+        lastTop.current = event.e.scrollTop;
+    }
+    useEffect(() => {
+        window.addEventListener('vScrollEvent', handelScroll)
+        return () => {
+            window.removeEventListener('vScrollEvent', handelScroll)
+        }
+    },[])
+    
+    
     return (
         <Slide appear={false} direction="down" in={!trigger}>
             {children}

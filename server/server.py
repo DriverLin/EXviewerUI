@@ -13,7 +13,7 @@ from turtle import down
 import urllib.request
 import urllib.error
 from typing import List
-from urllib.parse import urljoin,parse_qs
+from urllib.parse import urljoin, parse_qs
 
 import coloredlogs
 import requests
@@ -30,7 +30,7 @@ from fastapi import (
 )
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
-from utils.tools import timestamp_to_str,checkImg,atomWarpper,makeTrackableExcption,printTrackableException,logger,printPerformance
+from utils.tools import timestamp_to_str, checkImg, atomWarpper, makeTrackableExcption, printTrackableException, logger, printPerformance
 from utils.ProxyAccessor import ProxyAccessor
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -55,7 +55,7 @@ if cookie == "":
     logger.error("cookie未设置")
     exit(1)
 
-DOWNLOAD_PATH = os.environ.get("EH_DOWNLOAD_PATH","")
+DOWNLOAD_PATH = os.environ.get("EH_DOWNLOAD_PATH", "")
 if DOWNLOAD_PATH == "":
     DOWNLOAD_PATH = CONFIG["DOWNLOAD_PATH"]
     logger.info("using downloadpath from config file")
@@ -121,8 +121,20 @@ class ConnectionManager:
         await ws.accept()
         self.active_connections.append(ws)
         logger.info(f"WebSocket[{ws.client.host}:{ws.client.port}] 连接成功")
-        msg = pa.getDownloadProcess("queueChange")
-        await ws.send_json(msg) if msg is not None else None
+
+        syncState = pa.getStauseForWS()
+        await ws.send_json({
+            "type":"state",
+            "state":syncState
+        }) if syncState is not None else None
+        syncGalarys = pa.getDownloadedForWS()
+        await ws.send_json(
+            {
+            "type":"gallary",
+            "gallary":syncGalarys
+        }) if syncGalarys is not None else None
+
+     
 
     def disconnect(self, ws: WebSocket):
         logger.info(f"WebSocket[{ws.client.host}:{ws.client.port}] 断开链接")
