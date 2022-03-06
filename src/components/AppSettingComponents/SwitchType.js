@@ -1,8 +1,9 @@
 //开关类型
 
-import { useSetting } from "../Settings"
+import { useSetting } from "../utils/Settings"
 import { Button, Grid, Switch } from "@mui/material";
 import { makeStyles } from '@mui/styles';
+import { useEffect } from "react";
 
 
 

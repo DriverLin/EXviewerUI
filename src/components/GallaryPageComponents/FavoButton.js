@@ -8,26 +8,21 @@ import React, { useState, useRef,useEffect } from 'react';
 import { IconButton} from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-
+import { dispathStateStorage } from '../utils/StateSync';
 export default function FavoButton(props) {
     let initfavoStause = "null"
     if (props.g_data.hasOwnProperty('extended')) {
-        if (props.g_data.extended.favo === " Add to Favorites") {
-            initfavoStause = "no"
-        } else {
+        if (props.g_data.extended.favo > -1) {
             initfavoStause = "yes"
+        } else {
+            initfavoStause = "no"
         }
     }
     const [stause, setStause] = useState(initfavoStause)
-    // const [stause, setStause] = useState("no")
-    // const [stause, setStause] = useState("yes")
-    // const [stause, setStause] = useState("fetching")
-
     const lock = useRef(false)
     const onClick = () => {
         if (lock.current === true) return;
         lock.current = true;
-
         let url = null
         let successStause = null
         let failedStause = null
@@ -47,6 +42,9 @@ export default function FavoButton(props) {
                 lock.current = false;
                 if (data.msg === "success") {
                     setStause(successStause)
+                    let prevStause = JSON.parse(localStorage.getItem(props.g_data.gid) || '[false,-1,-2]')
+                    prevStause[1] = successStause === "yes" ? 9 : -1
+                    dispathStateStorage(props.g_data.gid, JSON.stringify(prevStause))
                 } else {
                     setStause(failedStause)
                 }

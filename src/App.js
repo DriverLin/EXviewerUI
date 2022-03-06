@@ -9,7 +9,7 @@ import MainPage from './components/MainPage';
 import ViewPage from './components/ViewPage';
 import AppSetting from './components/AppSetting';
 
-import { useSettingBind} from './components/Settings';
+import { useSettingBind} from './components/utils/Settings';
 
 import PopoverNotifier from "./components/utils/PopoverNotifier";
 

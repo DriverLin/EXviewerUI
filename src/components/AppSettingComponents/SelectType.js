@@ -1,4 +1,4 @@
-import { useSetting } from "../Settings";
+import { useSetting } from "../utils/Settings";
 import { useMemo, useState } from "react";
 import { Select, FormControl, MenuItem, InputLabel, Box, List, Menu, Button, Grid } from '@mui/material';
 import { makeStyles } from '@mui/styles';

@@ -1,1 +1,2 @@
 python ./server.py
+pause

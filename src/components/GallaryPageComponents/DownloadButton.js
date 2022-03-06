@@ -1,41 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, LinearProgress} from '@mui/material';
+import { Button, LinearProgress } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import { useSettingBind } from '../Settings';
+import { useSettingBind } from '../utils/Settings';
 import { notifyMessage } from '../utils/PopoverNotifier';
-
+import { dispathStateStorage } from '../utils/StateSync';
 export default function DownloadButton(props) {
     let initButtonText = ""
-    
-    if (props.g_data.hasOwnProperty('extended') && props.g_data.extended.downloaded === true) {
-        const over = props.g_data.extended.process[0]
-        const total = props.g_data.extended.process[1]
-        
-        if (over === total) {
-            initButtonText = "已下载"
-        } else if (over === -1) {
-            initButtonText = "队列中"
-         }
-        else{ 
-            initButtonText = `${total-over}项未完成`
+
+    if (props.g_data.hasOwnProperty('extended')) {
+        const over = props.g_data.extended.download
+        const total = Number(props.g_data.filecount)
+        if (over > -2) {
+            if (over === -1) {
+                initButtonText = "队列中"
+            } else if (over === total) {
+                initButtonText = "已下载"
+            }
+            else {
+                initButtonText = `${total - over}项未完成`
+            }
+        } else {
+            initButtonText = "下载"
         }
     } else {
         initButtonText = "下载"
     }
-
-
     const [stause, setStause] = useState("init")
-    // const [stause, setStause] = useState("processing")
-
-
-    // useEffect(() => {
-    //     console.log("download button props", props)
-    // }, [stause])
-
-
     const [downloadProgress, _setDownloadProgress] = useState([0, 0, 999])
-    // const [downloadProgress, _setDownloadProgress] = useState([500, 100, 999])
     const downloadProgressRef = useRef(0)
     const setDownloadProgress = (value) => {
         downloadProgressRef.current = value
@@ -64,16 +56,9 @@ export default function DownloadButton(props) {
         }, 600)
     }
 
-    // useEffect(() => {
-    //     console.log("amount DownloadButton")
-    //     return () => {
-    //         console.log("unmount DownloadButton")
-    //     }
-    // },[])
-
     const lock = useRef(false)
 
-    const addFavoWhenDownload = useSettingBind("下载时添加收藏",false)
+    const addFavoWhenDownload = useSettingBind("下载时添加收藏", false)
 
     const onClick = () => {
         if (window.serverSideConfigure.type !== "full" || localStorage.getItem("offline_mode") === "true") return
@@ -91,14 +76,18 @@ export default function DownloadButton(props) {
         switchToProcessing()
         const gid_token = `${props.g_data.gid}_${props.g_data.token}`
         props.enableDelete()
-        if (addFavoWhenDownload === true && props.clickFavo.current !== null) { 
-            if (props.clickFavo.current.stause !== "yes") { 
+        if (addFavoWhenDownload === true && props.clickFavo.current !== null) {
+            if (props.clickFavo.current.stause !== "yes") {
                 props.clickFavo.current.func()
             }
         }
         fetch(`/download/${gid_token}`)
-        try { 
+        try {
             const ws = new WebSocket(wsUrl)
+
+            let prevStause = JSON.parse(localStorage.getItem(props.g_data.gid) || '[false,-1,-2]')
+            prevStause[0] = true
+            dispathStateStorage(props.g_data.gid, JSON.stringify(prevStause))
             ws.onmessage = (e) => {
                 try {
                     const recvData = JSON.parse(e.data)
@@ -109,22 +98,27 @@ export default function DownloadButton(props) {
                             const prevFailed = downloadProgressRef.current[1]
                             if (prevSuccss <= process[0] && prevFailed <= process[1]) {
                                 setDownloadProgress(process)
+                                prevStause[2] = recvData.data.process[0]
+                                dispathStateStorage(props.g_data.gid, JSON.stringify(prevStause))
+
                             } else {
                                 console.log("olderprocess", process, prevSuccss, prevFailed)
                             }
                         }
                     }
-                    else if (recvData.type === "over") { 
+                    else if (recvData.type === "over") {
                         if (`${recvData.data.gid}_${recvData.data.token}` === gid_token) {
                             const process = recvData.data.process
                             if (process[0] === process[2]) {
                                 switchToText("success")
                                 ws.close()
-                            } else { 
+                            } else {
                                 switchToText("failed")
                                 lock.current = false
                                 ws.close()
                             }
+                            prevStause[0] = false
+                            dispathStateStorage(props.g_data.gid, JSON.stringify(prevStause))
                         }
                     }
                 } catch (err) {
@@ -134,7 +128,7 @@ export default function DownloadButton(props) {
                     lock.current = false
                 }
             }
-        }catch(err) {
+        } catch (err) {
             notifyMessage("error", String(err))
         }
     }

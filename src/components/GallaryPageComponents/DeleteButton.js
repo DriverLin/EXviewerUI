@@ -7,7 +7,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CloseIcon from '@mui/icons-material/Close';
-import { useSettingBind } from '../Settings';
+import { useSettingBind } from '../utils/Settings';
 import { notifyMessage} from '../utils/PopoverNotifier';
 
 export default function DeleteButton(props) {

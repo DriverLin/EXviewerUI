@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { Button, Grid, Rating, useMediaQuery, Typography } from '@mui/material';
+import { Button, Grid, Rating, useMediaQuery, Typography, IconButton } from '@mui/material';
 
 import TagPanel from "./GallaryPageComponents/TagPanel.js"
 import InfoPanel from './GallaryPageComponents/InfoPanel.js';
@@ -8,7 +8,7 @@ import CommentPanel from './GallaryPageComponents/CommentPanel.js';
 import PreviewPanel from './GallaryPageComponents/PreviewPanel.js';
 
 import StarBorderIcon from '@mui/icons-material/StarBorder';
-
+import AutorenewIcon from '@mui/icons-material/Autorenew';
 import { makeStyles } from '@mui/styles';
 
 import LoadingAnime from './LoadingAnime';
@@ -21,8 +21,9 @@ import FavoButton from './GallaryPageComponents/FavoButton.js';
 
 import KeyboardController from '../KeyboardController.js';
 
-import { useSetting } from './Settings';
+import { useSetting } from './utils/Settings';
 import { notifyMessage } from './utils/PopoverNotifier.js';
+import { dispathStateStorage } from './utils/StateSync.js';
 
 const formatTime = (time, format) => {
     const date = new Date(Number(time + "000"))
@@ -68,8 +69,8 @@ const transformTags = (g_data) => {
 export default function GallaryPage(props) {
     const location = useLocation();
 
-    const [loading, setLoading] = useState(true)
-
+    const [stause, setStause] = useState('init')
+    const [errorInfo, setErrorInfo] = useState(["unknow error"])
     const [g_data, setG_data] = useState(null)
     const g_data_ref = useRef(null)
     //这里没问题 因为渲染g_data是在loading=false之后了
@@ -108,83 +109,138 @@ export default function GallaryPage(props) {
             if (response.ok) {
                 return await response.json()
             } else {
-                const text = await response.text()
-                try {
-                    const info = JSON.parse(text)
-                    notifyMessage("error", JSON.parse(info.detail))
-                } catch (error) {
-                    notifyMessage("error", text)
-                }
+                // const text = await response.text()
+                // try {
+                //     const info = JSON.parse(text)
+                //     notifyMessage("error", JSON.parse(info.detail))
+                // } catch (error) {
+                //     notifyMessage("error", text)
+                // }
                 return false
             }
         }
     }
 
-    const getG_data = async (g_data_url) => { 
+    const getG_data = async (g_data_url) => {
         console.log("getG_data", g_data_url)
         const response = await fetch(g_data_url)
         if (response.ok) {
             return await response.json()
-            
         } else {
             const text = await response.text()
             try {
                 const info = JSON.parse(text)
-                notifyMessage("error", JSON.parse(info.detail))
+                const detail = JSON.parse(info.detail)
+                notifyMessage("error", detail)
+                setErrorInfo(detail)
             } catch (error) {
                 notifyMessage("error", text)
+                setErrorInfo([text])
             }
+            setStause("error")
             return false
         }
     }
 
 
     const init = async () => {
-        setLoading(true)
+        setStause("init")
         const gid = location.pathname.split("/")[2]
         const token = location.pathname.split("/")[3]
         let g_data_url = `/gallarys/${gid}_${token}/g_data.json`
         if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
             g_data_url = g_data_url + "?nocache=true"
         }
-        const dataRes = await getG_data(g_data_url)
-        const commentRes = await getComment(gid, token)
+
+        const dataget = getG_data(g_data_url)
+        const commentget = getComment(gid, token)
+
+        console.log(dataget, commentget)
         console.log("initing............")
-        console.log(dataRes , commentRes)
-        if (commentRes) { 
+
+        const dataRes = await dataget
+        const commentRes = await commentget
+        console.log(dataRes, commentRes)
+
+
+        if (commentRes) {
             setComments(commentRes)
         }
         if (dataRes) {
             document.title = dataRes.title_jpn || dataRes.title
             setG_data(dataRes)
+            
+            console.log("dataRes",dataRes)
+
+            if(dataRes.hasOwnProperty("extended")){
+                let prevStause = JSON.parse(localStorage.getItem(dataRes.gid) || '[false,-1,-2]')
+                console.log("prevStause",prevStause)
+                prevStause[1] = dataRes.extended.favo
+                prevStause[2] = dataRes.extended.download
+                dispathStateStorage(dataRes.gid, JSON.stringify(prevStause))
+            }
             g_data_ref.current = dataRes
             seTags(transformTags(dataRes))
             setPreviewSteped()
-            setLoading(false)
-        } else { 
-
+            setStause("finish")
+        } else {
         }
 
     }
-
-
-
 
     useEffect(() => {
         init()
     }, [])
     return (
-        loading ?
-            <LoadingAnime />
-            :
-
-            <GallaryInfoPage
-                g_data={g_data}
-                tags={tags}
-                previews={previews}
-                comments={comments}//comments = [] 则不显示，同事点击加载全部评论之后也会不显示
-                match={"large" || "normal" || "small"}
-            />
+        <div
+            style={{
+                height: "100vh",
+                width: "100%"
+            }}
+        >
+            {
+                stause === "init" ? <LoadingAnime /> : null
+            }{
+                stause === "finish" ? <GallaryInfoPage
+                    g_data={g_data}
+                    tags={tags}
+                    previews={previews}
+                    comments={comments}//comments = [] 则不显示，同事点击加载全部评论之后也会不显示
+                    match={"large" || "normal" || "small"}
+                /> : null
+            }{
+                stause === "error" ? <Grid
+                    container
+                    direction="column"
+                    justifyContent="center"
+                    alignItems="center"
+                    sx={{
+                        height: "100%",
+                        width: "100%"
+                    }}
+                >
+                    <IconButton
+                        sx={{
+                            backgroundColor: "#00000000",
+                            color: "primary.main",
+                        }}
+                        onClick={init}
+                    >
+                        <AutorenewIcon sx={{ fontSize: 200 }} />
+                    </IconButton>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'left',
+                            margin:"100px 20px 0px 20px"
+                        }}
+                    >{
+                            errorInfo.map(item => <a key={item}>{item}</a>)
+                        }</div>
+                </Grid> : null
+            }
+        </div>
     )
 }
 
@@ -275,12 +331,9 @@ function GallaryInfoPage(props) {
         /></Grid> : null}
     </Grid>
 
-
-
     return (
         <div className={matches ? classes.borderCard : classes.matches_borderCard} >
             <KeyboardController />
-
             <div className={classes.elemContainer}>
                 <Grid
                     container
