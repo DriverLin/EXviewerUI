@@ -9,7 +9,11 @@ import { IconButton} from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import { dispathStateStorage } from '../utils/StateSync';
+import { useSettingBind } from '../utils/Settings';
+
+
 export default function FavoButton(props) {
+    const favoIndex = useSettingBind("收藏夹",9)
     let initfavoStause = "null"
     if (props.g_data.hasOwnProperty('extended')) {
         if (props.g_data.extended.favo > -1) {
@@ -31,7 +35,7 @@ export default function FavoButton(props) {
             successStause = "no"
             failedStause = "yes"
         } else if (stause === "no") {
-            url = `/addfavo/${props.g_data.gid}_${props.g_data.token}/9`
+            url = `/addfavo/${props.g_data.gid}_${props.g_data.token}/${favoIndex}`
             successStause = "yes"
             failedStause = "no"
         } else return
@@ -42,9 +46,6 @@ export default function FavoButton(props) {
                 lock.current = false;
                 if (data.msg === "success") {
                     setStause(successStause)
-                    let prevStause = JSON.parse(localStorage.getItem(props.g_data.gid) || '[false,-1,-2]')
-                    prevStause[1] = successStause === "yes" ? 9 : -1
-                    dispathStateStorage(props.g_data.gid, JSON.stringify(prevStause))
                 } else {
                     setStause(failedStause)
                 }

@@ -109,13 +109,13 @@ export default function GallaryPage(props) {
             if (response.ok) {
                 return await response.json()
             } else {
-                // const text = await response.text()
-                // try {
-                //     const info = JSON.parse(text)
-                //     notifyMessage("error", JSON.parse(info.detail))
-                // } catch (error) {
-                //     notifyMessage("error", text)
-                // }
+                const text = await response.text()
+                try {
+                    const info = JSON.parse(text)
+                    notifyMessage("error", JSON.parse(info.detail))
+                } catch (error) {
+                    notifyMessage("error", text)
+                }
                 return false
             }
         }
@@ -131,10 +131,10 @@ export default function GallaryPage(props) {
             try {
                 const info = JSON.parse(text)
                 const detail = JSON.parse(info.detail)
-                notifyMessage("error", detail)
+                // notifyMessage("error", detail)
                 setErrorInfo(detail)
             } catch (error) {
-                notifyMessage("error", text)
+                // notifyMessage("error", text)
                 setErrorInfo([text])
             }
             setStause("error")
@@ -169,16 +169,7 @@ export default function GallaryPage(props) {
         if (dataRes) {
             document.title = dataRes.title_jpn || dataRes.title
             setG_data(dataRes)
-            
             console.log("dataRes",dataRes)
-
-            if(dataRes.hasOwnProperty("extended")){
-                let prevStause = JSON.parse(localStorage.getItem(dataRes.gid) || '[false,-1,-2]')
-                console.log("prevStause",prevStause)
-                prevStause[1] = dataRes.extended.favo
-                prevStause[2] = dataRes.extended.download
-                dispathStateStorage(dataRes.gid, JSON.stringify(prevStause))
-            }
             g_data_ref.current = dataRes
             seTags(transformTags(dataRes))
             setPreviewSteped()

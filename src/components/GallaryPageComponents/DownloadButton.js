@@ -84,43 +84,29 @@ export default function DownloadButton(props) {
         fetch(`/download/${gid_token}`)
         try {
             const ws = new WebSocket(wsUrl)
-
-            let prevStause = JSON.parse(localStorage.getItem(props.g_data.gid) || '[false,-1,-2]')
-            prevStause[0] = true
-            dispathStateStorage(props.g_data.gid, JSON.stringify(prevStause))
             ws.onmessage = (e) => {
                 try {
                     const recvData = JSON.parse(e.data)
-                    if (recvData.type === "process") {
-                        if (`${recvData.data.gid}_${recvData.data.token}` === gid_token) {
-                            const process = recvData.data.process
-                            const prevSuccss = downloadProgressRef.current[0]
-                            const prevFailed = downloadProgressRef.current[1]
-                            if (prevSuccss <= process[0] && prevFailed <= process[1]) {
-                                setDownloadProgress(process)
-                                prevStause[2] = recvData.data.process[0]
-                                dispathStateStorage(props.g_data.gid, JSON.stringify(prevStause))
+                    console.log(recvData)
+                    if (recvData.type === "state") {
+                        const selfState = recvData.state[Number(props.g_data.gid)]
+                        if (selfState !== undefined) {
+                            const [downloading, favo, download] = selfState
+                            if (downloading) {
+                                setDownloadProgress([download, 0, Number(props.g_data.filecount)])
+                            } else {
+                                if (download === Number(props.g_data.filecount)) {
+                                    switchToText("success")
+                                    ws.close()
+                                } else {
+                                    switchToText("failed")
+                                    lock.current = false
+                                    ws.close()
+                                }
+                            }
+                        }
+                    }
 
-                            } else {
-                                console.log("olderprocess", process, prevSuccss, prevFailed)
-                            }
-                        }
-                    }
-                    else if (recvData.type === "over") {
-                        if (`${recvData.data.gid}_${recvData.data.token}` === gid_token) {
-                            const process = recvData.data.process
-                            if (process[0] === process[2]) {
-                                switchToText("success")
-                                ws.close()
-                            } else {
-                                switchToText("failed")
-                                lock.current = false
-                                ws.close()
-                            }
-                            prevStause[0] = false
-                            dispathStateStorage(props.g_data.gid, JSON.stringify(prevStause))
-                        }
-                    }
                 } catch (err) {
                     notifyMessage("error", String(err))
                     ws.close()

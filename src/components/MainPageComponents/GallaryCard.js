@@ -13,10 +13,6 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 
 import DownloadProcessbar from './DownloadProcessbar';
 
-const small_matches = true;
-const height = small_matches ? 200 : 160;
-
-const width = "100%";
 const colormap = {
     "Manga": "#FF9700",
     "Doujinshi": "#F44236",
@@ -32,12 +28,6 @@ const languageMap = {
     "chinese": "ZH",
     "english": "EH"
 }
-
-
-
-
-
-
 
 const useStyles = makeStyles((theme) => ({
     imgContainer: {
@@ -119,67 +109,73 @@ const GallaryContainer = styled(ButtonBase)(({ theme }) => ({
 }));
 
 
+// export default function GallaryCard(props) {
+//     useEffect(  ()=>{
+//         console.log("GallaryCard useEffect",props);
+//     },[]  )
+//     return <a>hwllo</a>
+// }
+
+export default  function GallaryCard(props) {
+    let __propsExample = {
+        gid: "12356",
+        token: "abcdefg",
+        cover: "imgSrc",
+        name: "gallaryname",
+        category: "Manga",
+        pages: 28,
+        rank:0-5,
+        uploadtime: "2020-01-01",
+        lang:"chinese",
+
+        inprocess: false,
+        download: 19,
+        favo: false,
+    }
+    // useEffect(  ()=>{
+        
+    //     console.log("props.favo > -1",props.favo > -1,props.favo)
+        
+    //     console.log(props.gid,"mount");
+    //     return () => {
+    //         console.log(props.gid,"unmount");
+    //     }
+    // },[]  )
 
 
 
-export default function GallaryCard(props) {
-    // const matches = useMediaQuery('(min-width:830px)');
-    const small_matches = useMediaQuery('(min-width:560px)');
-    const relative_height = small_matches ? 200 : 160;
+    const relative_height = useMemo(() => props.small_matches ? 200 : 160, [props.small_matches]);
+    const fontSize = useMemo(() => props.small_matches ? "20px" : "16px", [props.small_matches]);
     const classes = useStyles();
     const touchEvent = useRef({})
-    // let cardTextInit = ""
-    const [downloadIcon, setDownloadIcon] = useState(props.stause[2])
-    let langText = ""
-    if (props.data.lang in languageMap) {
-        langText = languageMap[props.data.lang]
-    }
-    
-    const [cardTextShow, setCardTextShow] = useState("")
-
-    const inProcess = useMemo(() => props.stause[0], [props.stause])
-    const favorited = useMemo( () => props.stause[1] > -1   ,[props.stause] )
-    const porcessData = useMemo( () => [props.stause[2],props.data.pages],[props.stause])
-
-    useEffect(() => {//外部进度变化时
-        const [downloading,favo,download] = props.stause
-        let tmpCardText = ""//文字显示 便于在进度显示完成之后 显示结果
-        if (download > -2) {
-            if(download === Number(props.data.pages)){
-                setDownloadIcon(true)
-                tmpCardText = langText + " " + props.data.pages + "P"
+    const downloadIconShow = useMemo( () => props.download === Number(props.pages),[props.download,props.pages])
+    const cardText = useMemo( () => {
+        if(props.download > -2 ){
+            if(props.download === -1 ){
+                return "队列中"
             }else{
-                setDownloadIcon(false)
-                if(download === -1){
-                    tmpCardText = "未开始"
+                const undownloaded = Number(props.pages) - (props.download >= 0 ? props.download : 0)
+                if(undownloaded === 0){
+                    return `${  props.lang in languageMap ? languageMap[props.lang] : ""} ${props.pages}P`
                 }else{
-                    tmpCardText = `${Number(props.data.pages)-download} 项未下载`
-                } 
+                    return `${undownloaded}项未下载`
+                }
             }
+        }else{
+            return `${  props.lang in languageMap ? languageMap[props.lang] : ""} ${props.pages}P`
         }
-        else {
-            setDownloadIcon(false)
-            tmpCardText = langText + " " + props.data.pages + "P"
-        }
-        setCardTextShow(tmpCardText)
-    }, [props.stause]);
+    },[props.download])
+
     return (
         <GallaryContainer
             name='clickable'
-            style={
-                small_matches ?
-                    {
-                        height: relative_height,
-                        fontSize: "20px"
-                    } :
-                    {
-                        height: relative_height,
-                        fontSize: "16px"
-                    }
-            }
+            style={{
+                height: relative_height,
+                fontSize: fontSize
+            }}
             onContextMenu={(e) => {
                 e.preventDefault();
-                props.longClickCallback(props.data, e.clientX, e.clientY)
+                props.longClickCallback(props.gid,props.token,props.name , e.clientX, e.clientY)
 
             }}
             onTouchStart={(e) => {
@@ -191,7 +187,8 @@ export default function GallaryCard(props) {
                 setTimeout(() => {
                     if (touchEvent.current.prevent === false) {
                         props.longClickCallback(
-                            props.data,
+                            props.gid,
+                            props.token,
                             touchEvent.current.moveEvent.touches[0].clientX,
                             touchEvent.current.moveEvent.touches[0].clientY
                         )
@@ -207,7 +204,7 @@ export default function GallaryCard(props) {
                 if (touchEvent.current.prevent === false) {
                     // if (new Date().getTime() - touchEvent.current.startTime < 250) {
                     //     touchEvent.current.prevent = true//响应点击 阻止长按
-                    //     props.callBack(props.data)
+                    //     props.callBack(props.gid,props.token)
                     // }
                     touchEvent.current.prevent = true
                 }
@@ -220,55 +217,55 @@ export default function GallaryCard(props) {
                 }}
                 className={classes.imgContainer}
                 onClick={() => {
-                    props.infoCallBack(props.data)
+                    props.infoCallBack(props.gid,props.token)
                 }}
             >
-                <img style={{ width: relative_height / 1.39, }} className={classes.imgContainer_img} src={props.data.imgSrc} alt={`cover of ${props.data.name}`} />
+                <img style={{ width: relative_height / 1.39, }} className={classes.imgContainer_img} src={props.imgSrc} alt={`cover of ${props.name}`} />
             </div>
             <div
                 className={classes.infoContainer}
                 onClick={() => {
-                    props.viewCallBack(props.data)
+                    props.viewCallBack(props.gid,props.token)
                 }}
             >
                 <div className={classes.name_container}>
                     <div className={classes.name_text}>
-                        <a>{props.data.name}</a>
+                        <a>{props.name}</a>
                     </div>
                 </div>
                 <div style={{ height: relative_height - 75 }} className={classes.infos}>
                     <div className={classes.rank}>
-                        <Rating name="read-only" value={props.data.rank} precision={0.5} max={5} readOnly />
+                        <Rating name="read-only" value={props.rank} precision={0.5} max={5} readOnly />
                     </div>
-                    <div style={{ backgroundColor: colormap[props.data.category], }} className={classes.category}>
-                        <a style={{ color: "#ffffff" }}  >{props.data.category.toUpperCase()}</a>
+                    <div style={{ backgroundColor: colormap[props.category], }} className={classes.category}>
+                        <a style={{ color: "#ffffff" }}  >{props.category.toUpperCase()}</a>
                     </div>
-                    <div className={classes.upload_time}>{props.data.uploadtime}</div>
+                    <div className={classes.upload_time}>{props.uploadtime}</div>
 
-                    {inProcess ?
+                    {props.inprocess ?
                         <div className={classes.details}>
-                            <a>{porcessData[0] + "/" + porcessData[1]}</a>
+                            <a>{`${props.download >= 0 ? props.download : 0} / ${props.pages}`}</a>
                             <div className={classes.d_icon}>
-                                <DownloadProcessbar process={100 * porcessData[0] / porcessData[1] } small={!small_matches} />
+                                <DownloadProcessbar process={100 * (props.download >= 0 ? props.download : 0) / Number(props.pages)} small={!props.small_matches} />
                             </div>
                         </div>
                         :
                         <div className={classes.details}>
                             {
-                                downloadIcon ?
+                                downloadIconShow ?
                                     <div className={classes.d_icon}>
-                                        <DownloadIcon fontSize={small_matches ? "medium" : "small"} />
+                                        <DownloadIcon fontSize={props.small_matches ? "medium" : "small"} />
                                     </div>
                                     : null
                             }
                             {
-                                favorited ?
+                                props.favo > -1 ?
                                     <div className={classes.d_icon}>
-                                        <FavoriteIcon fontSize={small_matches ? "medium" : "small"} />
+                                        <FavoriteIcon fontSize={props.small_matches ? "medium" : "small"} />
                                     </div>
                                     : null
                             }
-                            <div className={classes.d_icon}>{cardTextShow}</div>
+                            <div className={classes.d_icon}>{cardText}</div>
                         </div>
                     }
                 </div>
