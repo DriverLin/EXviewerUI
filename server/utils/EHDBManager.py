@@ -13,12 +13,11 @@ class EHDBManager:
         self.g_data = {}
         for (gid,favonum) in self.db.execute("SELECT gid,favo FROM favo"):
             self.favo[gid] = favonum
-        for (gid,token,over,total,addSerial) in self.db.execute("SELECT gid,token,over,total,addSerial FROM download"):
+        for (gid,token,over,addSerial) in self.db.execute("SELECT gid,token,over,addSerial FROM download"):
             self.download[gid] = {
                 "gid":gid,
                 "token":token,
                 "over":over,
-                "total":total,
                 "addSerial":addSerial
             }
         for (gid,g_data) in self.db.execute("SELECT gid,g_data FROM g_data"):
@@ -62,11 +61,13 @@ class EHDBManager:
 
     def addFavo(self,_gid,favonum):
         gid = int(_gid)
-        if self.getFavo(gid) != False and self.getFavo(gid) != favonum:
-            self.updateFavo(gid,favonum)
-        else:
+        if self.getFavo(gid) == False :
             self.favo[gid] = favonum
             self.putTask("INSERT INTO favo (gid,favo) VALUES (?,?)",(gid,favonum))
+        else:
+            if self.getFavo(gid) != int(favonum):
+                self.updateFavo(gid,favonum)
+                self.favo[gid] = int(favonum)
 
     def updateFavo(self,_gid,favonum):
         gid = int(_gid)
@@ -79,8 +80,7 @@ class EHDBManager:
             self.favo.pop(gid)
             self.putTask("DELETE FROM favo WHERE gid = ?",(gid,))
     
-    def addDownload(self,_gid,token,g_data):
-        # print("addDownload",_gid,token,g_data)
+    def addDownload(self,_gid,token):
         gid = int(_gid)
         if self.getDownload(gid) != False:
             self.updateDownload(gid,-1)
@@ -89,13 +89,11 @@ class EHDBManager:
             self.download[gid] = {
                 "gid":gid,
                 "token":token,
-                "over":0,
-                "total":int(g_data["filecount"]),
+                "over":-1,
                 "addSerial":addSerial
             }
-            self.putTask("INSERT INTO download (gid,token,over,total,addSerial) VALUES (?,?,?,?,?)",(gid,token,-1,int(g_data["filecount"]),addSerial))
+            self.putTask("INSERT INTO download (gid,token,over,addSerial) VALUES (?,?,?,?)",(gid,token,-1,addSerial))
             self.addSerialMax += 1
-            self.addGdata(gid,g_data)        
 
     def updateDownload(self,_gid,over):
         gid = int(_gid)
@@ -143,6 +141,10 @@ class EHDBManager:
         downloaded = list(self.download.values())
         downloaded.sort(key=lambda x:x["addSerial"],reverse=True)
         return [x["gid"] for x in downloaded]
+
+    def execQuery(self,sql,param=None):
+        return self.db.execute(sql,param).fetchall() if param == None else self.db.execute(sql).fetchall()
+
 
 if __name__ == "__main__":
     dbm = EHDBManager(r"C:\Users\lty65\projects\ExviewerUI\server\DataForTest.db")

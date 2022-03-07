@@ -4,17 +4,17 @@
 //由于cache设计为3秒 所以只要不是太短就会一直是最新的
 //重新设计接口 让其处于full状态且不是离线模式的时候 使用参数 强制获取最新数据
 //如果是离线模式 则收藏按钮为禁用状态
-import React, { useState, useRef,useEffect } from 'react';
-import { IconButton} from '@mui/material';
+import React, { useState, useRef, useEffect } from 'react';
+import { IconButton } from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import { dispathStateStorage } from '../utils/StateSync';
 import { useSettingBind } from '../utils/Settings';
-
+import { addFavo, rmFavo, testAction, useActionHandeler, useSyncState } from '../utils/GlobalActionHandeler';
 
 export default function FavoButton(props) {
-    const favoIndex = useSettingBind("收藏夹",9)
-    let initfavoStause = "null"
+    const favoIndex = useSettingBind("收藏夹", 9)
+    let initfavoStause = "null"//没有扩展数据 无法管理收藏 收藏按钮直接为禁用
     if (props.g_data.hasOwnProperty('extended')) {
         if (props.g_data.extended.favo > -1) {
             initfavoStause = "yes"
@@ -27,43 +27,38 @@ export default function FavoButton(props) {
     const onClick = () => {
         if (lock.current === true) return;
         lock.current = true;
-        let url = null
-        let successStause = null
-        let failedStause = null
         if (stause === "yes") {
-            url = `/rmfavo/${props.g_data.gid}_${props.g_data.token}`
-            successStause = "no"
-            failedStause = "yes"
+            setStause("fetching")
+            rmFavo(props.g_data.gid, props.g_data.token)
         } else if (stause === "no") {
-            url = `/addfavo/${props.g_data.gid}_${props.g_data.token}/${favoIndex}`
-            successStause = "yes"
-            failedStause = "no"
+            setStause("fetching")
+            addFavo(props.g_data.gid, props.g_data.token, favoIndex)
         } else return
-        setStause("fetching")
 
-        setTimeout(() => {
-            fetch(url).then(res => res.json()).then(data => {
-                lock.current = false;
-                if (data.msg === "success") {
-                    setStause(successStause)
-                } else {
-                    setStause(failedStause)
-                }
-            }).catch(err => {
-                lock.current = false;
-                setStause(failedStause)
-                console.log("FavoButton error", err)
-            })
-        }, 500)
     }
+    useActionHandeler((result) => {
+        if (result.gid !== props.g_data.gid) return
+        if (result.success) {
+            setStause("yes")
+        }
+        lock.current = false
+    }, ["addFavo"])
+    useActionHandeler((result) => {
+        if (result.gid !== props.g_data.gid) return
+        if (result.success) {
+            setStause("no")
+        }
+        lock.current = false
+    }, ["rmFavo"])
+
+    const wsSyncState = useSyncState()
     useEffect(() => {
-        props.setClickFavo(
-            {
-                stause: stause,
-                func: onClick
-            }
-        )
-    }, [stause])
+        if (Object.keys(wsSyncState).length === 0) return
+        const testState = wsSyncState[props.g_data.gid]
+        if (testState) {
+            setStause((testState[1] > -1) ? "yes" : "no")
+        }
+    }, [wsSyncState])
 
 
     const elemMap = {

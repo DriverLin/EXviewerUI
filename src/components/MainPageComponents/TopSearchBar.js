@@ -7,10 +7,6 @@ import PropTypes from 'prop-types';
 import { useLocation } from "react-router-dom";
 import { getGuess } from "../GetTranslate"
 
-
-
-
-
 function HideOnScroll(props) {
     const { children, __window } = props;
     const [trigger,setTrigger] = useState(false)
@@ -30,8 +26,6 @@ function HideOnScroll(props) {
             window.removeEventListener('vScrollEvent', handelScroll)
         }
     },[])
-    
-    
     return (
         <Slide appear={false} direction="down" in={!trigger}>
             {children}

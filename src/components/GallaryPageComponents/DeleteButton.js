@@ -1,5 +1,5 @@
-import React, { useState} from 'react';
-import { Button, IconButton} from '@mui/material';
+import React, { useState } from 'react';
+import { Button, IconButton } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -8,8 +8,9 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import { useSettingBind } from '../utils/Settings';
-import { notifyMessage} from '../utils/PopoverNotifier';
-
+import { notifyMessage } from '../utils/PopoverNotifier';
+import { rmDownload, rmFavo, useActionHandeler } from '../utils/GlobalActionHandeler';
+import SecnodConfirmDialog from '../utils/SecnodConfirmDialog';
 export default function DeleteButton(props) {
     const [open, setOpen] = useState(false);
     const handleClickOpen = () => {
@@ -18,26 +19,24 @@ export default function DeleteButton(props) {
     const handleClose = () => {
         setOpen(false);
     };
-    const removeFavoWhenDelete = useSettingBind("删除时移除收藏",false)
+    const removeFavoWhenDelete = useSettingBind("删除时移除收藏", false)
     const handelCheck = () => {
         setOpen(false);
-        if (removeFavoWhenDelete === true && props.clickFavo.current !== null) {
-            if (props.clickFavo.current.stause === "yes") {
-                props.clickFavo.current.func()
-            }
+        if (removeFavoWhenDelete) {
+            rmFavo(props.g_data.gid, props.g_data.token)
         }
-
-        fetch(`/delete/${props.g_data.gid}_${props.g_data.token}`)
-            .then(res => res.json())
-            .then(data => {
-                notifyMessage("success", "删除成功")
-                props.disableDeleteButton();
-             })
-            .catch(err => { 
-                notifyMessage("error", "删除失败")
-                props.enableDeleteButton();
-            })
+        rmDownload(props.g_data.gid, props.g_data.token)
     }
+
+    useActionHandeler((result) => {
+        if (result.gid !== props.g_data.gid) return
+        if (result.success) {
+            notifyMessage("success", "删除成功")
+            props.disableDeleteButton();
+        }
+    }, ["rmDownload"])
+
+
 
     return (
         <div>
@@ -57,66 +56,7 @@ export default function DeleteButton(props) {
             >
                 <DeleteOutlineIcon fontSize="large" />
             </IconButton>
-
-
-            <Dialog
-                open={open}
-                onClose={handleClose}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description" 
-                sx={{
-                    "& .MuiDialog-paper": {
-                        color: "text.primary",
-                        backgroundColor: "page.background",
-                    }
-                }}
-            >
-                <DialogTitle id="alert-dialog-title">
-                    {"确认删除?"}
-                </DialogTitle>
-                
-                <DialogContent>
-                    <DialogContentText
-                        id="alert-dialog-description"
-                        sx={{
-                            color: "text.primary",
-                        }}
-
-                    >
-                        {
-                            // JSON.stringify(  )
-                            props.g_data.title_jpn || props.g_data.title
-                        }
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions
-                    sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                    }}
-                >
-                    <Button
-                        onClick={handelCheck}
-                        variant="text"
-                        startIcon={<DeleteOutlineIcon />}
-                        sx={{
-                            color: "#E91E63",
-                        }}
-                    >
-                        删除
-                    </Button>
-                    <Button
-                        onClick={handleClose}
-                        variant="text"
-                        startIcon={<CloseIcon />}
-                        sx={{
-                            color: "text.primary",
-                        }}
-                    >
-                        取消
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <SecnodConfirmDialog open={open} handleClose={handleClose} onConfirm={handelCheck} title={props.g_data.title_jpn || props.g_data.title} />
         </div>
     );
 }

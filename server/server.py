@@ -82,14 +82,44 @@ for pathName in [os.path.split(DB_PATH)[0], CACHE_PATH, GALLARY_PATH, COVER_PATH
         logger.info(f"创建了目录 {pathName}")
 
 if not os.path.exists(DB_PATH):
-    logger.info("数据库文件不存在,创建中...")
+    logger.info("数据库文件不存在")
     with open(DB_PATH, "w") as f:
         f.write("")
-
     db = sqlite3.connect(DB_PATH)
-    db.execute(
-        "CREATE TABLE IF NOT EXISTS downloaded (id_token TEXT,over INTEGER,total INTEGER,g_data TEXT,addSerial INTEGER PRIMARY KEY ASC AUTOINCREMENT)"
-    )
+    db.execute('''
+CREATE TABLE download (
+    gid       INTEGER UNIQUE
+                      NOT NULL,
+    token     TEXT,
+    over      INTEGER,
+    addSerial INTEGER PRIMARY KEY ASC AUTOINCREMENT
+);
+
+CREATE TABLE favo (
+    gid  INTEGER PRIMARY KEY
+                 UNIQUE
+                 NOT NULL,
+    favo INTEGER
+);
+
+CREATE TABLE g_data (
+    gid    INTEGER PRIMARY KEY
+                   UNIQUE
+                   NOT NULL,
+    g_data TEXT
+);
+
+
+CREATE VIEW downloaded AS
+    SELECT download.gid || '_' || download.token AS id_token,
+           download.over AS over,
+           json_extract(g_data.g_data, '$.filecount') AS total,
+           g_data.g_data AS g_data,
+           download.addSerial AS addSerial
+      FROM download,
+           g_data
+     WHERE download.gid == g_data.gid;'''
+               )
     db.commit()
     db.close()
     logger.info("创建数据库成功")
@@ -122,38 +152,34 @@ class ConnectionManager:
         self.active_connections.append(ws)
         logger.info(f"WebSocket[{ws.client.host}:{ws.client.port}] 连接成功")
 
-        syncState = pa.getStauseForWS()
-        await ws.send_json({
-            "type":"state",
-            "state":syncState
-        }) if syncState is not None else None
-        syncGalarys = pa.getDownloadedForWS()
-        await ws.send_json(
-            {
-            "type":"gallary",
-            "gallary":syncGalarys
-        }) if syncGalarys is not None else None
-
-     
-
     def disconnect(self, ws: WebSocket):
         logger.info(f"WebSocket[{ws.client.host}:{ws.client.port}] 断开链接")
         self.active_connections.remove(ws)
 
-    async def broadcast(self, message):
+    async def broadcast(self, messages):
         for connection in self.active_connections:
-            await connection.send_json(message)
+            for msg in messages:
+                await connection.send_json(msg)
+
+    async def onMessage(self, msg, ws):
+        logger.warning(f"收到消息{msg} from {ws.client.host}:{ws.client.port}")
+        start = time.time()
+        for result in pa.makeSyncData(msg):
+            await ws.send_json(result)
+        logger.warning(
+            f"处理消息{msg} from {ws.client.host}:{ws.client.port} 耗时{time.time()-start}")
 
 
 wsManager = ConnectionManager()
 
 
 @atomWarpper
-def nofityDownloadMessage(message):
+def nofityDownloadMessage(messages):
     global wsManager
+
     async def sendMessage():
         # logger.info(f"发送消息 {message} 到 {len(wsManager.active_connections)} 个连接")
-        await wsManager.broadcast(message)
+        await wsManager.broadcast(messages)
     try:
         asyncio.run(sendMessage())
     except Exception as e:
@@ -203,7 +229,6 @@ def rmfavo(gid_token):
 @app.get("/download/{gid_token}")
 def download(gid_token):
     logger.info(f"请求下载 {gid_token}")
-    global downloadQueue
     gid, token = gid_token.split("_")
     pa.download(gid, token)
     return {"msg": "已提交下载"}
@@ -231,7 +256,8 @@ def getfile(gid_token, filename, nocache=None):
                 return pa.get_g_data(gid, token)
             else:
                 try:
-                    return pa.g_data_from_pageHtml(gid, token)  # nocache模式 优先去获取HTML
+                    # nocache模式 优先去获取HTML
+                    return pa.g_data_from_pageHtml(gid, token)
                 except Exception as e:  # 获取失败则尝试其他方法 例如尝试访问一个被删除的画廊
                     return pa.get_g_data(gid, token)  # 其他方法页失败则raise
         else:
@@ -258,7 +284,8 @@ def getfile(gid_token, filename):
         bytes = pa.get_preview(gid, token, index)
         return Response(
             bytes,
-            headers={"Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000"},
+            headers={"Content-Type": "image/jpeg",
+                     "Cache-Control": "max-age=31536000"},
         )
     except Exception as e:
         trackE = makeTrackableExcption(e, f"请求预览 {gid_token} {filename} 失败")
@@ -305,7 +332,7 @@ def gallaryListNoPath(request: Request):
         extendResult = []
         if "f_search" in query and "page=0" in query and "search_and_merge_local=true" in query:
             extendResult = pa.localSearch(query)
-        result = extendResult + pa.get_main_gallarys(url) 
+        result = extendResult + pa.get_main_gallarys(url)
         return result
     except Exception as e:
         trackE = makeTrackableExcption(e, f"请求列表 {url} 失败")
@@ -320,7 +347,8 @@ def cover(filename):
         filepath = pa.get_cover(gid, token)
         return FileResponse(
             filepath,
-            headers={"Content-Type": "image/jpeg", "Cache-Control": "max-age=31536000"},
+            headers={"Content-Type": "image/jpeg",
+                     "Cache-Control": "max-age=31536000"},
         )
     except Exception as e:
         trackE = makeTrackableExcption(e, f"请求封面 {filename} 失败")
@@ -343,7 +371,8 @@ async def websocket_endpoint(websocket: WebSocket):
     await wsManager.connect(websocket)
     try:
         while True:
-            await websocket.receive_text()
+            msg = await websocket.receive_text()
+            await wsManager.onMessage(msg, websocket)
     # except WebSocketDisconnect:
     except Exception:
         wsManager.disconnect(websocket)

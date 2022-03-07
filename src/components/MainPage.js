@@ -4,9 +4,8 @@ import OnlineManinPage from './MainPageComponents/OnlineMainPage';
 import { notifyMessage } from './utils/PopoverNotifier';
 import TopSearchBar from './MainPageComponents/TopSearchBar'
 import { useLocation } from 'react-router';
-
 import LeftMenu from './MainPageComponents/LeftMenu'
-
+import FloatAddButton from './MainPageComponents/tools/FloatAddButton';
 import HomeIcon from '@mui/icons-material/Home';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
@@ -14,7 +13,6 @@ import SortIcon from '@mui/icons-material/Sort';
 import DownloadIcon from '@mui/icons-material/Download';
 import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
-import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import SettingsIcon from '@mui/icons-material/Settings';
 
@@ -25,7 +23,51 @@ import FileDownloadOffIcon from '@mui/icons-material/FileDownloadOff';
 
 import LongClickMenu from './MainPageComponents/LongClickMenu'
 import { useSettingBind } from './utils/Settings';
+import { useSyncGallarys, useSyncState, ServerSyncKeepAlive } from './utils/GlobalActionHandeler'
+import SecnodConfirmDialog from './utils/SecnodConfirmDialog';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 
+
+
+import ShuffleIcon from '@mui/icons-material/Shuffle';
+import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
+import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
+import CachedIcon from '@mui/icons-material/Cached';
+
+
+
+const randomSort = (arr) => {
+    return arr.sort(() => Math.random() - 0.5)
+}
+
+
+
+const nameSort = (arr) => {
+    const nameDict = {}
+    const firstShow = []
+    for (let item of arr) {
+        const hashName = item.name.replace(/\[.*?\]|\(.*?\)|【.*?】|（.*?）|\s+/g, "")
+        if (nameDict[hashName] !== undefined) {
+            if (item.lang === "chinese") {
+                //如果是中文画廊，则放在前面
+                nameDict[hashName].unshift(item)
+            } else {
+                //如果是英文画廊，则放在后面
+                nameDict[hashName].push(item)
+            }
+        } else {
+            nameDict[hashName] = [item]
+        }
+        if (firstShow.indexOf(hashName) === -1) {
+            firstShow.push(hashName)
+        }
+    }
+    const newList = []
+    for (let hashName of firstShow) {
+        newList.push(...nameDict[hashName])
+    }
+    return newList
+}
 
 const mergeGallary = (arr1, arr2) => {
     const result = []
@@ -51,13 +93,9 @@ const openNewTab = (url) => {
 }
 
 export default function MainPage(props) {
-
-
-
     const [gallarys, setGallarys] = useState([]);
     const pageOffset = useRef(0)
     const [states, setStates] = useState({})
-    const ws = useRef(null);
     const location = useLocation()
 
     const apiUrl = useMemo(() => {
@@ -77,54 +115,28 @@ export default function MainPage(props) {
         pageOffset.current = 0
         setGallarys([])
         console.log(apiUrl)
+        getRefresh()
         requestData()
-        closeWS()
-        initWS()
+
     }, [apiUrl])
 
-    const onWSMessage = (msg) => {
-        const data = JSON.parse(msg.data)
-        console.log("recv", data)
-        if (data.type === "gallary") { //下载界面才响应
-            if (apiUrl === "/api/data") {
-                setGallarys(prev => {
-                    console.log("收到了", data.gallary.length, '条数据  原有', prev.length)
-                    return prev.length === data.gallary.length ? prev : data.gallary
-                })//直接全同步 且避免乱序重排
-            }
-        } else if (data.type === "state") {//全部界面都响应 直接替换当前state
-            setStates(prevState => {//    {gid:[downloading,favonum,downloadnum]......}
-                return {
-                    ...prevState,
-                    ...data.state
-                }
-            })
-        }
-    }
-    const initWS = () => {
-        if (ws.current != null) {
-            closeWS()
-        }
-        else {
-            const wssOrWS = window.location.protocol === "https:" ? "wss:" : "ws:"
-            let wsUrl = `${wssOrWS}//${window.location.host}/ws`
-            if (window.location.host.includes(":3000")) {
-                console.log("dev")
-                //别部署在3000
-                wsUrl = wsUrl.replace(":3000", ":8080")
-            }
-            ws.current = new WebSocket(wsUrl)
-            ws.current.onmessage = onWSMessage
-        }
-    }
 
-    const closeWS = () => {
-        if (ws.current != null) {
-            ws.current.onmessage = null
-            ws.current.close()
-            ws.current = null
+    const syncState = useSyncState()
+    const syncGallarys = useSyncGallarys()
+    useEffect(() => {
+        setStates(syncState)
+    }, [syncState])
+
+
+    useEffect(() => {
+        if (apiUrl === "/api/data") {
+            if (syncGallarys.length === 0) return
+            if (syncGallarys.length !== gallarys.length) {
+                setGallarys(syncGallarys)
+            }
         }
-    }
+    }, [syncGallarys])
+
 
     const lock = useRef(false)
     const [loading, setLoading] = useState(false)
@@ -164,7 +176,13 @@ export default function MainPage(props) {
 
     const doSearch = (val) => {
         console.log("doSearch", val)
+        // randomSortGallary()
+        // nameHashSortGallary()
+        // goToTop()
     }
+
+
+
 
 
 
@@ -279,6 +297,11 @@ export default function MainPage(props) {
         }
     }
 
+
+
+
+
+
     const longClickCallback = (gid, token, name, x, y) => {
         const items = []
         const downloaded = states[Number(gid)] ? states[Number(gid)][2] > -2 : false
@@ -291,7 +314,7 @@ export default function MainPage(props) {
         if (downloaded) {
             items.push({
                 text: "删除下载",
-                onClick: () => { rmDownload(gid, token) },
+                onClick: () => { handelSenondConfirm(gid, token, name) },
                 icon: <FileDownloadOffIcon />
             })
         } else {
@@ -321,19 +344,96 @@ export default function MainPage(props) {
 
 
 
+    const [deleteSecnodConfirm, setDeleteSecnodConfirm] = useState({})
+
+    const handelSenondConfirm = (gid, token, title) => {
+        setDeleteSecnodConfirm({
+            title: title,
+            open: true,
+            onConfirm: () => {
+                console.log("delete", gid, token)
+                rmDownload(gid, token)
+                setDeleteSecnodConfirm({})
+            },
+            handleClose: () => { setDeleteSecnodConfirm({}) }
+        })
+    }
+
+
+
+    const [refreshToken, setRefreshToken] = useState(Math.random())
+    const getRefresh = () => {
+        setRefreshToken(Math.random())
+    }
+
+
+    const randomSortGallary = () => {
+        console.time("randomSortGallary")
+        getRefresh()
+        setGallarys(gallarys => randomSort(gallarys))
+        console.timeEnd("randomSortGallary")
+    }
+
+    const nameHashSortGallary = () => {
+        console.time("nameHashSortGallary")
+        getRefresh()
+        setGallarys(gallarys => nameSort(gallarys))
+        console.timeEnd("nameHashSortGallary")
+    }
+
+    const goToTop = () => {
+        getRefresh()
+    }
+
+    const refreshGallary = () => {
+        pageOffset.current = 0
+        setGallarys([])
+        getRefresh()
+        requestData()
+    }
+
+    const action_gototop = {
+        name: "回到顶部",
+        icon: <ArrowUpwardIcon />,
+        onClick: goToTop
+    }
+    const action_randomsort = {
+        name: "随机排序",
+        icon: <ShuffleIcon />,
+        onClick: randomSortGallary
+    }
+    const action_namehashsort = {
+        name: "名称排序",
+        icon: <SortByAlphaIcon />,
+        onClick: nameHashSortGallary
+    }
+    const action_refresh = {
+        name: "刷新",
+        icon: <CachedIcon />,
+        onClick: refreshGallary
+    }
+
+
+    const normalActions = [action_gototop, action_randomsort, action_namehashsort, action_refresh]
+    const downloadPageActions = [action_gototop, action_randomsort, action_namehashsort, action_refresh]
 
     return (
         <React.Fragment >
+            <FloatAddButton actions={normalActions} />
+            {/* <SecnodConfirmDialog title={"我是标题"} open={true} onClose={() => { }} onConfirm={()=>{}}/> */}
+            <SecnodConfirmDialog {...deleteSecnodConfirm} />
             <LongClickMenu pos={pos} setPos={setPos} items={longClickItems} title={longClickedName} />
             <LeftMenu open={leftMenuOpen} onClose={() => { setLeftMenuOpen(false) }} Items={menuItems}  ></LeftMenu>
             <TopSearchBar leftButtonClick={() => { setLeftMenuOpen(true) }} doSearch={doSearch} />
             <OnlineManinPage
+                key={refreshToken + 1}
                 loading={loading}
                 requestData={requestData}
                 gallarys={gallarys}
                 states={states}
                 longClickCallback={longClickCallback}
             />
+            <ServerSyncKeepAlive key={refreshToken + 2} />
         </React.Fragment>
     )
 }

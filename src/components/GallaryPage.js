@@ -24,6 +24,7 @@ import KeyboardController from '../KeyboardController.js';
 import { useSetting } from './utils/Settings';
 import { notifyMessage } from './utils/PopoverNotifier.js';
 import { dispathStateStorage } from './utils/StateSync.js';
+import { ServerSyncKeepAlive } from './utils/GlobalActionHandeler.js';
 
 const formatTime = (time, format) => {
     const date = new Date(Number(time + "000"))
@@ -122,7 +123,6 @@ export default function GallaryPage(props) {
     }
 
     const getG_data = async (g_data_url) => {
-        console.log("getG_data", g_data_url)
         const response = await fetch(g_data_url)
         if (response.ok) {
             return await response.json()
@@ -155,12 +155,12 @@ export default function GallaryPage(props) {
         const dataget = getG_data(g_data_url)
         const commentget = getComment(gid, token)
 
-        console.log(dataget, commentget)
-        console.log("initing............")
+        // console.log(dataget, commentget)
+        // console.log("initing............")
 
         const dataRes = await dataget
         const commentRes = await commentget
-        console.log(dataRes, commentRes)
+        // console.log(dataRes, commentRes)
 
 
         if (commentRes) {
@@ -169,7 +169,7 @@ export default function GallaryPage(props) {
         if (dataRes) {
             document.title = dataRes.title_jpn || dataRes.title
             setG_data(dataRes)
-            console.log("dataRes",dataRes)
+            // console.log("dataRes", dataRes)
             g_data_ref.current = dataRes
             seTags(transformTags(dataRes))
             setPreviewSteped()
@@ -224,7 +224,7 @@ export default function GallaryPage(props) {
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'left',
-                            margin:"100px 20px 0px 20px"
+                            margin: "100px 20px 0px 20px"
                         }}
                     >{
                             errorInfo.map(item => <a key={item}>{item}</a>)
@@ -244,7 +244,11 @@ function GallaryInfoPage(props) {
     const borderWidth = small_matches ? 24 : 12
 
 
-    const canDelete = (props.g_data.hasOwnProperty('extended') && props.g_data.extended.downloaded === true) || (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") === "true")
+    const canDelete = (props.g_data.hasOwnProperty('extended')
+        && props.g_data.extended.download > -2)
+        && (window.serverSideConfigure.type === "full"
+            && localStorage.getItem("offline_mode") !== "true")
+
     const [deleteButtonDisabled, setdeleteButtonDisabled] = useState(!canDelete);
 
     const disableDeleteButton = () => {
@@ -305,10 +309,6 @@ function GallaryInfoPage(props) {
         {"阅读"}
     </Button>
 
-
-    const clickFavo = useRef(null)
-    const setClickFavo = (f) => { clickFavo.current = f }
-
     const FCBS = <Grid
         container
         direction="row"
@@ -318,13 +318,13 @@ function GallaryInfoPage(props) {
         {downloadButtonShow ? <Grid item xs={FCBS_XS(downloadButtonShow)}><DownloadButton
             g_data={props.g_data}
             enableDelete={enableDeleteButton}
-            clickFavo={clickFavo}
         /></Grid> : null}
     </Grid>
 
     return (
         <div className={matches ? classes.borderCard : classes.matches_borderCard} >
             <KeyboardController />
+            <ServerSyncKeepAlive gid={props.g_data.gid}  />
             <div className={classes.elemContainer}>
                 <Grid
                     container
@@ -408,11 +408,9 @@ function GallaryInfoPage(props) {
                         forceControlDisabled={deleteButtonDisabled}
                         enableDeleteButton={enableDeleteButton}
                         disableDeleteButton={disableDeleteButton}
-                        clickFavo={clickFavo}
                     />
                     <FavoButton
                         g_data={props.g_data}
-                        setClickFavo={setClickFavo}
                     />
 
                     <ZipDownloadButton
@@ -445,7 +443,6 @@ function GallaryInfoPage(props) {
                 />
             </div>
             <div className={classes.elemContainer} />
-
         </div>
     )
 }
