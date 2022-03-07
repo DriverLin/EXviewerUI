@@ -22,6 +22,8 @@ export default function LeftMenu(props) {
                 alignItems="flex-start"
                 sx={{
                     height: "100%",
+                    padding: "5px",
+                    width:"155px",
                     backgroundColor: 'page.background',
                     color:"text.secondary",
                 }}

@@ -1,170 +1,76 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Button, LinearProgress } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useSettingBind } from '../utils/Settings';
 import { notifyMessage } from '../utils/PopoverNotifier';
 import { dispathStateStorage } from '../utils/StateSync';
+import { addDownload, addFavo, useSyncState } from '../utils/GlobalActionHandeler';
 export default function DownloadButton(props) {
-    let initButtonText = ""
+    const total = Number(props.g_data.filecount)
+    const addFavoWhenDownload = useSettingBind("下载时添加收藏", false)
+    const favoIndex = useSettingBind("收藏夹", 9)
+    const wsSyncState = useSyncState()
 
+    const calcText = (num) => {
+        if (num === -2) {
+            return '下载'
+        } if (num === -1) {
+            return "队列中"
+        }
+        if (num === total) {
+            return "已下载"
+        }
+        return `${total - num}项未完成`
+    }
+
+    const initState = [false, -1, -2]
     if (props.g_data.hasOwnProperty('extended')) {
         const over = props.g_data.extended.download
-        const total = Number(props.g_data.filecount)
-        if (over > -2) {
-            if (over === -1) {
-                initButtonText = "队列中"
-            } else if (over === total) {
-                initButtonText = "已下载"
-            }
-            else {
-                initButtonText = `${total - over}项未完成`
-            }
-        } else {
-            initButtonText = "下载"
-        }
-    } else {
-        initButtonText = "下载"
+        const favo = props.g_data.extended.favo
+        initState[1] = favo
+        initState[2] = over
     }
-    const [stause, setStause] = useState("init")
-    const [downloadProgress, _setDownloadProgress] = useState([0, 0, 999])
-    const downloadProgressRef = useRef(0)
-    const setDownloadProgress = (value) => {
-        downloadProgressRef.current = value
-        _setDownloadProgress(value)
-    }
+
+    const [trueState, setTrueState] = useState(initState)
+    
+
+    const downloading = useMemo(() => trueState[0], [trueState])
+    const processBarValue = useMemo(() => 100 * (trueState[2] > 0 ? trueState[2] : 0) / total, [trueState])
+
+
+    const [showText , setShowText] = useState(calcText(initState[2]))
+    useEffect(()=>{
+        setShowText(calcText(trueState[2]))
+    },[trueState])
+    // const [showText, setShowText] = useState(calcText(initState[2]))
 
     const [textOpacity, setTextOpacity] = useState(1)
     const [progressOpacity, setProgressOpacity] = useState(1)
 
-    const switchToProcessing = () => {
-        setTextOpacity(0)
-        setProgressOpacity(1)
-        setTimeout(() => {
-            setStause("processing")
-        }, 500)
-    }
+    useEffect(() => {
+        if (Object.keys(wsSyncState).length === 0) return
+        const testState = wsSyncState[props.g_data.gid]
+        console.log("testState", testState)
+        if (testState) {
+            setTrueState(testState)
+        } else {
+            setTrueState([false, -1, -2])
+        }
+    }, [wsSyncState])
 
-    const switchToText = (stause) => {
-        setProgressOpacity(0)
-        setTextOpacity(0)
-        setTimeout(() => {
-            setStause(stause)
-        }, 500)
-        setTimeout(() => {
-            setTextOpacity(1)
-        }, 600)
-    }
-
-    const lock = useRef(false)
-
-    const addFavoWhenDownload = useSettingBind("下载时添加收藏", false)
 
     const onClick = () => {
         if (window.serverSideConfigure.type !== "full" || localStorage.getItem("offline_mode") === "true") return
-        //只有full and not offline mode才能下载
-        if (lock.current) return
-        lock.current = true
-        setDownloadProgress([0, 0, 999])
-        const wssOrWS = window.location.protocol === "https:" ? "wss:" : "ws:"
-        let wsUrl = `${wssOrWS}//${window.location.host}/ws`
-        if (window.location.host.includes(":3000")) {
-            console.log("dev")
-            //球球别部署在3000 球球了
-            wsUrl = wsUrl.replace(":3000", ":8080")
+        if (trueState[0]) return // 已经在下载中
+        setShowText("已添加")
+        if (addFavoWhenDownload) {
+            addFavo(props.g_data.gid, props.g_data.token, favoIndex)
         }
-        switchToProcessing()
-        const gid_token = `${props.g_data.gid}_${props.g_data.token}`
         props.enableDelete()
-        if (addFavoWhenDownload === true && props.clickFavo.current !== null) {
-            if (props.clickFavo.current.stause !== "yes") {
-                props.clickFavo.current.func()
-            }
-        }
-        fetch(`/download/${gid_token}`)
-        try {
-            const ws = new WebSocket(wsUrl)
-            ws.onmessage = (e) => {
-                try {
-                    const recvData = JSON.parse(e.data)
-                    console.log(recvData)
-                    if (recvData.type === "state") {
-                        const selfState = recvData.state[Number(props.g_data.gid)]
-                        if (selfState !== undefined) {
-                            const [downloading, favo, download] = selfState
-                            if (downloading) {
-                                setDownloadProgress([download, 0, Number(props.g_data.filecount)])
-                            } else {
-                                if (download === Number(props.g_data.filecount)) {
-                                    switchToText("success")
-                                    ws.close()
-                                } else {
-                                    switchToText("failed")
-                                    lock.current = false
-                                    ws.close()
-                                }
-                            }
-                        }
-                    }
-
-                } catch (err) {
-                    notifyMessage("error", String(err))
-                    ws.close()
-                    switchToText("failed")
-                    lock.current = false
-                }
-            }
-        } catch (err) {
-            notifyMessage("error", String(err))
-        }
+        addDownload(props.g_data.gid, props.g_data.token)
     }
 
-
-
-
-    const eleMap = {
-        "init":
-            <div style={{ opacity: textOpacity, transition: .5 }}>
-                {initButtonText}
-            </div>,
-        "processing":
-            <LinearProgress
-                sx={{
-                    width: "100%",
-                    height: "100%",
-                    borderRadius: 1,
-                    "& .MuiLinearProgress-bar1Buffer": {
-                        backgroundColor: "button.readAndDownload.process",
-                    },
-                    "& .MuiLinearProgress-bar2Buffer": {
-                        backgroundColor: "#button.readAndDownload.buffer"
-                    },
-                    "& .MuiLinearProgress-dashed": {
-                        display: "none"
-                    },
-                    backgroundColor: "button.readAndDownload.main",
-                    transition: ".5s",
-                    opacity: progressOpacity,
-                }}
-                variant="buffer"
-                value={100 * downloadProgress[0] / downloadProgress[2]}
-                valueBuffer={100 * (downloadProgress[0] + downloadProgress[1]) / downloadProgress[2]}
-            />,
-
-        "success":
-            <div style={{ display: "flex", opacity: textOpacity, transition: .5 }}>
-                成功
-                <CheckCircleOutlineIcon />
-            </div>,
-        "failed":
-            <div style={{ display: "flex", opacity: textOpacity, transition: .5 }}>
-                {
-                    downloadProgress[1] === 0 ? "失败" : downloadProgress[1] + "项下载失败"
-
-                }
-                <ErrorOutlineIcon />
-            </div>,
-    }
 
     return <Button
         sx={{
@@ -183,7 +89,33 @@ export default function DownloadButton(props) {
         onClick={onClick}
     >
         {
-            eleMap[stause]
+            downloading ?
+                <LinearProgress
+                    sx={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: 1,
+                        "& .MuiLinearProgress-bar1Buffer": {
+                            backgroundColor: "button.readAndDownload.process",
+                        },
+                        "& .MuiLinearProgress-bar2Buffer": {
+                            backgroundColor: "#button.readAndDownload.buffer"
+                        },
+                        "& .MuiLinearProgress-dashed": {
+                            display: "none"
+                        },
+                        backgroundColor: "button.readAndDownload.main",
+                        transition: ".5s",
+                        opacity: 1,
+                    }}
+                    variant="buffer"
+                    value={processBarValue}
+                    valueBuffer={0}
+                /> :
+
+                <div style={{ opacity: 1, transition: .5 }}>
+                    {showText}
+                </div>
         }
     </Button>
 }

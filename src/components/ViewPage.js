@@ -8,6 +8,7 @@ import { useSettingBind } from './utils/Settings';
 import { notifyMessage } from './utils/PopoverNotifier';
 
 
+const fixto8 = (num) => (Array(8).join(0) + num).slice(-8)
 
 export default function ViewPage() {
     const [urls, _setUrls] = useState([])
@@ -108,7 +109,7 @@ export default function ViewPage() {
             document.title = data.title_jpn || data.title
             const tmpUrl = []
             for (let i = 1; i <= Number(data.filecount); i++) {
-                tmpUrl.push(`/gallarys/${gid}_${token}/${(Array(8).join(0) + i).slice(-8)}.jpg`)
+                tmpUrl.push(`/gallarys/${gid}_${token}/${fixto8(i)}.jpg`)
             }
             setUrls(tmpUrl)
             setPageCount(Number(data.filecount))
@@ -131,9 +132,7 @@ export default function ViewPage() {
     }, [])
 
     return (
-
         pageCount === 0 ?
-            // <LoadingAnime />
             null
             :
             <div >

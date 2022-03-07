@@ -131,9 +131,9 @@ export default function OnlineManinPage(props) {
 
     const scallkey = useMemo(() => (small_matches ? 1 : 0) * 10 + (break_matches ? 0 : 1), [small_matches, break_matches])
 
-    useEffect( () => {
-        console.log(scallkey)
-    },[scallkey])
+    // useEffect( () => {
+        // console.log(scallkey)
+    // },[scallkey])
 
 
 
