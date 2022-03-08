@@ -310,6 +310,10 @@ def downloadedAll():
     downloadedG_data = pa.queryDownloaded()
     return downloadedG_data
 
+@app.get("/api/Data.db")
+def getDB():
+    return FileResponse(DB_PATH,headers={"Cache-Control": "max-age=31536000"})
+
 
 @app.get("/list/{path}")
 def gallaryList(path, request: Request):

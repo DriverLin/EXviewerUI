@@ -9,20 +9,6 @@ import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
-import FileCopyIcon from '@mui/icons-material/FileCopyOutlined';
-import SaveIcon from '@mui/icons-material/Save';
-import PrintIcon from '@mui/icons-material/Print';
-import ShareIcon from '@mui/icons-material/Share';
-
-
-// const actions = [
-//     { icon: <FileCopyIcon />, name: 'Copy', onClick: () => { } },
-//     { icon: <SaveIcon />, name: 'Save', onClick: () => { } },
-//     { icon: <PrintIcon />, name: 'Print', onClick: () => { } },
-//     { icon: <ShareIcon />, name: 'Share', onClick: () => { } },
-// ];
-
-
 
 export default function FloatAddButton(props) {
     const [open, setOpen] = React.useState(false);
@@ -33,6 +19,7 @@ export default function FloatAddButton(props) {
     const handelScroll = (event) => {
         if (event.e.scrollTop > lastTop.current) {
             setHidden(true)
+            handleClose()
         } else {
             setHidden(false)
         }

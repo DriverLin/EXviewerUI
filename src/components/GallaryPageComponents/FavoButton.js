@@ -14,6 +14,9 @@ import { addFavo, rmFavo, testAction, useActionHandeler, useSyncState } from '..
 
 export default function FavoButton(props) {
     const favoIndex = useSettingBind("收藏夹", 9)
+
+    const forceDisabled = !(window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true")
+
     let initfavoStause = "null"//没有扩展数据 无法管理收藏 收藏按钮直接为禁用
     if (props.g_data.hasOwnProperty('extended')) {
         if (props.g_data.extended.favo > -1) {
@@ -22,6 +25,7 @@ export default function FavoButton(props) {
             initfavoStause = "no"
         }
     }
+
     const [stause, setStause] = useState(initfavoStause)
     const lock = useRef(false)
     const onClick = () => {
@@ -60,21 +64,21 @@ export default function FavoButton(props) {
         }
     }, [wsSyncState])
 
+    const disabledFavoButton = <IconButton
+        disabled={true}
+        onClick={() => { }}
+        sx={{
+            "&.Mui-disabled": {
+                color: "button.iconFunction.disabled",
+            },
+        }}
+        component="span"
+    >
+        <FavoriteBorderIcon fontSize="large" />
+    </IconButton>
 
     const elemMap = {
-        "null":
-            <IconButton
-                disabled={true}
-                onClick={() => { }}
-                sx={{
-                    "&.Mui-disabled": {
-                        color: "button.iconFunction.disabled",
-                    },
-                }}
-                component="span"
-            >
-                <FavoriteBorderIcon fontSize="large" />
-            </IconButton>,
+        "null":disabledFavoButton,
         "no":
             <IconButton
                 name='clickable'
@@ -112,6 +116,10 @@ export default function FavoButton(props) {
             </IconButton>,
     }
 
-    return elemMap[stause]
+    return <div>
+        {
+            forceDisabled ? disabledFavoButton : elemMap[stause]
+        }
+    </div>
 
 }

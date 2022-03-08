@@ -5,32 +5,33 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import JsZip from 'jszip'
 import FileSaver from 'file-saver'
-import {notifyMessage} from "../utils/PopoverNotifier"
+import { notifyMessage } from "../utils/PopoverNotifier"
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+
 export default function ZipDownloadButton(props) {
     const [stause, setStause] = useState("init")
-
     const [initOpacity, setInitOpacity] = useState(1)
     const [processingOpacity, setProcessingOpacity] = useState(0)
     const [finishOpacity, setFinishOpacity] = useState(0)
-
     const [process, setProcess] = useState(0)
+    const [noError, setNoError] = useState(true)
 
-    const makeZipAsync = async () => { 
+    const makeZipAsync = async () => {
         var new_zip = new JsZip();
         const response = await fetch(`/gallarys/${props.g_data.gid}_${props.g_data.token}/g_data.json`)
-        if (!response.ok) { 
-            notifyMessage("error","Failed to fetch g_data.json")
+        if (!response.ok) {
+            notifyMessage("error", "Failed to fetch g_data.json")
             return
         }
         const g_data = await response.json()
         const gallaryname = g_data.title_jpn || g_data.title
         new_zip.file("g_data.json", JSON.stringify(g_data, null, 4))
         let over = 0
-        const jobs =  Array.from(Array(Number(g_data.filecount)), (v, k) => k + 1).map(async (i) => {
+        const jobs = Array.from(Array(Number(g_data.filecount)), (v, k) => k + 1).map(async (i) => {
             const pic = await fetch(`/gallarys/${g_data.gid}_${g_data.token}/${(Array(8).join(0) + i).slice(-8)}.jpg`)
             if (!pic.ok) {
                 notifyMessage("error", `${(Array(8).join(0) + i).slice(-8)}.jpg 下载失败`)
-            } else { 
+            } else {
                 const blob = await pic.blob()
                 new_zip.file(`${(Array(8).join(0) + i).slice(-8)}.jpg`, blob)
                 over++
@@ -38,11 +39,14 @@ export default function ZipDownloadButton(props) {
             }
         })
         await Promise.all(jobs)
+
+        setProcessingOpacity(0)
+        setInitOpacity(0)
         if (over === Number(g_data.filecount)) {
-            const content = await new_zip.generateAsync({ type: "blob" })
-            FileSaver(content, gallaryname + ".zip")
-            setProcessingOpacity(0)
-            setInitOpacity(0)
+            setNoError(true)
+            new_zip.generateAsync({ type: "blob" }).then(function (content) {
+                FileSaver(content, gallaryname + ".zip");//压缩还挺慢的
+            });
             setTimeout(() => {
                 setStause("success")
             }, 500);
@@ -58,11 +62,16 @@ export default function ZipDownloadButton(props) {
             setTimeout(() => {
                 setInitOpacity(1)
             }, 1700);
-        }else{
-            //clearup
+        } else {
+            setNoError(false)
+            setTimeout(() => {
+                setStause("init")
+            }, 500);
+            setTimeout(() => {
+                setInitOpacity(1)
+            }, 600);
         }
     }
-
 
     const onClick = async () => {
         setInitOpacity(0)
@@ -84,7 +93,13 @@ export default function ZipDownloadButton(props) {
                 }}
                 component="span"
             >
-                <IosShareIcon fontSize="large" />
+                {
+                    noError ?
+                        <IosShareIcon fontSize="large" />
+                        :
+                        <ErrorOutlineIcon fontSize="large" />
+
+                }
             </IconButton>
         ,
         "processing":
