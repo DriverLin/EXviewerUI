@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+
 import { Swiper, SwiperSlide } from 'swiper/react';
+
 import SwiperCore, { Virtual, Controller, Keyboard, Mousewheel } from 'swiper';
 // import 'swiper/swiper.scss';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/scrollbar';
+// import 'swiper/css';
+// import 'swiper/css/navigation';
+// import 'swiper/css/pagination';
+// import 'swiper/css/scrollbar';
+import "swiper/swiper-bundle.min.css";
 
 SwiperCore.use([Virtual, Controller, Keyboard, Mousewheel]);
 

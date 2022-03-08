@@ -36,6 +36,11 @@ export default function ZipDownloadButton(props) {
                 new_zip.file(`${(Array(8).join(0) + i).slice(-8)}.jpg`, blob)
                 over++
                 setProcess(100 * over / Number(g_data.filecount))
+                if (over === Number(g_data.filecount)) {
+                    new_zip.generateAsync({ type: "blob" }).then(function (content) {
+                        FileSaver(content, gallaryname + ".zip");
+                    });
+                }
             }
         })
         await Promise.all(jobs)
@@ -44,9 +49,6 @@ export default function ZipDownloadButton(props) {
         setInitOpacity(0)
         if (over === Number(g_data.filecount)) {
             setNoError(true)
-            new_zip.generateAsync({ type: "blob" }).then(function (content) {
-                FileSaver(content, gallaryname + ".zip");//压缩还挺慢的
-            });
             setTimeout(() => {
                 setStause("success")
             }, 500);
