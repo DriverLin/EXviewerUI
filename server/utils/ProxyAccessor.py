@@ -143,7 +143,7 @@ class ProxyAccessor:
             req = urllib.request.Request(
                 url=urljoin(self.root, url), headers=self.headers
             )
-            resp = urllib.request.urlopen(req, timeout=15)
+            resp = urllib.request.urlopen(req, timeout=8)
             return resp.read().decode("utf-8")
         except urllib.error.URLError as e:
             raise makeTrackableExcption(e, f"获取HTML{url} 失败 ")

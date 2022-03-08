@@ -100,9 +100,9 @@ export default function OnlineManinPage(props) {
         };
     }
 
-    useEffect(() => {
-        requestNextPage()
-    }, [])
+    // useEffect(() => {
+    //     requestNextPage()
+    // }, [])
     const lastE = useRef(0);
     const handelVscroll = (e) => {
         const dis2trigger = 3

@@ -36,6 +36,8 @@ import CachedIcon from '@mui/icons-material/Cached';
 
 
 
+
+
 const randomSort = (arr) => {
     return arr.sort(() => Math.random() - 0.5)
 }
@@ -110,6 +112,9 @@ export default function MainPage(props) {
         return urlMap[location.pathname]
     }, [location])
 
+    const loadFromAPIDATA = () => { }
+    const loadFromDB = () => { }
+
 
     useEffect(() => {
         pageOffset.current = 0
@@ -141,44 +146,47 @@ export default function MainPage(props) {
     const lock = useRef(false)
     const [loading, setLoading] = useState(false)
     const requestData = async () => {
-        if (apiUrl === "/api/data") return
-
-        if (lock.current) return
-        lock.current = true
-        setLoading(true)
-        const targeturl = `${apiUrl}&page=${pageOffset.current}`
-        console.log("requestData", targeturl)
-        const response = await fetch(targeturl)
-        if (response.ok) {
-            const data = await response.json()
-            setGallarys(prev => mergeGallary(prev, data))
-            console.log(data)
-            pageOffset.current += 1
-            console.log("requestData over")
-            lock.current = false
-            setLoading(false)
-            return true
+        if (apiUrl === "/api/data") {
+            return
         } else {
-            const text = await response.text()
-            try {
-                const info = JSON.parse(text)
-                notifyMessage("error", JSON.parse(info.detail))
-            } catch (error) {
-                notifyMessage("error", text)
+            if (lock.current) return
+            lock.current = true
+            setLoading(true)
+            const targeturl = `${apiUrl}&page=${pageOffset.current}`
+            console.log("requestData", targeturl)
+            const response = await fetch(targeturl)
+            if (response.ok) {
+                const data = await response.json()
+                setGallarys(prev => mergeGallary(prev, data))
+                console.log(data)
+                pageOffset.current += 1
+                console.log("requestData over")
+                lock.current = false
+                setLoading(false)
+                return true
+            } else {
+                const text = await response.text()
+                try {
+                    const info = JSON.parse(text)
+                    notifyMessage("error", JSON.parse(info.detail))
+                } catch (error) {
+                    notifyMessage("error", text)
+                }
+                lock.current = false
+                setLoading(false)
+                return false
             }
-            lock.current = false
-            setLoading(false)
-            return false
+
         }
+
+
     }
 
 
 
-    const doSearch = (val) => {
-        console.log("doSearch", val)
-        // randomSortGallary()
-        // nameHashSortGallary()
-        // goToTop()
+    const doSearch = (text) => {
+        console.log("doSearch", text)
+        openCurrentTab(`/search?f_search=${encodeURIComponent(text)}`)
     }
 
 

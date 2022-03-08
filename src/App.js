@@ -1,6 +1,6 @@
 
 import './App.css';
-import React, { useState, useEffect , useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
@@ -9,7 +9,7 @@ import MainPage from './components/MainPage';
 import ViewPage from './components/ViewPage';
 import AppSetting from './components/AppSetting';
 
-import { useSettingBind} from './components/utils/Settings';
+import { useSettingBind } from './components/utils/Settings';
 
 import PopoverNotifier from "./components/utils/PopoverNotifier";
 
@@ -19,6 +19,7 @@ import {
   Routes,
   Route
 } from "react-router-dom";
+import StaticMainPage from './components/StaticMainPage';
 
 
 
@@ -26,14 +27,14 @@ import {
 
 function App() {
 
-  const colorMode = useSettingBind('色彩主题','暗色')
-  const dark = useMemo(() => { 
+  const colorMode = useSettingBind('色彩主题', '暗色')
+  const dark = useMemo(() => {
     if (colorMode === "跟随系统") {
       return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-    } else { 
+    } else {
       return colorMode === "暗色"
     }
-  },[colorMode])
+  }, [colorMode])
 
   const theme = createTheme({
     components: {
@@ -87,20 +88,20 @@ function App() {
             main: "#4a4a4a",
             hover: "#646464"
           },
-          text:"#ffffff",
+          text: "#ffffff",
         },
         iconFunction: {
           main: "#ffffff",
           disabled: "#9e9e9e",
           text: "#ffffff",
-          process:"#d90051",
+          process: "#d90051",
         },
         readAndDownload: {
           main: "#4a4a4a",
           hover: "#646464",
           process: "#d90051",
-          buffer:"e0e0e0",
-          text:"#ffffff"
+          buffer: "e0e0e0",
+          text: "#ffffff"
         },
         loadMore: {
           main: "#303030",
@@ -122,7 +123,7 @@ function App() {
       search: {
         color: "#3a3a3a",
         text: "#ffffff",
-        split:"#757575"
+        split: "#757575"
       }
     }
       :
@@ -199,14 +200,22 @@ function App() {
       }
   });
 
+  let serverType = window.serverSideConfigure
+  if (serverType) {
+    serverType = serverType.type
+  } else {
+    serverType = { type: "full" }
+  }
+
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <PopoverNotifier/>
+      <PopoverNotifier />
       <div id='mainContainer' style={{ backgroundColor: theme.palette.page.background, width: "100%" }}    >
         <HashRouter>
           <Routes>
-            <Route path="/" element={<MainPage />} />
+            <Route path="/" element={serverType === "full" ? <MainPage /> : <StaticMainPage />} />
             <Route path="/search" element={<MainPage />} />
             <Route path="/watched" element={<MainPage />} />
             <Route path="/popular" element={<MainPage />} />
