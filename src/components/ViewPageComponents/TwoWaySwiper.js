@@ -1,9 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-
-
+import React, { useEffect, useRef, useState } from 'react';
+import SwiperCore, { Controller, Keyboard, Mousewheel, Virtual } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
-
-import SwiperCore, { Virtual, Controller, Keyboard, Mousewheel } from 'swiper';
 // import 'swiper/swiper.scss';
 // import 'swiper/css';
 // import 'swiper/css/navigation';

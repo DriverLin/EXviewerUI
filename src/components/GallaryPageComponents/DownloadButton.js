@@ -1,11 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Button, LinearProgress } from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import { useSettingBind } from '../utils/Settings';
-import { notifyMessage } from '../utils/PopoverNotifier';
-import { dispathStateStorage } from '../utils/StateSync';
+import React, { useEffect, useMemo, useState } from 'react';
 import { addDownload, addFavo, useSyncState } from '../utils/GlobalActionHandeler';
+import { useSettingBind } from '../utils/Settings';
+
 export default function DownloadButton(props) {
     const total = Number(props.g_data.filecount)
     const addFavoWhenDownload = useSettingBind("下载时添加收藏", false)

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react"
-import { notifyMessage } from "./PopoverNotifier"
+import { useEffect, useRef, useState } from "react";
+import { notifyMessage } from "./PopoverNotifier";
 
 const dispatchEvent = (eventName, detail) => {
     const e = new Event("globalActionHandelerEvent");
@@ -212,7 +212,11 @@ export function ServerSyncKeepAlive(props) {
         ws.current = new WebSocket(wsUrl)
         ws.current.onmessage = wsMessageHandler
         ws.current.onopen = () => {
-            ws.current.send(props.gid ? "syncState" : "syncAll")
+            try {
+                ws.current.send(props.gid ? "syncState" : "syncAll")
+            } catch (e) {
+                console.log(e)
+            }
         }
     }
     const handelVisibilitychange = () => {
@@ -220,7 +224,11 @@ export function ServerSyncKeepAlive(props) {
             if (ws.current === null || ws.current.readyState !== WebSocket.OPEN) {
                 initWs()
             } else {
-                ws.current.send(props.gid ? "syncState" : "syncAll")
+                try {
+                    ws.current.send(props.gid ? "syncState" : "syncAll")
+                } catch (e) {
+                    console.log(e)
+                }
             }
         }
     }
@@ -229,6 +237,11 @@ export function ServerSyncKeepAlive(props) {
         window.addEventListener("visibilitychange", handelVisibilitychange)
         return () => {
             window.removeEventListener("visibilitychange", handelVisibilitychange)
+            try {
+                ws.current.close()
+            } catch (error) {
+                console.log("ws close error")
+            }
         }
     }, [])
     return <div />

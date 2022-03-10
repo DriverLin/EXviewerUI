@@ -1,8 +1,8 @@
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import { Rating, Typography } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import React from 'react';
 
-import {  Rating , Typography } from '@mui/material';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import { styled } from '@mui/material/styles';
 
 
 

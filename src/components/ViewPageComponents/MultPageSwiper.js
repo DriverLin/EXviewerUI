@@ -1,6 +1,6 @@
-import React, { useState, useEffect, } from 'react';
-import TwoWaySwiper from './TwoWaySwiper';
+import React, { useEffect, useState } from 'react';
 import MultImageShow from './MultImageShow';
+import TwoWaySwiper from './TwoWaySwiper';
 export default function MultPageSwiper(props) {
     const [value, _setValue] = useState(Number(props.value));
     const [mapedUrls, setMapedUrls] = useState([]);
@@ -32,7 +32,6 @@ export default function MultPageSwiper(props) {
     }
 
     const setValue = (eventValue) => {
-        // console.log("eventValue",eventValue)
         _setValue(eventValue);
         props.setValue(in2out(eventValue));
     }

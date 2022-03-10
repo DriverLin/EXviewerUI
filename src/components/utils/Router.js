@@ -1,17 +1,8 @@
-import { Button } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router";
+import GallaryPage from "../GallaryPage";
 import MainPage from "../MainPage";
 import ViewPage from "../ViewPage";
-import GallaryPage from "../GallaryPage";
-import { useLocation } from "react-router";
-import log from "./Logger";
-
-
-
-
-
-
-
 
 export function SwitchRouter(props) {
     const location = useLocation()

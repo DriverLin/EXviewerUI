@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
-import GetTranslate from "../GetTranslate.js"
+import { styled } from '@mui/material/styles';
+import * as React from 'react';
+import GetTranslate from "../GetTranslate.js";
 
 
 

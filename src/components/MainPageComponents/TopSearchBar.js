@@ -1,11 +1,11 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Grid, InputBase, ButtonBase, useScrollTrigger, Paper, AppBar, Slide, useMediaQuery, } from '@mui/material';
-import { makeStyles } from '@mui/styles';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
+import { AppBar, ButtonBase, Grid, InputBase, Paper, Slide, useMediaQuery } from '@mui/material';
+import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from "react-router-dom";
-import { getGuess } from "../GetTranslate"
+import { getGuess } from "../GetTranslate";
 
 function HideOnScroll(props) {
     const { children, __window } = props;

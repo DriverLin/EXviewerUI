@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import SwitchType from "./AppSettingComponents/SwitchType";
-import SelectType from "./AppSettingComponents/SelectType";
 import { Grid, useMediaQuery } from "@mui/material";
 import { makeStyles } from '@mui/styles';
+import React from 'react';
+import SelectType from "./AppSettingComponents/SelectType";
+import SwitchType from "./AppSettingComponents/SwitchType";
 
 const useStyles = makeStyles((theme) => ({
 
