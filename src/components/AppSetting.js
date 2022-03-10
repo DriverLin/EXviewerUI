@@ -50,7 +50,7 @@ export default function AppSetting(props) {
                     with: "100%",
                 }}
             >
-                <Grid item sx={12} sx={{ width: "100%" }} >
+                <Grid item xs={12} sx={{ width: "100%" }} >
                     <SwitchType
                         name={"下载时添加收藏"}
                         defaultValue={false}
@@ -60,7 +60,7 @@ export default function AppSetting(props) {
 
                 <div className={classes.splitLine} />
                 
-                <Grid item sx={12} sx={{ width: "100%" }}>
+                <Grid item xs={12} sx={{ width: "100%" }}>
                     <SwitchType
                         name={"删除时移除收藏"}
                         defaultValue={false}
@@ -70,7 +70,7 @@ export default function AppSetting(props) {
 
                 <div className={classes.splitLine} />
 
-                <Grid item sx={12} sx={{ width: "100%" }}>
+                <Grid item xs={12} sx={{ width: "100%" }}>
                     <SelectType
                         name={"色彩主题"}
                         defaultValue={"暗色"}
@@ -81,7 +81,7 @@ export default function AppSetting(props) {
 
                 <div className={classes.splitLine} />
 
-                <Grid item sx={12} sx={{ width: "100%" }}>
+                <Grid item xs={12} sx={{ width: "100%" }}>
                     <SelectType
                         name={"图片预加载"}
                         defaultValue={7}
@@ -92,7 +92,7 @@ export default function AppSetting(props) {
 
                 <div className={classes.splitLine} />
 
-                <Grid item sx={12} sx={{ width: "100%" }}>
+                <Grid item xs={12} sx={{ width: "100%" }}>
                     <SelectType
                         name={"收藏夹"}
                         defaultValue={9}
@@ -104,7 +104,7 @@ export default function AppSetting(props) {
 
                 <div className={classes.splitLine} />
 
-                <Grid item sx={12} sx={{ width: "100%" }}>
+                <Grid item xs={12} sx={{ width: "100%" }}>
                     <SwitchType
                         name={"搜索本地并合并结果"}
                         defaultValue={false}

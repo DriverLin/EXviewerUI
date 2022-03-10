@@ -1,5 +1,7 @@
 import threading
+
 from cacheout import LRUCache
+
 
 class MulthreadCache(object):  # 等重写吧。。。
     def __init__(self):
