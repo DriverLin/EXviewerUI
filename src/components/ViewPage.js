@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from "react-router-dom";
+import { notifyMessage } from './utils/PopoverNotifier';
+import { useSettingBind } from './utils/Settings';
+import MultPageSwiper from './ViewPageComponents/MultPageSwiper';
 import RevSlider from './ViewPageComponents/RevSlider';
 import ViewSettingPanel from './ViewPageComponents/ViewSettingPanel';
-import MultPageSwiper from './ViewPageComponents/MultPageSwiper';
-import { useLocation } from "react-router-dom";
-import { useSettingBind } from './utils/Settings';
-import { notifyMessage } from './utils/PopoverNotifier';
+
 
 
 const fixto8 = (num) => (Array(8).join(0) + num).slice(-8)
@@ -133,7 +133,7 @@ export default function ViewPage(props) {
 
     const refreshKey = useMemo(
         () => {
-            return `${horizontalView}_${switchDirection}`
+            return  (horizontalView?10:0) + (switchDirection?1:0)
         }, [horizontalView, switchDirection]
     )
 

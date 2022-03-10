@@ -1,5 +1,5 @@
-import React, { useState, useEffect,useRef } from 'react';
-import { Slider, Slide } from '@mui/material';
+import { Slide, Slider } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
 
 export default function RevSlider(props) {
     const translateFatherValue = () => {

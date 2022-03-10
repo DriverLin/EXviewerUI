@@ -1,14 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Button, Box, InputBase, Fab, useScrollTrigger, Paper, AppBar, Zoom, useMediaQuery, } from '@mui/material';
-import { makeStyles } from '@mui/styles';
-import MenuIcon from '@mui/icons-material/Menu';
-import AddIcon from '@mui/icons-material/Add';
-import PropTypes from 'prop-types';
-import { useLocation } from "react-router-dom";
-import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import SpeedDial from '@mui/material/SpeedDial';
-import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
+import SpeedDialIcon from '@mui/material/SpeedDialIcon';
+import React, { useEffect, useRef, useState } from 'react';
+
 
 export default function FloatAddButton(props) {
     const [open, setOpen] = React.useState(false);

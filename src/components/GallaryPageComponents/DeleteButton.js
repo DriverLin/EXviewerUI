@@ -1,16 +1,12 @@
-import React, { useState } from 'react';
-import { Button, IconButton } from '@mui/material';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import CloseIcon from '@mui/icons-material/Close';
-import { useSettingBind } from '../utils/Settings';
-import { notifyMessage } from '../utils/PopoverNotifier';
+import { IconButton } from '@mui/material';
+import React, { useState } from 'react';
 import { rmDownload, rmFavo, useActionHandeler } from '../utils/GlobalActionHandeler';
+import { notifyMessage } from '../utils/PopoverNotifier';
 import SecnodConfirmDialog from '../utils/SecnodConfirmDialog';
+import { useSettingBind } from '../utils/Settings';
+
+
 export default function DeleteButton(props) {
     const [open, setOpen] = useState(false);
     const handleClickOpen = () => {

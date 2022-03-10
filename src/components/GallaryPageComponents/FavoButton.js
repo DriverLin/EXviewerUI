@@ -1,16 +1,13 @@
-
-
 //先说明设计思路
 //由于cache设计为3秒 所以只要不是太短就会一直是最新的
 //重新设计接口 让其处于full状态且不是离线模式的时候 使用参数 强制获取最新数据
 //如果是离线模式 则收藏按钮为禁用状态
-import React, { useState, useRef, useEffect } from 'react';
-import { IconButton } from '@mui/material';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-import { dispathStateStorage } from '../utils/StateSync';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import { IconButton } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { addFavo, rmFavo, useActionHandeler, useSyncState } from '../utils/GlobalActionHandeler';
 import { useSettingBind } from '../utils/Settings';
-import { addFavo, rmFavo, testAction, useActionHandeler, useSyncState } from '../utils/GlobalActionHandeler';
 
 export default function FavoButton(props) {
     const favoIndex = useSettingBind("收藏夹", 9)

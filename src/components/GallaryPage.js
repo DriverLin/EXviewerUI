@@ -1,30 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
-
-import { Button, Grid, Rating, useMediaQuery, Typography, IconButton } from '@mui/material';
-
-import TagPanel from "./GallaryPageComponents/TagPanel.js"
-import InfoPanel from './GallaryPageComponents/InfoPanel.js';
-import CommentPanel from './GallaryPageComponents/CommentPanel.js';
-import PreviewPanel from './GallaryPageComponents/PreviewPanel.js';
-
-import StarBorderIcon from '@mui/icons-material/StarBorder';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import { Button, Grid, IconButton, Rating, Typography, useMediaQuery } from '@mui/material';
 import { makeStyles } from '@mui/styles';
-
-import LoadingAnime from './LoadingAnime';
-
-import { useLocation, } from "react-router-dom";
-import DownloadButton from './GallaryPageComponents/DownloadButton.js';
-import ZipDownloadButton from './GallaryPageComponents/ZipDownloadButton.js';
-import DeleteButton from './GallaryPageComponents/DeleteButton.js';
-import FavoButton from './GallaryPageComponents/FavoButton.js';
-
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from "react-router-dom";
 import KeyboardController from '../KeyboardController.js';
-
-import { useSetting } from './utils/Settings';
-import { notifyMessage } from './utils/PopoverNotifier.js';
-import { dispathStateStorage } from './utils/StateSync.js';
+import CommentPanel from './GallaryPageComponents/CommentPanel.js';
+import DeleteButton from './GallaryPageComponents/DeleteButton.js';
+import DownloadButton from './GallaryPageComponents/DownloadButton.js';
+import FavoButton from './GallaryPageComponents/FavoButton.js';
+import InfoPanel from './GallaryPageComponents/InfoPanel.js';
+import PreviewPanel from './GallaryPageComponents/PreviewPanel.js';
+import TagPanel from "./GallaryPageComponents/TagPanel.js";
+import ZipDownloadButton from './GallaryPageComponents/ZipDownloadButton.js';
+import LoadingAnime from './LoadingAnime';
 import { ServerSyncKeepAlive } from './utils/GlobalActionHandeler.js';
+import { notifyMessage } from './utils/PopoverNotifier.js';
 
 const formatTime = (time, format) => {
     const date = new Date(Number(time + "000"))

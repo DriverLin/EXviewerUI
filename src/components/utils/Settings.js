@@ -1,4 +1,4 @@
-import { useState , useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useLocalStorage } from './MyHooks';
 
 export function useSetting(key, defaultValue) {

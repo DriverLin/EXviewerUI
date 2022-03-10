@@ -1,18 +1,16 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
-import { makeStyles } from '@mui/styles';
-
-import { ButtonBase } from '@mui/material';
-// import ButtonBase from '@mui/material/ButtonBase';
-// import Rating from '@mui/material/Rating';
-import Rating from './Rating';
-import useMediaQuery from '@mui/material/useMediaQuery';
-
-import { styled } from '@mui/material/styles';
-
 import DownloadIcon from '@mui/icons-material/Download';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-
+import { ButtonBase } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { makeStyles } from '@mui/styles';
+import React, { useMemo, useRef } from 'react';
 import DownloadProcessbar from './DownloadProcessbar';
+// import Rating from '@mui/material/Rating';
+import Rating from './Rating';
+
+
+
+
 
 
 const colormap = {

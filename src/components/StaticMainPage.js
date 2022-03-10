@@ -1,38 +1,19 @@
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import OnlineManinPage from './MainPageComponents/OnlineMainPage';
-import { notifyMessage } from './utils/PopoverNotifier';
-import TopSearchBar from './MainPageComponents/TopSearchBar'
-import { useLocation } from 'react-router';
-import LeftMenu from './MainPageComponents/LeftMenu'
-import FloatAddButton from './MainPageComponents/tools/FloatAddButton';
-import HomeIcon from '@mui/icons-material/Home';
-import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import SortIcon from '@mui/icons-material/Sort';
-import DownloadIcon from '@mui/icons-material/Download';
-import WifiIcon from '@mui/icons-material/Wifi';
-import WifiOffIcon from '@mui/icons-material/WifiOff';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import SettingsIcon from '@mui/icons-material/Settings';
-
-import AutoStoriesIcon from '@mui/icons-material/AutoStories';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import FileDownloadOffIcon from '@mui/icons-material/FileDownloadOff';
-
-import LongClickMenu from './MainPageComponents/LongClickMenu'
-import { useSettingBind } from './utils/Settings';
-import { useSyncGallarys, useSyncState, ServerSyncKeepAlive } from './utils/GlobalActionHandeler'
-import SecnodConfirmDialog from './utils/SecnodConfirmDialog';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-
-
-
-import ShuffleIcon from '@mui/icons-material/Shuffle';
-import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
-import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
 import CachedIcon from '@mui/icons-material/Cached';
+import SettingsIcon from '@mui/icons-material/Settings';
+import ShuffleIcon from '@mui/icons-material/Shuffle';
+import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
+import React, { useEffect, useRef, useState } from 'react';
+import FloatAddButton from './MainPageComponents/FloatAddButton';
+import LeftMenu from './MainPageComponents/LeftMenu';
+import OnlineManinPage from './MainPageComponents/OnlineMainPage';
+import TopSearchBar from './MainPageComponents/TopSearchBar';
+
+
+
+
+
 
 
 const formatTime = (time, format) => {

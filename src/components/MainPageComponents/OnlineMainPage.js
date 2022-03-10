@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import GallaryCard from "./GallaryCard";
-import useMediaQuery from '@mui/material/useMediaQuery';
-import 'react-virtualized/styles.css';
-import { Collection } from 'react-virtualized';
 import LinearProgress from '@mui/material/LinearProgress';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Collection } from 'react-virtualized';
+import 'react-virtualized/styles.css';
+import GallaryCard from "./GallaryCard";
 
 const openCurrentTab = (url) => {
     window.location.href = "/#" + url

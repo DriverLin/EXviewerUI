@@ -1,8 +1,5 @@
-import React, { useState } from 'react';
-import { SwipeableDrawer, List, ListItem, ListItemText, ListItemIcon, Grid } from '@mui/material';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import BrightnessAutoIcon from '@mui/icons-material/BrightnessAuto';
+import { Grid, List, ListItem, ListItemIcon, ListItemText, SwipeableDrawer } from '@mui/material';
+import React from 'react';
 
 export default function LeftMenu(props) {
 

@@ -1,43 +1,30 @@
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import OnlineManinPage from './MainPageComponents/OnlineMainPage';
-import { notifyMessage } from './utils/PopoverNotifier';
-import TopSearchBar from './MainPageComponents/TopSearchBar'
-import { useLocation } from 'react-router';
-import LeftMenu from './MainPageComponents/LeftMenu'
-import FloatAddButton from './MainPageComponents/tools/FloatAddButton';
-import HomeIcon from '@mui/icons-material/Home';
-import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import SortIcon from '@mui/icons-material/Sort';
-import DownloadIcon from '@mui/icons-material/Download';
-import WifiIcon from '@mui/icons-material/Wifi';
-import WifiOffIcon from '@mui/icons-material/WifiOff';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import SettingsIcon from '@mui/icons-material/Settings';
-
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import CachedIcon from '@mui/icons-material/Cached';
+import DownloadIcon from '@mui/icons-material/Download';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FileDownloadOffIcon from '@mui/icons-material/FileDownloadOff';
-
-import LongClickMenu from './MainPageComponents/LongClickMenu'
-import { useSettingBind } from './utils/Settings';
-import { useSyncGallarys, useSyncState, ServerSyncKeepAlive } from './utils/GlobalActionHandeler'
-import SecnodConfirmDialog from './utils/SecnodConfirmDialog';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-
-
-
+import HomeIcon from '@mui/icons-material/Home';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import SettingsIcon from '@mui/icons-material/Settings';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
-import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
-import CachedIcon from '@mui/icons-material/Cached';
-
-import log from './utils/Logger'
-
-
-
+import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router';
+import FloatAddButton from './MainPageComponents/FloatAddButton';
+import LeftMenu from './MainPageComponents/LeftMenu';
+import LongClickMenu from './MainPageComponents/LongClickMenu';
+import OnlineManinPage from './MainPageComponents/OnlineMainPage';
+import TopSearchBar from './MainPageComponents/TopSearchBar';
+import { ServerSyncKeepAlive, useSyncGallarys, useSyncState } from './utils/GlobalActionHandeler';
+import log from './utils/Logger';
+import { notifyMessage } from './utils/PopoverNotifier';
+import SecnodConfirmDialog from './utils/SecnodConfirmDialog';
+import { useSettingBind } from './utils/Settings';
 
 const randomSort = (arr) => {
     return arr.sort(() => Math.random() - 0.5)
@@ -418,6 +405,9 @@ export default function MainPage(props) {
     const normalActions = [action_gototop, action_randomsort, action_namehashsort, action_refresh]
     const downloadPageActions = [action_gototop, action_randomsort, action_namehashsort, action_refresh]
 
+
+
+
     return (
         <React.Fragment >
             <FloatAddButton actions={normalActions} scrollTop={scrollTop} />
@@ -437,7 +427,7 @@ export default function MainPage(props) {
                 openCurrent={props.openCurrent}
                 openNew={props.openNew}
             />
-            <ServerSyncKeepAlive key={refreshToken + 2} />
+            <ServerSyncKeepAlive />
         </React.Fragment>
     )
 }
