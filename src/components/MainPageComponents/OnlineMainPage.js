@@ -5,8 +5,14 @@ import 'react-virtualized/styles.css';
 import { Collection } from 'react-virtualized';
 import LinearProgress from '@mui/material/LinearProgress';
 
+const openCurrentTab = (url) => {
+    window.location.href = "/#" + url
+}
+
+
 const openNewTab = (url) => {
-    window.open("/#" + url, "_blank")
+    // window.open("/#" + url, "_blank")
+    openCurrentTab(url)
 }
 
 
@@ -21,12 +27,13 @@ export default function OnlineManinPage(props) {
     }
 
     const viewCallBack = (gid,token) => {
-        openNewTab(`/g/${gid}/${token}/`)
-
+        // openNewTab(`/g/${gid}/${token}/`)
+        props.openNew(`/g/${gid}/${token}/`,"")
     }
     const infoCallBack = (gid,token) => {
-        openNewTab(`/viewing/${gid}/${token}/`)
-
+        // openNewTab(`/viewing/${gid}/${token}/`)
+        props.openNew(`/viewing/${gid}/${token}/`,"")
+        
     }
 
     const cellRenderer = ({ index, key, style }) => {
@@ -112,9 +119,11 @@ export default function OnlineManinPage(props) {
             requestNextPage()
         }
         lastE.current = end
-        const vScrollEvent = new Event("vScrollEvent");
-        vScrollEvent.e = e;
-        window.dispatchEvent(vScrollEvent);
+        // console.log("sendEvent",`vScrollEvent-${props.scuid}`)
+        // const vScrollEvent = new Event(`vScrollEvent-${props.uid}`);
+        // vScrollEvent.e = e;
+        // window.dispatchEvent(vScrollEvent);
+        props.setScrollTop(e.scrollTop)
     }
 
     const resizeWindow = (e) => {
@@ -134,8 +143,7 @@ export default function OnlineManinPage(props) {
     // useEffect( () => {
         // console.log(scallkey)
     // },[scallkey])
-
-
+        
 
     return (
         <div
@@ -154,6 +162,8 @@ export default function OnlineManinPage(props) {
                 height={(documentHeight || document.body.clientHeight)}
                 width={(documentWidth || document.body.clientWidth) + 100}
                 verticalOverscanSize={25}
+                id={"this_is_vscroll"}
+                // scrollTop={props.initScrollOffset || 0}
             />
             {
                 props.loading ? <div

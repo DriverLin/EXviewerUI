@@ -168,6 +168,7 @@ export default  function GallaryCard(props) {
         }
     },[props.download])
 
+    
     return (
         <GallaryContainer
             name='clickable'
@@ -191,6 +192,7 @@ export default  function GallaryCard(props) {
                         props.longClickCallback(
                             props.gid,
                             props.token,
+                            props.name,
                             touchEvent.current.moveEvent.touches[0].clientX,
                             touchEvent.current.moveEvent.touches[0].clientY
                         )
@@ -204,10 +206,6 @@ export default  function GallaryCard(props) {
             }}
             onTouchEnd={(e) => {
                 if (touchEvent.current.prevent === false) {
-                    // if (new Date().getTime() - touchEvent.current.startTime < 250) {
-                    //     touchEvent.current.prevent = true//响应点击 阻止长按
-                    //     props.callBack(props.gid,props.token)
-                    // }
                     touchEvent.current.prevent = true
                 }
             }}

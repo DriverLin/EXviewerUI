@@ -52,7 +52,8 @@ export default function TagPanel(props) {
                                                 name='clickable'
                                                 key={value}
                                                 onClick={() => {
-                                                    window.open(`/#/search?f_search=${encodeURIComponent(`${row}:"${value}$"`)}`, "_blank");
+                                                    // window.open(`/#/search?f_search=${encodeURIComponent(`${row}:"${value}$"`)}`, "_blank");
+                                                    props.openNew("/search",`?f_search=${encodeURIComponent(`${row}:"${value}$"`)}`)
                                                 }}
                                             >
                                                 {

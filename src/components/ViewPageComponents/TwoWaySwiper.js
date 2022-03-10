@@ -89,7 +89,7 @@ export default function TwoWaySwiper(props) {
                         return tmp
                     })().map((item, index) => {
                         return (
-                            <SwiperSlide key={index} virtualIndex={index}>
+                            <SwiperSlide key={index} >
                                 {item}
                             </SwiperSlide>)
                     })
@@ -98,3 +98,5 @@ export default function TwoWaySwiper(props) {
     )
 }
 
+
+//virtualIndex={index}

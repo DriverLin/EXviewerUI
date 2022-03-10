@@ -13,7 +13,7 @@ export default function ZipDownloadButton(props) {
     const [initOpacity, setInitOpacity] = useState(1)
     const [processingOpacity, setProcessingOpacity] = useState(0)
     const [finishOpacity, setFinishOpacity] = useState(0)
-    const [process, setProcess] = useState(0)
+    const [downloadProcess, setDownloadProcess] = useState(0)
     const [noError, setNoError] = useState(true)
 
     const makeZipAsync = async () => {
@@ -35,7 +35,7 @@ export default function ZipDownloadButton(props) {
                 const blob = await pic.blob()
                 new_zip.file(`${(Array(8).join(0) + i).slice(-8)}.jpg`, blob)
                 over++
-                setProcess(100 * over / Number(g_data.filecount))
+                setDownloadProcess(100 * over / Number(g_data.filecount))
                 if (over === Number(g_data.filecount)) {
                     new_zip.generateAsync({ type: "blob" }).then(function (content) {
                         FileSaver(content, gallaryname + ".zip");
@@ -115,7 +115,7 @@ export default function ZipDownloadButton(props) {
                         color: "button.iconFunction.process",
                     }}
                     variant="determinate"
-                    value={process}
+                    value={downloadProcess}
                 />
             </div>
         ,

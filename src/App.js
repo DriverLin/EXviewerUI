@@ -20,6 +20,11 @@ import {
   Route
 } from "react-router-dom";
 import StaticMainPage from './components/StaticMainPage';
+import { useLocation } from "react-router";
+
+import { SwitchRouter } from './components/utils/Router';
+
+
 
 
 
@@ -207,7 +212,13 @@ function App() {
     serverType = { type: "full" }
   }
 
-
+  const openNew = (pathname, search) => window.open(`/#${pathname}${search}`, "_blank")
+  const openCurrent = (pathname, search) => window.location.href = `/#${pathname}${search}`
+  const props = {
+    openCurrent: openCurrent,
+    openNew: openNew,
+    // location: location
+  }
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -215,15 +226,16 @@ function App() {
       <div id='mainContainer' style={{ backgroundColor: theme.palette.page.background, width: "100%" }}    >
         <HashRouter>
           <Routes>
-            <Route path="/" element={serverType === "full" ? <MainPage /> : <StaticMainPage />} />
-            <Route path="/search" element={<MainPage />} />
-            <Route path="/watched" element={<MainPage />} />
-            <Route path="/popular" element={<MainPage />} />
-            <Route path="/favorites" element={<MainPage />} />
-            <Route path="/downloaded" element={<MainPage />} />
-            <Route path="/g/:id/:token/" element={<GallaryPage />} />
-            <Route path="/viewing/:id/:token/" element={<ViewPage />} />
-            <Route path="/setting" element={<AppSetting />} />
+            {/* <Route path="*" element={<SwitchRouter/>} /> */}
+            <Route path="/" element={serverType === "full" ? <MainPage {...props} /> : <StaticMainPage />} />
+            <Route path="/search" element={<MainPage {...props} />} />
+            <Route path="/watched" element={<MainPage {...props} />} />
+            <Route path="/popular" element={<MainPage {...props} />} />
+            <Route path="/favorites" element={<MainPage {...props} />} />
+            <Route path="/downloaded" element={<MainPage {...props} />} />
+            <Route path="/g/:id/:token/" element={<GallaryPage {...props} />} />
+            <Route path="/viewing/:id/:token/" element={<ViewPage {...props} />} />
+            <Route path="/setting" element={<AppSetting {...props} />} />
           </Routes>
         </HashRouter>
       </div >

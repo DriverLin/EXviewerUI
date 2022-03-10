@@ -24,9 +24,6 @@ function SkeImg(props) {
 
     useEffect(() => {
         loadImg()
-        // setTimeout(() => {
-        //     setStause('error')
-        // }, 1000)
     }, [props.src])
 
     const elemMap = {
@@ -85,9 +82,6 @@ export default function MultImageShow(props) {
     } else {
         mapSrc.push(props.srcs[0])
     }
-
-
-
     return (
         <Grid
             sx={{
@@ -111,7 +105,6 @@ export default function MultImageShow(props) {
                 })
             }
         </Grid>
-
 
     )
 }

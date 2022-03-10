@@ -25,8 +25,6 @@ class EHDBManager:
         
         self.addSerialMax = self.db.execute("SELECT MAX(addSerial) FROM download").fetchone()[0]
 
-
-
         def excuteMany(args):
             start = time()
             for (SQL,param) in args:
@@ -61,7 +59,7 @@ class EHDBManager:
 
     def addFavo(self,_gid,favonum):
         gid = int(_gid)
-        if self.getFavo(gid) == False :
+        if self.getFavo(gid) == -1 :
             self.favo[gid] = favonum
             self.putTask("INSERT INTO favo (gid,favo) VALUES (?,?)",(gid,favonum))
         else:
@@ -82,7 +80,7 @@ class EHDBManager:
     
     def addDownload(self,_gid,token):
         gid = int(_gid)
-        if self.getDownload(gid) != False:
+        if self.getDownload(gid) != -2:
             self.updateDownload(gid,-1)
         else:
             addSerial = self.addSerialMax + 1
@@ -127,11 +125,11 @@ class EHDBManager:
         
     def getFavo(self,_gid):
         gid = int(_gid)
-        return self.favo[gid] if gid in self.favo else False
+        return self.favo[gid] if gid in self.favo else -1
 
     def getDownload(self,_gid):
         gid = int(_gid)
-        return self.download[gid] if gid in self.download else False
+        return self.download[gid]["over"] if gid in self.download else -2
     
     def getGdata(self,_gid):
         gid = int(_gid)
@@ -142,8 +140,23 @@ class EHDBManager:
         downloaded.sort(key=lambda x:x["addSerial"],reverse=True)
         return [x["gid"] for x in downloaded]
 
+    def getState(self,__downloading_gid):
+        downloading_gid = int(__downloading_gid)
+        gids = set(self.download.keys()).union(set(self.favo.keys()))
+        result = {}
+        for gid in gids:
+            result[gid] = [
+                gid == downloading_gid,
+                self.getFavo(gid),
+                self.getDownload(gid)
+            ]
+        return result
+
+
+
+
     def execQuery(self,sql,param=None):
-        return self.db.execute(sql,param).fetchall() if param == None else self.db.execute(sql).fetchall()
+        return self.db.execute(sql,param).fetchall() if param != None else self.db.execute(sql).fetchall()
 
 
 if __name__ == "__main__":

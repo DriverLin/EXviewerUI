@@ -149,20 +149,12 @@ class ProxyAccessor:
             raise makeTrackableExcption(e, f"获取HTML{url} 失败 ")
 
     def getLocalFavoValue(self, gid):
-        favo = self.dbm.getFavo(gid)
-        if favo != False:
-            return favo
-        else:
-            return -1
+        return self.dbm.getFavo(gid)
 
     def getDownloadExtendvalue(self, gid):
-        queryProcess = self.dbm.getDownload(gid)
-        if queryProcess == False:
-            return -2
-        else:
-            return queryProcess["over"]
+        return self.dbm.getDownload(gid)
 
-    @ printPerformance
+    @printPerformance
     def g_data_from_pageHtml(self, gid, token):
         try:
             html = self.get_gallary_html_ignore_cache(gid, token)
@@ -369,11 +361,16 @@ class ProxyAccessor:
             ).text
             uploadtime = elem.select_one(
                 "div.gl5t > div > div:nth-child(2)").text
+
             favo = (
                 elem.select_one(
                     "div.gl5t > div > div:nth-child(2)").get("style")
                 != None
-            )
+            )  # 获取到远程画廊是收藏的 但是此时不能获取到编号
+            localFavo = self.getLocalFavoValue(gid)  # 本地收藏情况
+            if favo and localFavo == -1:  # 爬取时显示远程收藏了 但是本地没有记录 则新增记录999
+                self.dbm.addFavo(gid, 999)
+
             lang = elem.select_one("div.gl6t > div")
             lang = lang.text if lang is not None else ""
             pages = elem.select_one(
@@ -391,7 +388,7 @@ class ProxyAccessor:
                     "lang": lang,
                     "pages": pages,
                     # 999代表收藏 但是不确定收藏夹编号 (其实可以知道名称)
-                    "favo": 999 if favo else -1,
+                    "favo": self.dbm.getFavo(gid),
                     "download": self.getDownloadExtendvalue(gid),
                 }
             )
@@ -608,8 +605,18 @@ class ProxyAccessor:
         # return gid_tokens
         return []
 
+    def check_search(self,g_data, words, tags):
+        for word in words:
+            if word not in g_data["title"] and word not in g_data["title_jpn"]:
+                return False
+        for tag in tags:
+            if tag not in g_data["tags"]:
+                return False
+        # logger.debug(f"{json.dumps(g_data, ensure_ascii=False,indent=4)}")
+        return True
+
+
     def localSearch(self, query):
-        logger.info(f"搜索 {query}")
         str = parse_qs(query)['f_search'][0]
         tagRe = '[A-Za-z0-9]+:"[^\$]+\$"'
         wordRe = '[\u0800-\u4e00\u4E00-\u9FA5A-Za-z0-9_]+'
@@ -617,47 +624,60 @@ class ProxyAccessor:
         for tagRes in re.findall(tagRe, str):
             str = str.replace(tagRes, '')
             tags.append(re.sub('\$|"', '', tagRes))
-        words = [json.dumps(x, ensure_ascii=True)[1:-1]
-                 for x in re.findall(wordRe, str)]
-        sql = "SELECT g_data FROM downloaded WHERE 1 == 1 "
-        for tag in tags:
-            sql += f"AND g_data LIKE '%{tag}%' "
-        for word in words:
-            sql += f"AND g_data LIKE '%{word}%' "
-        sql += "ORDER BY addSerial DESC"
-        # print(sql)
+        words = re.findall(wordRe, str)
+
         result = []
-        for (g_data_str,) in self.dbm.execQuery(sql):
-            g_data = json.loads(g_data_str)
-            gid = g_data["gid"]
-            token = g_data["token"]
-            result.append(
-                {
-                    "gid": f"{gid}",
-                    "token": token,
-                    "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
-                    "name": g_data["title_jpn"] if g_data["title_jpn"] != "" else g_data["title"],
-                    "rank": float(g_data["rating"]),
-                    "category": g_data["category"],
-                    "uploadtime": timestamp_to_str("%Y-%m-%d %H:%M",  int(g_data["posted"])),
-                    "download": self.getDownloadExtendvalue(gid),
-                    "favo": self.getLocalFavoValue(gid),
-                    "lang": "chinese" if "language:chinese" in g_data["tags"] else "",
-                    "pages": g_data["filecount"],
-                }
-            )
+
+        logger.info(f"localSearch words: {json.dumps(words, ensure_ascii=False)}")
+        logger.info(f"localSearch tags: {json.dumps(tags)}")
+
+        for gid in self.dbm.listDownload():
+            g_data = self.dbm.getGdata(gid)
+            if(g_data):
+                if self.check_search(g_data, words, tags):
+                    token = g_data["token"]
+                    result.append(
+                        {
+                            "gid": f"{gid}",
+                            "token": token,
+                            "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
+                            "name": g_data["title_jpn"] if g_data["title_jpn"] != "" else g_data["title"],
+                            "rank": float(g_data["rating"]),
+                            "category": g_data["category"],
+                            "uploadtime": timestamp_to_str("%Y-%m-%d %H:%M",  int(g_data["posted"])),
+                            "download": self.getDownloadExtendvalue(gid),
+                            "favo": self.getLocalFavoValue(gid),
+                            "lang": "chinese" if "language:chinese" in g_data["tags"] else "",
+                            "pages": g_data["filecount"],
+                        }
+                    )
+
         return result
+        # for (g_data_str,) in self.dbm.execQuery(sql):
+        #     g_data = json.loads(g_data_str)
+        #     gid = g_data["gid"]
+        #     token = g_data["token"]
+        #     result.append(
+        #         {
+        #             "gid": f"{gid}",
+        #             "token": token,
+        #             "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
+        #             "name": g_data["title_jpn"] if g_data["title_jpn"] != "" else g_data["title"],
+        #             "rank": float(g_data["rating"]),
+        #             "category": g_data["category"],
+        #             "uploadtime": timestamp_to_str("%Y-%m-%d %H:%M",  int(g_data["posted"])),
+        #             "download": self.getDownloadExtendvalue(gid),
+        #             "favo": self.getLocalFavoValue(gid),
+        #             "lang": "chinese" if "language:chinese" in g_data["tags"] else "",
+        #             "pages": g_data["filecount"],
+        #         }
+        #     )
+        # logger.info(f"本地检索到{len(result)}条结果")
+        # return result
 
     def getStauseForWS(self):
-        stause = {}
         downloading_gid = self.downloadManager.downloading_gid
-        for gid in self.dbm.listDownload():
-            stause[gid] = [
-                gid == downloading_gid,
-                self.getLocalFavoValue(gid),
-                self.getDownloadExtendvalue(gid)
-            ]
-        return stause
+        return self.dbm.getState(downloading_gid)
 
     def getDownloadedForWS(self):
         result = []
@@ -698,6 +718,3 @@ class ProxyAccessor:
     def getReport(self, type=0):
         self.downloadNotifyer(self.makeSyncData(
             "syncState" if type == 0 else "syncAll"))
-
-
-

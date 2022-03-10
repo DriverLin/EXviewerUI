@@ -162,6 +162,8 @@ const openNewTab = (url) => {
 
 export default function StaticMainPage(props) {
     const [gallarys, setGallarys] = useState([]);
+    const [loading, setLoading] = useState(true)
+
     const g_dataRef = useRef([])
 
 
@@ -171,6 +173,7 @@ export default function StaticMainPage(props) {
         const filtedGallarys = localSearchAction(g_dataRef.current, text).map(item => translateGdata2CardData(item))
         getRefresh()
         await setGallarys(filtedGallarys)
+        setLoading(false)
         console.timeEnd("doSearch")
 
     }
@@ -184,14 +187,17 @@ export default function StaticMainPage(props) {
                 const data = await resp.json()
                 g_dataRef.current = data
                 console.timeEnd("get gallarys from static api")
-                setGallarys(data.map(item => translateGdata2CardData(item)))
-            
+                await setGallarys(data.map(item => translateGdata2CardData(item)))
+                setLoading(false)
+                
             } else if (window.serverSideConfigure.type === "Data.db") {
                 console.time("get gallarys from Data.db")
                 const data = await window.loadDataLocaly()
                 console.timeEnd("get gallarys from Data.db")
                 g_dataRef.current = data
-                setGallarys(data.map(item => translateGdata2CardData(item)))
+                await setGallarys(data.map(item => translateGdata2CardData(item)))
+                setLoading(false)
+                
             } else {
                 console.error("unsupport window.serverSideConfigure.type")
             }
@@ -200,13 +206,6 @@ export default function StaticMainPage(props) {
         }
         
     }, [])
-
-
-    useEffect(async () => {
-
-    }, [])
-
-
 
 
     const [leftMenuOpen, setLeftMenuOpen] = useState(false)
@@ -282,7 +281,7 @@ export default function StaticMainPage(props) {
             <TopSearchBar leftButtonClick={() => { setLeftMenuOpen(true) }} doSearch={doSearch} />
             <OnlineManinPage
                 key={refreshToken + 1}
-                loading={false}
+                loading={loading}
                 requestData={() => { }}
                 gallarys={gallarys}
                 states={{}}

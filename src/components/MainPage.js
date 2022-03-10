@@ -34,6 +34,7 @@ import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
 import CachedIcon from '@mui/icons-material/Cached';
 
+import log from './utils/Logger'
 
 
 
@@ -86,7 +87,7 @@ const mergeGallary = (arr1, arr2) => {
 }
 
 
-const openCurrentTab = (url) => {
+const openCurrent = (url) => {
     window.location.href = "/#" + url
 }
 
@@ -95,15 +96,18 @@ const openNewTab = (url) => {
 }
 
 export default function MainPage(props) {
+    const usel = useLocation()
+    const location = props.location ? props.location : usel 
+
+    const [scrollTop, setScrollTop] = useState(0)
     const [gallarys, setGallarys] = useState([]);
     const pageOffset = useRef(0)
     const [states, setStates] = useState({})
-    const location = useLocation()
-
+    const searhLocal = useSettingBind("搜索本地并合并结果", false)
     const apiUrl = useMemo(() => {
         const urlMap = {
             "/": "/list/?1=1",
-            "/search": `/list/${location.search}`,
+            "/search": `/list/${location.search}${searhLocal ? "&search_and_merge_local=true" : ""}`,
             "/watched": "/list/watched?1=1",
             "/popular": "/list/popular?1=1",
             "/favorites": "/list/favorites.php?1=1",
@@ -112,17 +116,12 @@ export default function MainPage(props) {
         return urlMap[location.pathname]
     }, [location])
 
-    const loadFromAPIDATA = () => { }
-    const loadFromDB = () => { }
-
-
     useEffect(() => {
         pageOffset.current = 0
         setGallarys([])
-        console.log(apiUrl)
+        log(apiUrl)
         getRefresh()
         requestData()
-
     }, [apiUrl])
 
 
@@ -153,14 +152,14 @@ export default function MainPage(props) {
             lock.current = true
             setLoading(true)
             const targeturl = `${apiUrl}&page=${pageOffset.current}`
-            console.log("requestData", targeturl)
+            log("requestData", targeturl)
             const response = await fetch(targeturl)
             if (response.ok) {
                 const data = await response.json()
-                setGallarys(prev => mergeGallary(prev, data))
-                console.log(data)
+                await setGallarys(prev => mergeGallary(prev, data))
+                log(data)
                 pageOffset.current += 1
-                console.log("requestData over")
+                log("requestData over")
                 lock.current = false
                 setLoading(false)
                 return true
@@ -183,54 +182,48 @@ export default function MainPage(props) {
     }
 
 
-
     const doSearch = (text) => {
-        console.log("doSearch", text)
-        openCurrentTab(`/search?f_search=${encodeURIComponent(text)}`)
+        props.openCurrent("/search",`?f_search=${encodeURIComponent(text)}`,"")
+        // console.log(props)
     }
-
-
-
-
-
 
     const [leftMenuOpen, setLeftMenuOpen] = useState(false)
     let menuItems = [
         {
             onClick: () => {
-                openCurrentTab("/")
+                props.openCurrent("/","")
             },
             icon: <HomeIcon />,
             text: "主页"
         }, {
             onClick: () => {
-                openCurrentTab("/watched")
+                props.openCurrent("/watched","")
             },
             icon: <SubscriptionsIcon />,
             text: "订阅"
         }, {
             onClick: () => {
-                openCurrentTab("/popular")
+                props.openCurrent("/popular","")
             },
             icon: <LocalFireDepartmentIcon />,
             text: "热门"
         }, {
             onClick: () => {
-                openCurrentTab("/favorites")
+                props.openCurrent("/favorites","")
             },
             icon: <FavoriteIcon />,
             text: "收藏"
         },
         {
             onClick: () => {
-                openCurrentTab("/downloaded")
+                props.openCurrent("/downloaded","")
             },
             icon: <DownloadIcon />,
             text: "下载"
         },
         {
             onClick: () => {
-                openNewTab("/setting")
+                props.openNew("/setting","")
             },
             icon: <SettingsIcon />,
             text: "设置"
@@ -359,7 +352,7 @@ export default function MainPage(props) {
             title: title,
             open: true,
             onConfirm: () => {
-                console.log("delete", gid, token)
+                log("delete", gid, token)
                 rmDownload(gid, token)
                 setDeleteSecnodConfirm({})
             },
@@ -427,12 +420,12 @@ export default function MainPage(props) {
 
     return (
         <React.Fragment >
-            <FloatAddButton actions={normalActions} />
+            <FloatAddButton actions={normalActions} scrollTop={scrollTop} />
             {/* <SecnodConfirmDialog title={"我是标题"} open={true} onClose={() => { }} onConfirm={()=>{}}/> */}
             <SecnodConfirmDialog {...deleteSecnodConfirm} />
             <LongClickMenu pos={pos} setPos={setPos} items={longClickItems} title={longClickedName} />
             <LeftMenu open={leftMenuOpen} onClose={() => { setLeftMenuOpen(false) }} Items={menuItems}  ></LeftMenu>
-            <TopSearchBar leftButtonClick={() => { setLeftMenuOpen(true) }} doSearch={doSearch} />
+            <TopSearchBar leftButtonClick={() => { setLeftMenuOpen(true) }} doSearch={doSearch} scrollTop={scrollTop} />
             <OnlineManinPage
                 key={refreshToken + 1}
                 loading={loading}
@@ -440,6 +433,9 @@ export default function MainPage(props) {
                 gallarys={gallarys}
                 states={states}
                 longClickCallback={longClickCallback}
+                setScrollTop={setScrollTop}
+                openCurrent={props.openCurrent}
+                openNew={props.openNew}
             />
             <ServerSyncKeepAlive key={refreshToken + 2} />
         </React.Fragment>

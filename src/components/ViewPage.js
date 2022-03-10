@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 import RevSlider from './ViewPageComponents/RevSlider';
 import ViewSettingPanel from './ViewPageComponents/ViewSettingPanel';
@@ -10,18 +10,18 @@ import { notifyMessage } from './utils/PopoverNotifier';
 
 const fixto8 = (num) => (Array(8).join(0) + num).slice(-8)
 
-export default function ViewPage() {
+export default function ViewPage(props) {
+    const usel = useLocation()
+    const location = props.location ? props.location : usel
+
     const [urls, _setUrls] = useState([])
     const urlsRef = useRef([])
     const setUrls = (v) => {
         _setUrls(v)
         urlsRef.current = v
-    } 
-
-    const location = useLocation();
+    }
     const gid = location.pathname.split("/")[2]
     const token = location.pathname.split("/")[3]
-    
     const pageCountRef = useRef(0)
     const [pageCount, _setPageCount] = useState(0);
     const setPageCount = (value) => {
@@ -47,15 +47,15 @@ export default function ViewPage() {
 
     //考虑到服务器压力  以及阅读速度
     //不需要按照是否双页进行双倍预加载
-    
+
     const prevRange = 4
-    const nextRange = useSettingBind("图片预加载",7)
+    const nextRange = useSettingBind("图片预加载", 7)
     const preload = () => {
         const start = pageNumRef.current - prevRange > 0 ? pageNumRef.current - prevRange : 1
         const end = pageNumRef.current + nextRange > pageCountRef.current ? pageCountRef.current : pageNumRef.current + nextRange
-        for (let i = start; i <= end; i++) { 
+        for (let i = start; i <= end; i++) {
             let img = new Image();
-            img.onload = () => { 
+            img.onload = () => {
                 img = null
             }
             img.src = urlsRef.current[i - 1]
@@ -77,7 +77,7 @@ export default function ViewPage() {
 
     const handelTap = (event) => {
         const jmpNum = horizontalView ? 2 : 1
-        const postion = switchDirection ? -1 : 1  
+        const postion = switchDirection ? -1 : 1
         if (event.pageX / document.body.clientWidth > 0.7) {
             setPageNum(pageNum + postion * jmpNum)
         } else if (event.pageX / document.body.clientWidth < 0.3) {
@@ -102,7 +102,7 @@ export default function ViewPage() {
     const onViewSettingPanelOpen = () => { setSettingPanelOpen(true) }
 
 
-    const init = async () => { 
+    const init = async () => {
         const response = await fetch(`/gallarys/${gid}_${token}/g_data.json`)
         if (response.ok) {
             const data = await response.json()
@@ -114,7 +114,7 @@ export default function ViewPage() {
             setUrls(tmpUrl)
             setPageCount(Number(data.filecount))
             preload()
-        } else { 
+        } else {
             const text = await response.text()
             try {
                 const info = JSON.parse(text)
@@ -131,6 +131,12 @@ export default function ViewPage() {
         init()
     }, [])
 
+    const refreshKey = useMemo(
+        () => {
+            return `${horizontalView}_${switchDirection}`
+        }, [horizontalView, switchDirection]
+    )
+
     return (
         pageCount === 0 ?
             null
@@ -144,7 +150,7 @@ export default function ViewPage() {
                 <div style={{ height: '100vh', width: '100vw', }} onClick={handelTap}>
                     {
                         <MultPageSwiper
-                            key={horizontalView}//切换横屏模式  就重新渲染 避免了页数切换的BUG
+                            key={refreshKey}//切换横屏模式  就重新渲染 避免了页数切换的BUG
                             value={pageNum}
                             setValue={setPageNum}
                             reverse={switchDirection}
