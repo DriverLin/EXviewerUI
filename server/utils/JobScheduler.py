@@ -1,6 +1,8 @@
 import threading
 import time
+
 from utils.tools import atomWarpper
+
 
 class JobScheduler(object):
     def __init__(

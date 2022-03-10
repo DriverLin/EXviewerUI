@@ -5,17 +5,19 @@ import re
 import sqlite3
 import threading
 import time
-import urllib.request
 import urllib.error
-from urllib.parse import urljoin, parse_qs
+import urllib.request
+from urllib.parse import parse_qs, urljoin
+
 import requests
 from bs4 import BeautifulSoup
 from cacheout import LRUCache
 
-from utils.EHDBManager import EHDBManager
-from utils.tools import timestamp_to_str, checkImg, atomWarpper, makeTrackableExcption, logger, printPerformance
-from utils.MulthreadCache import MulthreadCache
 from utils.DownloadManager import DownloadManager
+from utils.EHDBManager import EHDBManager
+from utils.MulthreadCache import MulthreadCache
+from utils.tools import (atomWarpper, checkImg, logger, makeTrackableExcption,
+                         printPerformance, timestamp_to_str)
 
 cache = MulthreadCache()
 
