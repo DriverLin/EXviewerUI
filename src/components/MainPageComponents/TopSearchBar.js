@@ -1,4 +1,4 @@
-import React, { useRef, useState ,useEffect} from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Grid, InputBase, ButtonBase, useScrollTrigger, Paper, AppBar, Slide, useMediaQuery, } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -9,23 +9,18 @@ import { getGuess } from "../GetTranslate"
 
 function HideOnScroll(props) {
     const { children, __window } = props;
-    const [trigger,setTrigger] = useState(false)
-
+    const [trigger, setTrigger] = useState(false)
     const lastTop = useRef(0);
-    const handelScroll = (event) => {
-        if (event.e.scrollTop > lastTop.current) {
+    useEffect(() => {
+        if (props.scrollTop > lastTop.current) {
             setTrigger(true)
-        }else{
+        } else {
             setTrigger(false)
         }
-        lastTop.current = event.e.scrollTop;
-    }
-    useEffect(() => {
-        window.addEventListener('vScrollEvent', handelScroll)
-        return () => {
-            window.removeEventListener('vScrollEvent', handelScroll)
-        }
-    },[])
+        lastTop.current = props.scrollTop;
+    }, [props.scrollTop])
+
+
     return (
         <Slide appear={false} direction="down" in={!trigger}>
             {children}
@@ -42,7 +37,6 @@ HideOnScroll.propTypes = {
 export default function TopSearchBar(props) {
     const matches = useMediaQuery('(min-width:830px)')
     const locationProps = useLocation()
-
     const defaultSearch = decodeURIComponent(locationProps.search).replace('?f_search=', '')
     const useStyles = makeStyles((theme) => ({
         inputRoot: {
@@ -68,6 +62,12 @@ export default function TopSearchBar(props) {
     const [searchValue, setSearchValue] = useState(defaultSearch);
     const [guess, setGuess] = useState([])
     const [autocomplete, setAutocomplete] = useState(false)
+
+
+    const location = useLocation()
+    useEffect(() => {
+        setSearchValue(decodeURIComponent(location.search).replace('?f_search=', ''))
+    }, [location])
 
 
     const getWordOfLast = (inputText) => {
@@ -124,7 +124,6 @@ export default function TopSearchBar(props) {
         handelAutcomplete(e.target.value)
     }
     const doSearch = () => {
-        // console.log("searching for: " + searchValueRef.current);
         props.doSearch(searchValueRef.current)
     }
 

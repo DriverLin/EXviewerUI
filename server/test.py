@@ -177,5 +177,6 @@ pa = ProxyAccessor(
     nofityDownloadMessage,
 )
 
-pa.downloadManager.addDownload("2160325","04af322019")
-pa.downloadManager.deleteDownloaded("2160325","04af322019")
+res = pa.localSearch('f_search=鮫肌%20parody%3A"granblue%20fantasy%24"')
+print(res)
+exit(0)

@@ -68,7 +68,9 @@ const transformTags = (g_data) => {
 
 
 export default function GallaryPage(props) {
-    const location = useLocation();
+    const usel = useLocation()
+    const location = props.location ? props.location : usel 
+
 
     const [stause, setStause] = useState('init')
     const [errorInfo, setErrorInfo] = useState(["unknow error"])
@@ -198,6 +200,9 @@ export default function GallaryPage(props) {
                     previews={previews}
                     comments={comments}//comments = [] 则不显示，同事点击加载全部评论之后也会不显示
                     match={"large" || "normal" || "small"}
+                    openCurrent={props.openCurrent}
+                    openNew={props.openNew}
+
                 /> : null
             }{
                 stause === "error" ? <Grid
@@ -239,6 +244,10 @@ export default function GallaryPage(props) {
 
 
 function GallaryInfoPage(props) {
+    const openReading = (gid, token) => {
+        // window.open(`/#/viewing/${gid}/${token}/`, "_blank")
+        props.openNew(`/viewing/${gid}/${token}/`, "")
+    }
     const matches = useMediaQuery('(min-width:800px)');
     const small_matches = useMediaQuery('(min-width:560px)');
     const borderWidth = small_matches ? 24 : 12
@@ -304,7 +313,8 @@ function GallaryInfoPage(props) {
             color: "button.readAndDownload.text",
         }}
         name='clickable'
-        onClick={() => { window.open(`/#/viewing/${props.g_data.gid}/${props.g_data.token}/`, "_blank") }}
+        onClick={() => { openReading(props.g_data.gid, props.g_data.token) }}
+        // onClick={() => { window.location.href = `/#/viewing/${props.g_data.gid}/${props.g_data.token}/` }}
         variant="contained" >
         {"阅读"}
     </Button>
@@ -324,7 +334,7 @@ function GallaryInfoPage(props) {
     return (
         <div className={matches ? classes.borderCard : classes.matches_borderCard} >
             <KeyboardController />
-            <ServerSyncKeepAlive gid={props.g_data.gid}  />
+            <ServerSyncKeepAlive gid={props.g_data.gid} />
             <div className={classes.elemContainer}>
                 <Grid
                     container
@@ -421,7 +431,11 @@ function GallaryInfoPage(props) {
             </div>
 
             <div className={classes.elemContainer}>
-                <TagPanel tags={props.tags} />
+                <TagPanel
+                    tags={props.tags}
+                    openCurrent={props.openCurrent}
+                    openNew={props.openNew}
+                />
             </div>
 
             <div className={classes.elemContainer}>
@@ -440,6 +454,8 @@ function GallaryInfoPage(props) {
                     spacingPX={borderWidth}
                     gid={props.g_data.gid}
                     token={props.g_data.token}
+                    openCurrent={props.openCurrent}
+                    openNew={props.openNew}
                 />
             </div>
             <div className={classes.elemContainer} />

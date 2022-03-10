@@ -8,8 +8,6 @@ export default function LeftMenu(props) {
 
     return (
         <SwipeableDrawer
-            // disableBackdropTransition={!iOS}
-            // disableDiscovery={iOS}
             anchor={"left"}
             open={props.open}
             onOpen={() => { }}
@@ -22,14 +20,12 @@ export default function LeftMenu(props) {
                 alignItems="flex-start"
                 sx={{
                     height: "100%",
-                    padding: "5px",
-                    width:"155px",
                     backgroundColor: 'page.background',
-                    color:"text.secondary",
+                    color: "text.secondary",
                 }}
             >
 
-                <List >
+                <List sx={{"& .MuiListItem-button": {width: 140,}}}>
                     {
                         props.Items.map(row => (
                             <ListItem
@@ -39,12 +35,10 @@ export default function LeftMenu(props) {
                                 onClick={() => {
                                     row.onClick();
                                     props.onClose();
-                                }} >
-                                <ListItemIcon
-                                    sx={{
-                                        color: "text.primary"
-                                    }}
-                                >
+                                }}
+
+                            >
+                                <ListItemIcon sx={{ color: "text.primary" }}>
                                     {row.icon}
                                 </ListItemIcon>
                                 <ListItemText primary={row.text} />
@@ -53,7 +47,7 @@ export default function LeftMenu(props) {
                     }
                 </List>
 
-              
+
             </Grid>
         </SwipeableDrawer>
 

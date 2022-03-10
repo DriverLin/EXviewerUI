@@ -315,6 +315,30 @@ def getDB():
     return FileResponse(DB_PATH,headers={"Cache-Control": "max-age=31536000"})
 
 
+
+
+@app.post("/api/logger")
+async def remoteLogger(request: Request):
+    jsbody = await request.json()
+    await logwsm.broadcast([jsbody])
+    return {"msg": "success"}
+
+@app.get("/api/logger")
+def loggerPage():
+    hearders = {"Content-Type": "text/html"}
+    return FileResponse(r"C:\Users\lty65\projects\ExviewerUI\server\logger.html",headers=hearders)
+
+logwsm = ConnectionManager()
+
+@app.websocket("/logws")
+async def websocket_endpoint(websocket: WebSocket):
+    await logwsm.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except Exception:
+        logwsm.disconnect(websocket)
+
 @app.get("/list/{path}")
 def gallaryList(path, request: Request):
     query = str(request.scope["query_string"], encoding="utf-8")
@@ -377,7 +401,6 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             msg = await websocket.receive_text()
             await wsManager.onMessage(msg, websocket)
-    # except WebSocketDisconnect:
     except Exception:
         wsManager.disconnect(websocket)
 

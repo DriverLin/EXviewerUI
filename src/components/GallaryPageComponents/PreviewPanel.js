@@ -79,7 +79,13 @@ export default function PreviewPanel(props) {
 
     useEffect(() => {
         window.addEventListener('scroll', handelScroll, true)
-        return () => { window.removeEventListener('scroll', handelScroll, true) }
+        
+        console.log('加载预览页面')
+        
+        return () => { 
+            window.removeEventListener('scroll', handelScroll, true) 
+            console.log('卸载预览页面')
+        }
     }, [])
 
     const lastE = useRef(0);
@@ -131,7 +137,8 @@ export default function PreviewPanel(props) {
                                     onClick={
                                         () => {
                                             localStorage.setItem(`/viewing/${props.gid}/${props.token}/`, index + 1)
-                                            window.open(`/#/viewing/${props.gid}/${props.token}/`, "_blank")
+                                            // window.open(`/#/viewing/${props.gid}/${props.token}/`, "_blank")
+                                            props.openNew(`/viewing/${props.gid}/${props.token}/`,"")
                                         }
                                     }
                                 >

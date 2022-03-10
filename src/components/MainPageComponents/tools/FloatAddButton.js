@@ -13,24 +13,20 @@ import SpeedDialAction from '@mui/material/SpeedDialAction';
 export default function FloatAddButton(props) {
     const [open, setOpen] = React.useState(false);
     const [hidden, setHidden] = useState(false)
+
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
+
     const lastTop = useRef(0);
-    const handelScroll = (event) => {
-        if (event.e.scrollTop > lastTop.current) {
+    useEffect( () => {
+        if(props.scrollTop > lastTop.current){
             setHidden(true)
             handleClose()
         } else {
             setHidden(false)
         }
-        lastTop.current = event.e.scrollTop;
-    }
-    useEffect(() => {
-        window.addEventListener('vScrollEvent', handelScroll)
-        return () => {
-            window.removeEventListener('vScrollEvent', handelScroll)
-        }
-    }, [])
+        lastTop.current = props.scrollTop;
+    },[props.scrollTop])
 
     return (
         <SpeedDial

@@ -2,10 +2,8 @@ import React, { useState, useEffect, } from 'react';
 import TwoWaySwiper from './TwoWaySwiper';
 import MultImageShow from './MultImageShow';
 export default function MultPageSwiper(props) {
-
     const [value, _setValue] = useState(Number(props.value));
     const [mapedUrls, setMapedUrls] = useState([]);
-
     const out2in = () => {
         if (props.double) {
             if (props.headsingle) {
@@ -20,7 +18,6 @@ export default function MultPageSwiper(props) {
         }
     }
     const in2out = (privateValue) => {
-        // console.log('in2out', props.double, props.headsingle, privateValue);
         if (props.double) {
             if (props.headsingle) {
                 return (privateValue - 1) * 2 + 1
@@ -35,18 +32,16 @@ export default function MultPageSwiper(props) {
     }
 
     const setValue = (eventValue) => {
+        // console.log("eventValue",eventValue)
         _setValue(eventValue);
         props.setValue(in2out(eventValue));
     }
 
     useEffect(() => {
-        // console.log('MultPageSwiper useEffect props.value', props.value)
-        // console.log("ou2in", out2in())
         if (out2in() !== value) {
             _setValue(out2in());
         }
     }, [props.value])
-
 
 
     useEffect(() => {
@@ -93,6 +88,7 @@ export default function MultPageSwiper(props) {
                 })
             }
         </TwoWaySwiper>
+
     )
 }
 
