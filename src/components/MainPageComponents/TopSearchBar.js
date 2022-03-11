@@ -36,7 +36,8 @@ HideOnScroll.propTypes = {
 
 export default function TopSearchBar(props) {
     const matches = useMediaQuery('(min-width:830px)')
-    const locationProps = useLocation()
+    const usl = useLocation()
+    const locationProps = props.location ? props.location : usl
     const defaultSearch = decodeURIComponent(locationProps.search).replace('?f_search=', '')
     const useStyles = makeStyles((theme) => ({
         inputRoot: {

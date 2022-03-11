@@ -21,19 +21,19 @@ export default function OnlineManinPage(props) {
     const small_matches = useMediaQuery('(min-width:560px)');//是否小尺寸
     const [documentWidth, setDocumentWidth] = useState(document.body.clientWidth)
     const [documentHeight, setDocumentHeight] = useState(document.body.clientHeight)
-    
+
     const requestNextPage = async () => {
         await props.requestData()
     }
 
-    const viewCallBack = (gid,token) => {
+    const viewCallBack = (gid, token) => {
         // openNewTab(`/g/${gid}/${token}/`)
-        props.openNew(`/g/${gid}/${token}/`,"")
+        props.openNew(`/g/${gid}/${token}/`, "")
     }
-    const infoCallBack = (gid,token) => {
+    const infoCallBack = (gid, token) => {
         // openNewTab(`/viewing/${gid}/${token}/`)
-        props.openNew(`/viewing/${gid}/${token}/`,"")
-        
+        props.openNew(`/viewing/${gid}/${token}/`, "")
+
     }
 
     const cellRenderer = ({ index, key, style }) => {
@@ -49,9 +49,9 @@ export default function OnlineManinPage(props) {
         return <div key={key} style={newStyle}>
             <GallaryCard
                 {...cardData}
-                inprocess={props.states[gid] === undefined ? false :  props.states[gid][0]}
-                favo={props.states[gid] === undefined ? -1 :  props.states[gid][1]}
-                download={props.states[gid] === undefined ? -2 :  props.states[gid][2]}
+                inprocess={props.states[gid] === undefined ? false : props.states[gid][0]}
+                favo={props.states[gid] === undefined ? -1 : props.states[gid][1]}
+                download={props.states[gid] === undefined ? -2 : props.states[gid][2]}
                 small_matches={small_matches}
                 infoCallBack={infoCallBack}
                 viewCallBack={viewCallBack}
@@ -107,10 +107,10 @@ export default function OnlineManinPage(props) {
         };
     }
 
-    // useEffect(() => {
-    //     requestNextPage()
-    // }, [])
+
+    const overCardNum = useRef(0)
     const lastE = useRef(0);
+
     const handelVscroll = (e) => {
         const dis2trigger = 3
         const end = e.scrollHeight - e.scrollTop - e.clientHeight
@@ -119,10 +119,12 @@ export default function OnlineManinPage(props) {
             requestNextPage()
         }
         lastE.current = end
-        // console.log("sendEvent",`vScrollEvent-${props.scuid}`)
-        // const vScrollEvent = new Event(`vScrollEvent-${props.uid}`);
-        // vScrollEvent.e = e;
-        // window.dispatchEvent(vScrollEvent);
+        if (e.scrollTop !== 0) {
+            const cellHeight = small_matches ? 230 : 170;
+            const div2 = break_matches ? 2 : 1;
+            const cardNum = div2 * Math.floor(e.scrollTop / cellHeight)
+            overCardNum.current = cardNum
+        }
         props.setScrollTop(e.scrollTop)
     }
 
@@ -138,12 +140,15 @@ export default function OnlineManinPage(props) {
         }
     }, [])
 
-    const scallkey = useMemo(() => (small_matches ? 1 : 0) * 10 + (break_matches ? 0 : 1), [small_matches, break_matches])
+    const scallkey = useMemo(() => (small_matches ? 1 : 0) + (break_matches ? 2 : 1) - 1, [small_matches, break_matches])
 
-    // useEffect( () => {
-        // console.log(scallkey)
-    // },[scallkey])
-        
+    const collectionRef = useRef(null)
+    useEffect(() => {
+        const cellHeight = small_matches ? 230 : 170;
+        const div2 = break_matches ? 2 : 1;
+        const offsetTop = cellHeight * overCardNum.current / div2
+        document.getElementById("this_is_vscroll").scrollTop = offsetTop
+    }, [collectionRef.current])
 
     return (
         <div
@@ -155,6 +160,7 @@ export default function OnlineManinPage(props) {
         >
             <Collection
                 key={scallkey}
+                ref={collectionRef}
                 cellCount={props.gallarys.length}
                 cellRenderer={cellRenderer}
                 cellSizeAndPositionGetter={cellSizeAndPositionGetter}
@@ -163,7 +169,6 @@ export default function OnlineManinPage(props) {
                 width={(documentWidth || document.body.clientWidth) + 100}
                 verticalOverscanSize={25}
                 id={"this_is_vscroll"}
-                // scrollTop={props.initScrollOffset || 0}
             />
             {
                 props.loading ? <div

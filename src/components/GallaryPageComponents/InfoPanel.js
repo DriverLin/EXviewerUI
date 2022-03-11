@@ -87,19 +87,13 @@ export default function InfoPanel(props) {
                     display: "inline-flex"
                 }}>
                 <Rating
-                    name="customized-empty"
-                    defaultValue={Number(props.g_data.rating)}
+                    value={Number(props.g_data.rating)}
                     precision={0.1}
                     emptyIcon={<StarBorderIcon fontSize="inherit" />}
-                    readOnly={true}
+                    readOnly
                     size="medium"
                 />
             </div>}
-
-
-
-
-
         </div>
     )
 }
