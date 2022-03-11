@@ -1,28 +1,20 @@
 
-import './App.css';
-import React, { useState, useEffect, useMemo } from 'react';
-
+import { CssBaseline } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-
-import GallaryPage from './components/GallaryPage';
-import MainPage from './components/MainPage';
-import ViewPage from './components/ViewPage';
-import AppSetting from './components/AppSetting';
-
+import React, { useEffect, useMemo } from 'react';
+import {
+  HashRouter, Route, Routes
+} from "react-router-dom";
+import './App.css';
+import PopoverNotifier from "./components/utils/PopoverNotifier";
+import { SwitchRouter } from './components/utils/Router';
 import { useSettingBind } from './components/utils/Settings';
 
-import PopoverNotifier from "./components/utils/PopoverNotifier";
 
-import { CssBaseline } from '@mui/material';
-import {
-  HashRouter,
-  Routes,
-  Route
-} from "react-router-dom";
-import StaticMainPage from './components/StaticMainPage';
-import { useLocation } from "react-router";
 
-import { SwitchRouter } from './components/utils/Router';
+
+
+
 
 
 
@@ -33,6 +25,7 @@ import { SwitchRouter } from './components/utils/Router';
 function App() {
 
   const colorMode = useSettingBind('色彩主题', '暗色')
+  
   const dark = useMemo(() => {
     if (colorMode === "跟随系统") {
       return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -41,6 +34,9 @@ function App() {
     }
   }, [colorMode])
 
+  useEffect(() => {
+    document.querySelector('meta[name="theme-color"]').setAttribute('content',dark ? '#303030' : '#ECEFF1')
+  },[dark])
   const theme = createTheme({
     components: {
       MuiCssBaseline: {
@@ -226,8 +222,10 @@ function App() {
       <div id='mainContainer' style={{ backgroundColor: theme.palette.page.background, width: "100%" }}    >
         <HashRouter>
           <Routes>
-            {/* <Route path="*" element={<SwitchRouter/>} /> */}
-            <Route path="/" element={serverType === "full" ? <MainPage {...props} /> : <StaticMainPage />} />
+            
+            <Route path="*" element={<SwitchRouter/>} />
+            
+            {/* <Route path="/" element={serverType === "full" ? <MainPage {...props} /> : <StaticMainPage />} />
             <Route path="/search" element={<MainPage {...props} />} />
             <Route path="/watched" element={<MainPage {...props} />} />
             <Route path="/popular" element={<MainPage {...props} />} />
@@ -236,6 +234,8 @@ function App() {
             <Route path="/g/:id/:token/" element={<GallaryPage {...props} />} />
             <Route path="/viewing/:id/:token/" element={<ViewPage {...props} />} />
             <Route path="/setting" element={<AppSetting {...props} />} />
+           */}
+          
           </Routes>
         </HashRouter>
       </div >

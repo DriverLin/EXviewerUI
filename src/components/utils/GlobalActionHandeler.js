@@ -154,11 +154,6 @@ export function rmDownload(gid, token) {
     )
 }
 
-
-
-
-
-
 export function useActionHandeler(func, actions) {
     const handeler = (e) => {
         if (actions.indexOf(e.key) !== -1) {
@@ -193,7 +188,9 @@ export function useSyncState() {
 }
 
 export function ServerSyncKeepAlive(props) {
-    const gState = useRef({})
+    //指定一个refreshKey
+    //当refreshKey发生变化时，向服务器发送请求
+
     const ws = useRef(null)
     const wsMessageHandler = (msg) => {
         const data = JSON.parse(msg.data)
@@ -215,7 +212,7 @@ export function ServerSyncKeepAlive(props) {
             try {
                 ws.current.send(props.gid ? "syncState" : "syncAll")
             } catch (e) {
-                console.log(e)
+                console.log("ws error",ws.current.state)
             }
         }
     }
@@ -227,7 +224,8 @@ export function ServerSyncKeepAlive(props) {
                 try {
                     ws.current.send(props.gid ? "syncState" : "syncAll")
                 } catch (e) {
-                    console.log(e)
+                    console.log("ws error",ws.current.state)
+
                 }
             }
         }
@@ -244,5 +242,12 @@ export function ServerSyncKeepAlive(props) {
             }
         }
     }, [])
+    useEffect(() => {
+        try {
+            ws.current.send(props.gid ? "syncState" : "syncAll")
+        } catch (e) {
+            console.log(e)
+        }
+    },[props.refreshKey])
     return <div />
 }

@@ -84,7 +84,7 @@ const openNewTab = (url) => {
 
 export default function MainPage(props) {
     const usel = useLocation()
-    const location = props.location ? props.location : usel 
+    const location = props.location ? props.location : usel
 
     const [scrollTop, setScrollTop] = useState(0)
     const [gallarys, setGallarys] = useState([]);
@@ -170,7 +170,7 @@ export default function MainPage(props) {
 
 
     const doSearch = (text) => {
-        props.openCurrent("/search",`?f_search=${encodeURIComponent(text)}`,"")
+        props.openCurrent("/search", `?f_search=${encodeURIComponent(text)}`, "")
         // console.log(props)
     }
 
@@ -178,39 +178,39 @@ export default function MainPage(props) {
     let menuItems = [
         {
             onClick: () => {
-                props.openCurrent("/","")
+                props.openCurrent("/", "")
             },
             icon: <HomeIcon />,
             text: "主页"
         }, {
             onClick: () => {
-                props.openCurrent("/watched","")
+                props.openCurrent("/watched", "")
             },
             icon: <SubscriptionsIcon />,
             text: "订阅"
         }, {
             onClick: () => {
-                props.openCurrent("/popular","")
+                props.openCurrent("/popular", "")
             },
             icon: <LocalFireDepartmentIcon />,
             text: "热门"
         }, {
             onClick: () => {
-                props.openCurrent("/favorites","")
+                props.openCurrent("/favorites", "")
             },
             icon: <FavoriteIcon />,
             text: "收藏"
         },
         {
             onClick: () => {
-                props.openCurrent("/downloaded","")
+                props.openCurrent("/downloaded", "")
             },
             icon: <DownloadIcon />,
             text: "下载"
         },
         {
             onClick: () => {
-                props.openNew("/setting","")
+                props.openNew("/setting", "")
             },
             icon: <SettingsIcon />,
             text: "设置"
@@ -291,6 +291,7 @@ export default function MainPage(props) {
 
 
     const longClickCallback = (gid, token, name, x, y) => {
+        //未完成的下载
         const items = []
         const downloaded = states[Number(gid)] ? states[Number(gid)][2] > -2 : false
         const favoted = states[Number(gid)] ? states[Number(gid)][1] > -1 : false
@@ -410,14 +411,32 @@ export default function MainPage(props) {
 
     return (
         <React.Fragment >
-            <FloatAddButton actions={normalActions} scrollTop={scrollTop} />
-            {/* <SecnodConfirmDialog title={"我是标题"} open={true} onClose={() => { }} onConfirm={()=>{}}/> */}
-            <SecnodConfirmDialog {...deleteSecnodConfirm} />
-            <LongClickMenu pos={pos} setPos={setPos} items={longClickItems} title={longClickedName} />
-            <LeftMenu open={leftMenuOpen} onClose={() => { setLeftMenuOpen(false) }} Items={menuItems}  ></LeftMenu>
-            <TopSearchBar leftButtonClick={() => { setLeftMenuOpen(true) }} doSearch={doSearch} scrollTop={scrollTop} />
+            <FloatAddButton
+                actions={normalActions}
+                scrollTop={scrollTop}
+            />
+            <SecnodConfirmDialog
+                {...deleteSecnodConfirm}
+            />
+            <LongClickMenu
+                pos={pos}
+                setPos={setPos}
+                items={longClickItems}
+                title={longClickedName}
+            />
+            <LeftMenu
+                open={leftMenuOpen}
+                onClose={() => { setLeftMenuOpen(false) }}
+                Items={menuItems}
+            />
+            <TopSearchBar
+                leftButtonClick={() => { setLeftMenuOpen(true) }}
+                doSearch={doSearch}
+                scrollTop={scrollTop}
+                location={location}
+            />
             <OnlineManinPage
-                key={refreshToken + 1}
+                key={refreshToken}
                 loading={loading}
                 requestData={requestData}
                 gallarys={gallarys}
@@ -427,7 +446,7 @@ export default function MainPage(props) {
                 openCurrent={props.openCurrent}
                 openNew={props.openNew}
             />
-            <ServerSyncKeepAlive />
+            <ServerSyncKeepAlive refreshKey={refreshToken} />
         </React.Fragment>
     )
 }
