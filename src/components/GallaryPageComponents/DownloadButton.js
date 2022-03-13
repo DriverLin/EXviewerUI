@@ -48,7 +48,7 @@ export default function DownloadButton(props) {
     useEffect(() => {
         if (Object.keys(wsSyncState).length === 0) return
         const testState = wsSyncState[props.g_data.gid]
-        console.log("testState", testState)
+        // console.log("testState", testState)
         if (testState) {
             setTrueState(testState)
         } else {

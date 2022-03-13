@@ -23,23 +23,23 @@ function PreviewLoadingImg(props) {
                 name='clickable'
                 variant="rectangular"
                 style={{
-                width: "100%",
-                height: "0",
-                paddingBottom: "139%",
-                overflow: "hidden",
-                borderRadius: 5
-            }} />
+                    width: "100%",
+                    height: "0",
+                    paddingBottom: "139%",
+                    overflow: "hidden",
+                    borderRadius: 5
+                }} />
         ,
         'error':
             <div
                 name='clickable'
                 style={{
-                height: "auto",
-                width: "100%",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-            }} >
+                    height: "auto",
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                }} >
                 <BrokenImageIcon />
             </div>,
         'finished':
@@ -79,11 +79,11 @@ export default function PreviewPanel(props) {
 
     useEffect(() => {
         window.addEventListener('scroll', handelScroll, true)
-        
+
         console.log('加载预览页面')
-        
-        return () => { 
-            window.removeEventListener('scroll', handelScroll, true) 
+
+        return () => {
+            window.removeEventListener('scroll', handelScroll, true)
             console.log('卸载预览页面')
         }
     }, [])
@@ -91,6 +91,7 @@ export default function PreviewPanel(props) {
     const lastE = useRef(0);
     const handelScroll = (e) => {
         const dis2trigger = 3
+        if (e.target.documentElement === undefined) return
         const end = e.target.documentElement.scrollHeight - e.target.documentElement.scrollTop - e.target.documentElement.clientHeight
         if (lastE.current > dis2trigger && end <= dis2trigger) {
             console.log("reach the end")
@@ -138,7 +139,7 @@ export default function PreviewPanel(props) {
                                         () => {
                                             localStorage.setItem(`/viewing/${props.gid}/${props.token}/`, index + 1)
                                             // window.open(`/#/viewing/${props.gid}/${props.token}/`, "_blank")
-                                            props.openNew(`/viewing/${props.gid}/${props.token}/`,"")
+                                            props.openNew(`/viewing/${props.gid}/${props.token}/`, "")
                                         }
                                     }
                                 >

@@ -212,20 +212,17 @@ export function ServerSyncKeepAlive(props) {
             try {
                 ws.current.send(props.gid ? "syncState" : "syncAll")
             } catch (e) {
-                console.log("ws error",ws.current.state)
+                console.log("ws error", ws.current.state)
             }
         }
     }
     const handelVisibilitychange = () => {
         if (!document.hidden) {
-            if (ws.current === null || ws.current.readyState !== WebSocket.OPEN) {
+            if (ws.current === null) {
                 initWs()
             } else {
-                try {
+                if (ws.current.readyState === WebSocket.OPEN) {
                     ws.current.send(props.gid ? "syncState" : "syncAll")
-                } catch (e) {
-                    console.log("ws error",ws.current.state)
-
                 }
             }
         }
@@ -243,11 +240,9 @@ export function ServerSyncKeepAlive(props) {
         }
     }, [])
     useEffect(() => {
-        try {
+        if (ws.current.readyState === WebSocket.OPEN) {
             ws.current.send(props.gid ? "syncState" : "syncAll")
-        } catch (e) {
-            console.log(e)
         }
-    },[props.refreshKey])
+    }, [props.refreshKey])
     return <div />
 }

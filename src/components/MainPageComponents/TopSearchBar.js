@@ -3,7 +3,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { AppBar, ButtonBase, Grid, InputBase, Paper, Slide, useMediaQuery } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from "react-router-dom";
 import { getGuess } from "../GetTranslate";
 
@@ -35,13 +35,43 @@ HideOnScroll.propTypes = {
 
 
 export default function TopSearchBar(props) {
-    const matches = useMediaQuery('(min-width:830px)')
+    const small_matches = useMediaQuery('(min-width:560px)')
+    const break_matches = useMediaQuery('(min-width:840px)')
     const usl = useLocation()
     const locationProps = props.location ? props.location : usl
     const defaultSearch = decodeURIComponent(locationProps.search).replace('?f_search=', '')
+
+
+    const rootWidth = useMemo(() => {
+        if (small_matches) {
+            if (break_matches) {
+                return 680
+            } else {
+                return "calc(100vw - 160px)"
+            }
+        } else {
+            return "calc(100vw - 120px)"
+        }
+    }, [small_matches, break_matches])
+    
+    const autoCompleteWidth = useMemo(() => {
+        if (small_matches) {
+            if (break_matches) {
+                return 780
+            } else {
+                return "calc(100vw - 60px)"
+            }
+        } else {
+            return "calc(100vw - 20px)"
+        }
+    }, [small_matches,break_matches])
+
+
+
+
     const useStyles = makeStyles((theme) => ({
         inputRoot: {
-            width: matches ? 630 : document.body.clientWidth - 160,
+            width: rootWidth,
         },
         inputInput: {
             "&.MuiInputBase-input": {
@@ -134,7 +164,7 @@ export default function TopSearchBar(props) {
         <ButtonBase
             onClick={() => { finishAutoComplete(props.data) }}
             sx={{
-                width: matches ? 730 : document.body.clientWidth - 60,
+                width: "100%",
                 height: 55,
                 textAlign: "left",
                 borderTop: "1px solid",
@@ -155,20 +185,29 @@ export default function TopSearchBar(props) {
 
 
     const AutoInputElems = <div style={{
-        width: "100%",
-        maxHeight: "calc(min(60vh,550px))",
-        overflow: "scroll",
+        width: autoCompleteWidth,
+        overflow: "hidden",
     }}>
-        <Grid
-            container
-            direction="column"
-            justifyContent="flex-start"
-            alignItems="center"
+        <div
+            style={{
+                width: "calc(100% + 20px)",
+                maxHeight: "calc(min(60vh,550px))",
+                overflowY: "scroll",
+                overflowX: "hidden",
+            }}
         >
-            {
-                guess.map((item, index) => <AutoCompleteItem key={index} data={item} />)
-            }
-        </Grid>
+            <Grid
+                container
+                direction="column"
+                justifyContent="flex-start"
+                alignItems="center"
+                sx={{ width: "100%", }}
+            >
+                {
+                    guess.map((item, index) => <AutoCompleteItem key={index} data={item} />)
+                }
+            </Grid>
+        </div>
     </div>
 
     return (
@@ -202,7 +241,6 @@ export default function TopSearchBar(props) {
                             autoComplete='off'
                             value={searchValue}
                             onChange={updateSearchValue}
-                            // defaultValue={defaultSearch}
                             onFocus={() => {
                                 setAutocomplete(true)
                                 inputFocusStause.current = true

@@ -1,25 +1,12 @@
 import asyncio
 import json
-import logging
 import os
-import queue
-import re
-import shutil
 import sqlite3
 import ssl
-import threading
 import time
-import urllib.error
-import urllib.request
-from turtle import down
 from typing import List
-from urllib.parse import parse_qs, urljoin
 
-import coloredlogs
-import requests
 import uvicorn
-from bs4 import BeautifulSoup
-from cacheout import LRUCache
 from fastapi import (FastAPI, HTTPException, Request, Response, WebSocket,
                      WebSocketDisconnect)
 from fastapi.staticfiles import StaticFiles
@@ -66,10 +53,10 @@ GALLARY_PATH = os.path.join(DOWNLOAD_PATH, r"Gallarys")
 COVER_PATH = os.path.join(DOWNLOAD_PATH, r"cover")
 DB_PATH = os.path.join(DOWNLOAD_PATH, os.path.join("api", "Data.db"))
 
-CACHE_PATH = os.environ.get("EH_CACHE_PATH")
+CACHE_PATH = os.environ.get("EH_CACHE_PATH", "")
 if CACHE_PATH == "":
     CACHE_PATH = os.path.join(ROOT_PATH, r"cache")
-    logger.info("using cache path from config file")
+    logger.info("using default cache path ")
 else:
     logger.info("using cache path from env")
 
@@ -83,43 +70,23 @@ if not os.path.exists(DB_PATH):
     with open(DB_PATH, "w") as f:
         f.write("")
     db = sqlite3.connect(DB_PATH)
-    db.execute('''
-CREATE TABLE download (
-    gid       INTEGER UNIQUE
-                      NOT NULL,
-    token     TEXT,
-    over      INTEGER,
-    addSerial INTEGER PRIMARY KEY ASC AUTOINCREMENT
-);
-
-CREATE TABLE favo (
-    gid  INTEGER PRIMARY KEY
-                 UNIQUE
-                 NOT NULL,
-    favo INTEGER
-);
-
-CREATE TABLE g_data (
-    gid    INTEGER PRIMARY KEY
-                   UNIQUE
-                   NOT NULL,
-    g_data TEXT
-);
-
-
-CREATE VIEW downloaded AS
-    SELECT download.gid || '_' || download.token AS id_token,
-           download.over AS over,
-           json_extract(g_data.g_data, '$.filecount') AS total,
-           g_data.g_data AS g_data,
-           download.addSerial AS addSerial
-      FROM download,
-           g_data
-     WHERE download.gid == g_data.gid;'''
-               )
+    db.execute('''CREATE TABLE download (gid INTEGER UNIQUE NOT NULL, token TEXT, over INTEGER, addSerial INTEGER PRIMARY KEY ASC AUTOINCREMENT);''')
+    db.execute(
+        '''CREATE TABLE favo (gid INTEGER PRIMARY KEY UNIQUE NOT NULL, favo INTEGER);''')
+    db.execute(
+        '''CREATE TABLE g_data (gid INTEGER PRIMARY KEY UNIQUE NOT NULL, g_data TEXT);''')
+    db.execute('''CREATE VIEW downloaded AS select 
+        download.gid || '_' || download.token as id_token,
+        download.over as over,
+        cast(json_extract(g_data.g_data  , '$.filecount') as int) as total,
+        g_data.g_data as g_data,
+        download.addSerial as addSerial       
+    from download,g_data 
+    where download.gid == g_data.gid;
+    ''')
     db.commit()
     db.close()
-    logger.info("创建数据库成功")
+    logger.info("已初始化数据库")
 
 logger.info(f"ROOT_PATH {ROOT_PATH}")
 logger.info(f"DOWNLOAD_PATH {DOWNLOAD_PATH}")
@@ -196,7 +163,7 @@ pa = ProxyAccessor(
 app = FastAPI(async_request_limit=1000)
 
 
-ispublic = os.environ.get("PUBLIC_ENV") == "true"
+ispublic = os.environ.get("PUBLIC_ENV", "false") == "true"
 
 
 @app.get("/addfavo/{gid_token}/{index}")
@@ -307,11 +274,10 @@ def downloadedAll():
     downloadedG_data = pa.queryDownloaded()
     return downloadedG_data
 
+
 @app.get("/api/Data.db")
 def getDB():
-    return FileResponse(DB_PATH,headers={"Cache-Control": "max-age=31536000"})
-
-
+    return FileResponse(DB_PATH, headers={"Cache-Control": "max-age=31536000"})
 
 
 @app.post("/api/logger")
@@ -320,12 +286,15 @@ async def remoteLogger(request: Request):
     await logwsm.broadcast([jsbody])
     return {"msg": "success"}
 
+
 @app.get("/api/logger")
 def loggerPage():
     hearders = {"Content-Type": "text/html"}
-    return FileResponse(r"C:\Users\lty65\projects\ExviewerUI\server\logger.html",headers=hearders)
+    return FileResponse(r"C:\Users\lty65\projects\ExviewerUI\server\logger.html", headers=hearders)
+
 
 logwsm = ConnectionManager()
+
 
 @app.websocket("/logws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -335,6 +304,7 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.receive_text()
     except Exception:
         logwsm.disconnect(websocket)
+
 
 @app.get("/list/{path}")
 def gallaryList(path, request: Request):
