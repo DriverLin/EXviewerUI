@@ -2,8 +2,6 @@
 import json
 import os
 import re
-import sqlite3
-import threading
 import time
 import urllib.error
 import urllib.request
@@ -227,7 +225,7 @@ class ProxyAccessor:
                 favoNum = ["-2", "-21", "-40", "-59", "-78", "-97",
                            "-116", "-135", "-154", "-173"].index(postion)
                 favo = favoNum
-                self.dbm.updateFavo(gid, favo)
+                self.dbm.addFavo(gid, favo)
             else:
                 self.dbm.rmFavo(gid)
                 # 爬取的时候 同步更新数据库
@@ -703,7 +701,6 @@ class ProxyAccessor:
         return result
 
     def makeSyncData(self, msg):
-        logger.info(f"收到websocket请求 {msg}")
         if msg == "syncState":
             return [{
                 "state": self.getStauseForWS(),

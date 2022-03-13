@@ -1,33 +1,12 @@
 
-import asyncio
 import json
-import logging
 import os
-import queue
-import re
 import shutil
-import sqlite3
-import ssl
-import threading
-import time
-import urllib.error
-import urllib.request
-from ast import Pass
-from cgitb import handler
-from concurrent.futures import thread
-from tkinter import N
-from typing import List
-from urllib.parse import parse_qs, urljoin
-
-import requests
-from bs4 import BeautifulSoup
-from cacheout import LRUCache
 
 from utils.EHDBManager import EHDBManager
 from utils.JobScheduler import JobScheduler
-from utils.MulthreadCache import MulthreadCache
-from utils.tools import (atomWarpper, checkImg, logger, makeTrackableExcption,
-                         printPerformance, timestamp_to_str)
+from utils.tools import (atomWarpper, logger, makeTrackableExcption,
+                         printPerformance)
 
 DOWNLOAD_START = 0
 DOWNLOAD_IMG = 1
@@ -80,10 +59,12 @@ class DownloadManager:
         elif job["action"] == DOWNLOAD_FINISH:
             self.downloading_gid = -1
             self.downloadSuccess = 0
-            self.downloadingQueue = [x for x in self.downloadingQueue if x[0] != gid]
+            self.downloadingQueue = [
+                x for x in self.downloadingQueue if x[0] != gid]
             return RESULT_DOWNLOAD_FINISH
         elif job["action"] == DELETE_DOWNLOAD:
-            self.downloadingQueue = [x for x in self.downloadingQueue if x[0] != gid]
+            self.downloadingQueue = [
+                x for x in self.downloadingQueue if x[0] != gid]
             coverPath = os.path.join(self.covePath, f"{gid}_{token}.jpg")
             saveDir = os.path.join(self.gallaryPath, f"{gid}_{token}")
             shutil.rmtree(saveDir) if os.path.exists(saveDir) else None
@@ -120,11 +101,12 @@ class DownloadManager:
         if (gid, token) in self.downloadingQueue:
             return  # 在队列中 则返回
         else:
-            self.dbm.addDownload(gid, token)#立即添加下载记录
+            self.dbm.addDownload(gid, token)  # 立即添加下载记录
             g_data = None
             try:
                 g_data = self.getG_data(gid, token)
-                logger.info(f"\n下载 {gid} {token}\n {json.dumps(g_data, ensure_ascii=False,indent=4)}")
+                logger.info(
+                    f"\n下载 {gid} {token}\n {json.dumps(g_data, ensure_ascii=False,indent=4)}")
             except Exception as e:
                 raise makeTrackableExcption(e, "下载失败 无法获取g_data")
             try:
@@ -133,7 +115,7 @@ class DownloadManager:
                 shutil.move(src, dst)
             except Exception as e:
                 raise makeTrackableExcption(e, "下载失败 无法获取cover")
-            self.dbm.addGdata(gid, g_data)#这里更新g_data
+            self.dbm.addGdata(gid, g_data)  # 这里更新g_data
             savePath = os.path.join(self.gallaryPath, f"{gid}_{token}")
             os.makedirs(savePath, exist_ok=True)
             g_data_path = os.path.join(savePath, "g_data.json")

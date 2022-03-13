@@ -1,10 +1,10 @@
+import { Slide } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router";
 import AppSetting from "../AppSetting";
 import GallaryPage from "../GallaryPage";
 import MainPage from "../MainPage";
 import ViewPage from "../ViewPage";
-
 
 
 const replaceLast = (arr, item) => {
@@ -111,7 +111,18 @@ export function SwitchRouter(props) {
     return (
         <div>
             {
-                elems.map((elem, index) => <div key={index} style={{ display: index === elems.length - 1 ? null : "none" }}  >{elem}</div>)
+                elems.map((elem, index) => (
+
+                    <Slide in={true} appear={index !== 0} direction="left"  >
+                        <div
+                            key={index}
+                            style={{ display: index === elems.length - 1 ? null : "none" }}
+                        >
+                            {elem}
+                        </div>
+                    </Slide>
+                )
+                )
             }
         </div >
     )

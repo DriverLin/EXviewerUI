@@ -60,18 +60,10 @@ class EHDBManager:
 
     def addFavo(self,_gid,favonum):
         gid = int(_gid)
-        if self.getFavo(gid) == -1 :
+        if self.getFavo(gid) != favonum :
+            self.putTask("INSERT OR REPLACE INTO favo (gid,favo) VALUES (?,?)",(gid,favonum))
             self.favo[gid] = favonum
-            self.putTask("INSERT INTO favo (gid,favo) VALUES (?,?)",(gid,favonum))
-        else:
-            if self.getFavo(gid) != int(favonum):
-                self.updateFavo(gid,favonum)
-                self.favo[gid] = int(favonum)
 
-    def updateFavo(self,_gid,favonum):
-        gid = int(_gid)
-        self.favo[gid] = favonum
-        self.putTask(f"UPDATE favo SET favo = {favonum} WHERE gid = {gid}")
 
     def rmFavo(self,_gid):
         gid = int(_gid)
@@ -107,16 +99,8 @@ class EHDBManager:
 
     def addGdata(self,_gid,g_data):
         gid = int(_gid)
-        if self.getGdata(gid) != False:
-            self.updateGdata(gid,g_data)
-        else:
-            self.g_data[gid] = g_data
-            self.putTask("INSERT INTO g_data (gid,g_data) VALUES (?,?)",(gid,json.dumps(g_data)))
-    
-    def updateGdata(self,_gid,g_data):
-        gid = int(_gid)
         self.g_data[gid] = g_data
-        self.putTask("UPDATE g_data SET g_data = ? WHERE gid = ?",(json.dumps(g_data),gid))
+        self.putTask("INSERT OR REPLACE INTO g_data (gid,g_data) VALUES (?,?)",(gid,json.dumps(g_data)))
 
     def rmGdata(self,_gid):
         gid = int(_gid)
