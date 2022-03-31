@@ -1,7 +1,7 @@
 import threading
 import time
 
-from utils.tools import atomWarpper
+from utils.tools import atomWarpper, logger
 
 
 class JobScheduler(object):
@@ -15,7 +15,8 @@ class JobScheduler(object):
         self.lock = threading.Lock()  # 锁 用于控制队列的读写
         self.handeler = handeler  # 执行器 外部传入
         self.MAXPARALLEL = maxParallel  # 最大并行数
-        self.parallelJobs = threading.Semaphore(self.MAXPARALLEL)  # 并行任务信号量 用于控制并行任务数量
+        self.parallelJobs = threading.Semaphore(
+            self.MAXPARALLEL)  # 并行任务信号量 用于控制并行任务数量
         self.jobsRunning = threading.Lock()  # 当前是否有任务正在运行   并行任务不可与串行任务同时运行
         self.handelingJobs = {}
         self.onChange = onChange  # 当任务发生变化时调用 包括添加 删除 修改
@@ -34,26 +35,24 @@ class JobScheduler(object):
 
             while True:
                 [job, tag, parallel] = self.get_job()
-
                 if parallel:
-                    self.parallelJobs.acquire()
-
-                    def run_thread():
-                        jobInfo = {
-                            "job": job,
-                            "tag": tag,
-                            "parallel": parallel,
+                    self.parallelJobAcquire(1,f"{job['action']}::img_{job['index']}")
+                    def run_thread(_job, _tag, _parallel):
+                        _jobInfo = {
+                            "job": _job,
+                            "tag": _tag,
+                            "parallel": _parallel,
                             "timestamp": time.time(),
                         }
-                        key = id(job)
-                        add_handelingJob(key, jobInfo)
-                        result = self.handeler(job)
-                        finish_handelingJob(key, jobInfo, result)
-                        self.parallelJobs.release()
-
-                    threading.Thread(target=run_thread).start()
+                        key = id(_job)
+                        add_handelingJob(key, _jobInfo)
+                        result = self.handeler(_job)
+                        finish_handelingJob(key, _jobInfo, result)
+                        self.parallelJobRelease(1,f"{job['action']}::img_{job['index']}")
+                    threading.Thread(target=run_thread, args=(
+                        job, tag, parallel)).start()
                 else:
-                    [self.parallelJobs.acquire() for _ in range(self.MAXPARALLEL)]
+                    self.parallelJobAcquire(self.MAXPARALLEL,f"finish")
                     jobInfo = {
                         "job": job,
                         "tag": tag,
@@ -64,9 +63,19 @@ class JobScheduler(object):
                     add_handelingJob(key, jobInfo)
                     result = self.handeler(job)
                     finish_handelingJob(key, jobInfo, result)
-                    [self.parallelJobs.release() for _ in range(self.MAXPARALLEL)]
+                    self.parallelJobRelease(self.MAXPARALLEL,f"finish")
 
         threading.Thread(target=shdule_thread).start()
+
+    def parallelJobAcquire(self, count=1, msg=""):
+        logger.debug(f"{msg} need {count} , now {self.parallelJobs._value}")
+        [self.parallelJobs.acquire() for _ in range(count)]
+        logger.debug(f"{msg} get {count} , now {self.parallelJobs._value}")
+
+    def parallelJobRelease(self, count=1, msg=""):
+        logger.debug(f"{msg} will release {count} , now {self.parallelJobs._value}")
+        [self.parallelJobs.release() for _ in range(count)]
+        logger.debug(f"{msg} released {count} , now {self.parallelJobs._value}")
 
     def add_job(self, job, tag, parallel=False):
         self.lock.acquire()
@@ -101,7 +110,8 @@ class JobScheduler(object):
         self.lock.acquire()
         original_len = len(self.queue)
         self.queue = [job for job in self.queue if job[1] != tag]
-        [self.queueSemaphore.acquire() for _ in range(original_len - len(self.queue))]
+        [self.queueSemaphore.acquire()
+         for _ in range(original_len - len(self.queue))]
         self.onChange("remove", tag, None)
         self.lock.release()
 
@@ -113,5 +123,3 @@ class JobScheduler(object):
                 {"job": job[0], "tag": job[1], "parallel": job[2]} for job in self.queue
             ],
         }
-
-

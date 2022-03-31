@@ -112,10 +112,15 @@ class EHDBManager:
         gid = int(_gid)
         return self.favo[gid] if gid in self.favo else -1
 
-    def getDownload(self,_gid):
+    def getDownload(self,_gid):#获取值 over -2 为未下载
         gid = int(_gid)
         return self.download[gid]["over"] if gid in self.download else -2
     
+    def getDownloadREC(self,_gid):#获取完整记录 包括gid,token,over,addSerial
+        gid = int(_gid)
+        return self.download[gid] if gid in self.download else False
+
+
     def getGdata(self,_gid):
         gid = int(_gid)
         return self.g_data[gid] if gid in self.g_data else False
@@ -137,12 +142,8 @@ class EHDBManager:
             ]
         return result
 
-
-
-
     def execQuery(self,sql,param=None):
-        return self.db.execute(sql,param).fetchall() if param != None else self.db.execute(sql).fetchall()
-
+        return self.db.execute(sql,param).fetchall() if param != None else self.db.execute(sql)
 
 if __name__ == "__main__":
     dbm = EHDBManager(r"C:\Users\lty65\projects\ExviewerUI\server\DataForTest.db")

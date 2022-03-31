@@ -57,28 +57,29 @@ export function SwitchRouter(props) {
         const target = `${pathname}${search}`
         if (history.current[history.current.length - 1] === target) {
             console.log("重复的路由")
+            return
         } else {
             history.current.push(target)
             window.location.href = `/#${target}`
             console.log("新的路由", target)
+            return
         }
-    }//open new
-
-
-
+    };//open new
 
     const openCurrent = (pathname, search) => {//
         console.log("替换当前页面", pathname, search)
         const target = `${pathname}${search}`
-        if (history.current[history.current.length - 1] === target) {
-            return
-        } else {
-            // history.current.pop()
-            // history.current.push(target)
-            const replaceElem = pathRender(pathname, search)
-            setElems(elems => replaceLast(elems, replaceElem));
-        }
-    }//把当前栈顶的location更新 组件也更新 浏览器地址不更新
+        const replaceElem = pathRender(pathname, search)
+        setElems(elems => replaceLast(elems, replaceElem));
+        // if (history.current[history.current.length - 1] === target) {
+        //     return
+        // } else {
+        //     // history.current.pop()
+        //     // history.current.push(target)
+        //     const replaceElem = pathRender(pathname, search)
+        //     setElems(elems => replaceLast(elems, replaceElem));
+        // }
+    };//把当前栈顶的location更新 组件也更新 浏览器地址不更新
 
 
     const pathRender = (pathname, search) => {
@@ -113,9 +114,9 @@ export function SwitchRouter(props) {
             {
                 elems.map((elem, index) => (
 
-                    <Slide in={true} appear={index !== 0} direction="left"  >
+                    <Slide key={index} in={true} appear={index !== 0} direction="left"  >
                         <div
-                            key={index}
+
                             style={{ display: index === elems.length - 1 ? null : "none" }}
                         >
                             {elem}

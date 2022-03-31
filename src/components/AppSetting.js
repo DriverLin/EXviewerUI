@@ -106,9 +106,9 @@ export default function AppSetting(props) {
 
                 <Grid item xs={12} sx={{ width: "100%" }}>
                     <SwitchType
-                        name={"搜索本地并合并结果"}
+                        name={"搜索本地画廊"}
                         defaultValue={false}
-                        help={(value) => value ? "搜索画廊时同时搜索本地数据库,合并后优先展示在最前面" : "仅搜索在线画廊"}
+                        help={(value) => value ? "搜索结果优先显示已下载的画廊" : "不优先显示已下载的画廊"}
                     />
                 </Grid>
             </Grid>

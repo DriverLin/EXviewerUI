@@ -1690,7 +1690,13 @@ const preciseQuery = {
         "sono bisque doll wa koi o suru": "\u66f4\u8863\u4eba\u5076\u5760\u5165\u7231\u6cb3",
         "hypnosis mic": "\u50ac\u7720\u9ea6\u514b\u98ce",
         "project sekai": "\u4e16\u754c\u8ba1\u5212",
-        "needy streamer overload": "\u4e3b\u64ad\u5973\u5b69\u91cd\u5ea6\u4f9d\u8d56"
+        "needy streamer overload": "\u4e3b\u64ad\u5973\u5b69\u91cd\u5ea6\u4f9d\u8d56",
+        "elden ring": "\u827e\u5c14\u767b\u6cd5\u73af",
+        "otome game no hametsu flag shika nai akuyaku reijou ni tensei shiteshimatta...": "\u8f6c\u751f\u6210\u4e3a\u4e86\u53ea\u6709\u4e59\u5973\u6e38\u620f\u7834\u706dFlag\u7684\u90aa\u6076\u5927\u5c0f\u59d0",
+        "osomatsu-san": "\u963f\u677e",
+        "arena of valor": "\u738b\u8005\u8363\u8000",
+        "douluo continent": "\u6597\u7f57\u5927\u9646",
+        "grand blue": "\u78a7\u84dd\u4e4b\u6d77"
     },
     "character": {
         "alice": "\u7231\u4e3d\u4e1d",
@@ -4980,7 +4986,13 @@ const preciseQuery = {
         "kaoruko sazaki": "\u4f50\u5d0e\u85b0\u5b50",
         "izuku midoriya": "\u7eff\u8c37\u51fa\u4e45",
         "mitsuki bakugou": "\u7206\u8c6a\u5149\u5df1(\u706b\u7206\u7334\u7684\u6bcd\u4eb2)",
-        "prushka": "\u666e\u9c81\u4fee\u5361"
+        "prushka": "\u666e\u9c81\u4fee\u5361",
+        "hakui koyori": "\u535a\u8863\u5c0f\u591c\u7483",
+        "satoko houjou": "\u5317\u6761\u6c99\u90fd\u5b50",
+        "siesta": "\u8c22\u4e1d\u5854",
+        "rebecca bluegarden": "\u857e\u8d1d\u5361\u00b7\u5e03\u9c81\u52a0\u7538",
+        "aria von reiji asuna": "\u5cad\u53f8",
+        "kokawa asuka": "\u7532\u6cb3\u660e\u65e5\u9999(\u7532\u6cb3\u98de\u9e1f)"
     },
     "group": {
         "clockup": "CLOCKUP",
@@ -7175,7 +7187,12 @@ const preciseQuery = {
         "kanyou shoujo": "\u89c2\u7528\u5c11\u5973",
         "ferallemma": "\u30d5\u30a3\u30e9\u30ec\u30de",
         "bakayaro": "\u3070\u304b\u3084\u308d\u3046",
-        "nanimoshinai": "NANIMOSHINAI"
+        "nanimoshinai": "NANIMOSHINAI",
+        "mokumokusei": "\u30e2\u30af\u30e2\u30af\u30bb\u30a4",
+        "junjou harinezumi": "\u7d14\u60c5\u30cf\u30ea\u30cd\u30ba\u30df",
+        "miniomlet ongakudan": "\u30df\u30cb\u30aa\u30e0\u30ec\u30c4\u97f3\u697d\u56e3",
+        "baiuzensen": "\u6885\u96e8\u524d\u7dda",
+        "nagomiyasan": "\u306a\u3054\u307f\u3084\u3055\u3093"
     },
     "artist": {
         "13": "13",
@@ -10706,7 +10723,12 @@ const preciseQuery = {
         "yoshitama ichirou": "\u5409\u7389\u4e00\u697c",
         "rifuru": "\u308a\u3075\u308b",
         "oniharigusa": "\u9b3c\u9488\u8349",
-        "komota": "\u3053\u3082\u305f"
+        "komota": "\u3053\u3082\u305f",
+        "akamoku": "\u3042\u304b\u3082\u304f",
+        "hiyama yuki": "\u6a9c\u5c71\u30e6\u30ad",
+        "izumi kirifu": "\u548c\u6cc9\u30ad\u30ea\u30d5",
+        "suzuki nago": "\u9234\u6728\u548c",
+        "ito fleda": "\u4f0a\u85e4\u9054\u54c9"
     },
     "cosplayer": {
         "otohara an": "\u4e59\u539f\u3042\u3093",
@@ -10776,7 +10798,7 @@ const preciseQuery = {
         "furry": "\u6bdb\u8338\u8338",
         "giraffe boy": "\u957f\u9888\u9e7f\u7537",
         "ghost": "\u5e7d\u7075\ud83d\udc7b",
-        "goblin": "\u5730\u7cbe",
+        "goblin": "\u54e5\u5e03\u6797",
         "harpy": "\u9e1f\u4eba",
         "horse boy": "\u9a6c\u7537\u5b69",
         "human on furry": "\u4eba\u6bdb",
@@ -11301,7 +11323,7 @@ const preciseQuery = {
         "furry": "\u6bdb\u8338\u8338",
         "giraffe girl": "\u957f\u9888\u9e7f\u5a18",
         "ghost": "\u5e7d\u7075\ud83d\udc7b",
-        "goblin": "\u5730\u7cbe",
+        "goblin": "\u54e5\u5e03\u6797",
         "harpy": "\u9e1f\u4eba",
         "horse girl": "\u9a6c\u5973\u5b69",
         "human on furry": "\u4eba\u6bdb",

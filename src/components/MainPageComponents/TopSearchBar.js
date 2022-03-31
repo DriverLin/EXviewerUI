@@ -41,7 +41,6 @@ export default function TopSearchBar(props) {
     const locationProps = props.location ? props.location : usl
     const defaultSearch = decodeURIComponent(locationProps.search).replace('?f_search=', '')
 
-
     const rootWidth = useMemo(() => {
         if (small_matches) {
             if (break_matches) {
@@ -95,10 +94,9 @@ export default function TopSearchBar(props) {
     const [autocomplete, setAutocomplete] = useState(false)
 
 
-    const location = useLocation()
     useEffect(() => {
-        setSearchValue(decodeURIComponent(location.search).replace('?f_search=', ''))
-    }, [location])
+        setSearchValue(decodeURIComponent(locationProps.search).replace('?f_search=', ''))
+    }, [locationProps])
 
 
     const getWordOfLast = (inputText) => {

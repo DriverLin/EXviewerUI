@@ -126,7 +126,6 @@ class ConnectionManager:
                 await connection.send_json(msg)
 
     async def onMessage(self, msg, ws):
-        logger.warning(f"收到消息{msg} from {ws.client.host}:{ws.client.port}")
         start = time.time()
         for result in pa.makeSyncData(msg):
             await ws.send_json(result)
@@ -194,9 +193,13 @@ def rmfavo(gid_token):
 def download(gid_token):
     logger.info(f"请求下载 {gid_token}")
     gid, token = gid_token.split("_")
-    pa.download(gid, token)
-    return {"msg": "已提交下载"}
-
+    try:
+        pa.download(gid, token)
+        return {"msg": "已提交下载"}
+    except Exception as e:
+        trackE = makeTrackableExcption(e, f"请求下载 {gid_token} 失败")
+        printTrackableException(trackE)
+        raise HTTPException(status_code=417, detail=str(trackE))
 
 @app.get("/delete/{gid_token}")
 def delete(gid_token):

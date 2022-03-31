@@ -1,7 +1,7 @@
 import json
 from os import times
-import requests
 
+import requests
 
 try:
     jsdata = requests.get("https://github.com/EhTagTranslation/Database/releases/latest/download/db.text.json").json()

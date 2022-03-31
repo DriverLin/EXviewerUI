@@ -37,6 +37,7 @@ export default function InfoPanel(props) {
         "Game CG": "#4CB050",
         "Misc": "#F06292",
         "Artist CG": "#9C28B1",
+        "Private":"#000000",
         "": "#00000000"
     };
 

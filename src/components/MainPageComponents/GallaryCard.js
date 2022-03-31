@@ -23,6 +23,7 @@ const colormap = {
     "Game CG": "#4CB050",
     "Misc": "#D90051",
     "Artist CG": "#D90051",
+    "PRIVATE":"#000000",
 };
 const languageMap = {
     "chinese": "ZH",

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import ReconnectingWebSocket from 'reconnecting-websocket';
 import { notifyMessage } from "./PopoverNotifier";
-
 const dispatchEvent = (eventName, detail) => {
     const e = new Event("globalActionHandelerEvent");
     e.key = eventName;
@@ -192,22 +192,27 @@ export function ServerSyncKeepAlive(props) {
     //当refreshKey发生变化时，向服务器发送请求
 
     const ws = useRef(null)
-    const wsMessageHandler = (msg) => {
-        const data = JSON.parse(msg.data)
-        if (!data.hasOwnProperty("gallarys") || !data.hasOwnProperty("state")) return
-        dispatchEvent("syncState", data.state)
-        if (data.gallarys.length > 0) {
-            dispatchEvent("syncGallarys", data.gallarys)
-        }
-    }
+    
+    
+    
     const initWs = () => {
+        if (ws.current != null )return
         const wssOrWS = window.location.protocol === "https:" ? "wss:" : "ws:"
         let wsUrl = `${wssOrWS}//${window.location.host}/ws`
         if (window.location.host.includes(":3000")) {
             wsUrl = wsUrl.replace(":3000", ":8080")
         }
-        ws.current = new WebSocket(wsUrl)
-        ws.current.onmessage = wsMessageHandler
+        ws.current = new ReconnectingWebSocket(wsUrl)
+        
+        ws.current.onmessage = (msg) => {
+            const data = JSON.parse(msg.data)
+            if (!data.hasOwnProperty("gallarys") || !data.hasOwnProperty("state")) return
+            dispatchEvent("syncState", data.state)
+            if (data.gallarys.length > 0) {
+                dispatchEvent("syncGallarys", data.gallarys)
+            }
+        }
+        
         ws.current.onopen = () => {
             try {
                 ws.current.send(props.gid ? "syncState" : "syncAll")
@@ -215,30 +220,27 @@ export function ServerSyncKeepAlive(props) {
                 console.log("ws error", ws.current.state)
             }
         }
-    }
-    const handelVisibilitychange = () => {
-        if (!document.hidden) {
-            if (ws.current === null) {
-                initWs()
-            } else {
-                if (ws.current.readyState === WebSocket.OPEN) {
-                    ws.current.send(props.gid ? "syncState" : "syncAll")
-                }
-            }
+
+        ws.current.onerror = (e) => {
+            console.log("ws error", e)
+        }
+
+        ws.current.onclose = () => {
+            console.log("ws close")
         }
     }
     useEffect(() => {
         initWs()
-        window.addEventListener("visibilitychange", handelVisibilitychange)
         return () => {
-            window.removeEventListener("visibilitychange", handelVisibilitychange)
-            try {
+            try{
                 ws.current.close()
-            } catch (error) {
-                console.log("ws close error")
+                ws.current = null
+            }catch(e){
+                console.log("ws close error", e)
             }
         }
     }, [])
+
     useEffect(() => {
         if (ws.current.readyState === WebSocket.OPEN) {
             ws.current.send(props.gid ? "syncState" : "syncAll")
