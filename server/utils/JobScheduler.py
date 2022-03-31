@@ -20,6 +20,7 @@ class JobScheduler(object):
         self.jobsRunning = threading.Lock()  # 当前是否有任务正在运行   并行任务不可与串行任务同时运行
         self.handelingJobs = {}
         self.onChange = onChange  # 当任务发生变化时调用 包括添加 删除 修改
+        self.runLog = []  # 运行日志
 
         def shdule_thread():
             @atomWarpper
@@ -36,7 +37,19 @@ class JobScheduler(object):
             while True:
                 [job, tag, parallel] = self.get_job()
                 if parallel:
-                    self.parallelJobAcquire(1,f"{job['action']}::img_{job['index']}")
+                    self.runLog.append({
+                        "job": job,
+                        "type": "acquiring",
+                        "time": time.time(),
+                    })
+                    self.parallelJobAcquire(
+                        1, f"{job['action']}::img_{job['index']}")
+                    self.runLog.append({
+                        "job": job,
+                        "type": "acquired",
+                        "time": time.time(),
+                    })
+
                     def run_thread(_job, _tag, _parallel):
                         _jobInfo = {
                             "job": _job,
@@ -48,11 +61,28 @@ class JobScheduler(object):
                         add_handelingJob(key, _jobInfo)
                         result = self.handeler(_job)
                         finish_handelingJob(key, _jobInfo, result)
-                        self.parallelJobRelease(1,f"{job['action']}::img_{job['index']}")
+                        self.parallelJobRelease(
+                            1, f"{_job['action']}::img_{_job['index']}")
+                        self.runLog.append({
+                            "job": _job,
+                            "type": "released",
+                            "time": time.time(),
+                        })
+
                     threading.Thread(target=run_thread, args=(
                         job, tag, parallel)).start()
                 else:
-                    self.parallelJobAcquire(self.MAXPARALLEL,f"finish")
+                    self.runLog.append({
+                        "job": job,
+                        "type": "acquiring",
+                        "time": time.time(),
+                    })
+                    self.parallelJobAcquire(self.MAXPARALLEL, f"finish")
+                    self.runLog.append({
+                        "job": job,
+                        "type": "acquired",
+                        "time": time.time(),
+                    })
                     jobInfo = {
                         "job": job,
                         "tag": tag,
@@ -63,19 +93,29 @@ class JobScheduler(object):
                     add_handelingJob(key, jobInfo)
                     result = self.handeler(job)
                     finish_handelingJob(key, jobInfo, result)
-                    self.parallelJobRelease(self.MAXPARALLEL,f"finish")
+                    self.parallelJobRelease(self.MAXPARALLEL, f"finish")
+                    self.runLog.append({
+                        "job": job,
+                        "type": "released",
+                        "time": time.time(),
+                    })
 
         threading.Thread(target=shdule_thread).start()
 
     def parallelJobAcquire(self, count=1, msg=""):
+        # Semaphore.acquire
+        # 是一旦有 则直接取出
+        # 是不是应该改成一次性取出所有，不够则不取出的方式
         logger.debug(f"{msg} need {count} , now {self.parallelJobs._value}")
         [self.parallelJobs.acquire() for _ in range(count)]
         logger.debug(f"{msg} get {count} , now {self.parallelJobs._value}")
 
     def parallelJobRelease(self, count=1, msg=""):
-        logger.debug(f"{msg} will release {count} , now {self.parallelJobs._value}")
+        logger.debug(
+            f"{msg} will release {count} , now {self.parallelJobs._value}")
         [self.parallelJobs.release() for _ in range(count)]
-        logger.debug(f"{msg} released {count} , now {self.parallelJobs._value}")
+        logger.debug(
+            f"{msg} released {count} , now {self.parallelJobs._value}")
 
     def add_job(self, job, tag, parallel=False):
         self.lock.acquire()
@@ -115,11 +155,6 @@ class JobScheduler(object):
         self.onChange("remove", tag, None)
         self.lock.release()
 
-    def listJobs(self):
-        return {
-            "timestamp": time.time(),
-            "handeling": list(self.handelingJobs.values()),
-            "queue": [
-                {"job": job[0], "tag": job[1], "parallel": job[2]} for job in self.queue
-            ],
-        }
+
+    def listLog(self):
+        return self.runLog

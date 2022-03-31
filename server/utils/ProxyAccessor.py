@@ -593,8 +593,8 @@ class ProxyAccessor:
     def deleteDownload(self, gid, token):
         self.downloadManager.deleteDownloaded(gid, token)
 
-    def listJobs(self):
-        return []
+    def listLog(self):
+        return self.downloadManager.listLog()
 
     def downloadMany(self, gid_token_list):
         for (gid, token) in gid_token_list:

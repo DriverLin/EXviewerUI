@@ -9,6 +9,7 @@ from typing import List
 import uvicorn
 from fastapi import (FastAPI, HTTPException, Request, Response, WebSocket,
                      WebSocketDisconnect)
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
@@ -160,7 +161,7 @@ pa = ProxyAccessor(
 )
 
 app = FastAPI(async_request_limit=1000)
-
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 ispublic = os.environ.get("PUBLIC_ENV", "false") == "true"
 
@@ -200,6 +201,7 @@ def download(gid_token):
         trackE = makeTrackableExcption(e, f"请求下载 {gid_token} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=417, detail=str(trackE))
+
 
 @app.get("/delete/{gid_token}")
 def delete(gid_token):
@@ -354,9 +356,12 @@ def cover(filename):
         raise HTTPException(status_code=404, detail=str(trackE))
 
 
-@app.get("/jobs")
-def get_sheduled_jobs():
-    return pa.listJobs()
+@app.get("/logs")
+def get_download_logs():
+    return {
+        "server_time": time.time(),
+        "logs": pa.listLog()
+    }
 
 
 @app.get("/")

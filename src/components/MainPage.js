@@ -9,6 +9,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FileDownloadOffIcon from '@mui/icons-material/FileDownloadOff';
 import HomeIcon from '@mui/icons-material/Home';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import LogoDevIcon from '@mui/icons-material/LogoDev';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
 import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
@@ -25,7 +26,6 @@ import log from './utils/Logger';
 import { notifyMessage } from './utils/PopoverNotifier';
 import SecnodConfirmDialog from './utils/SecnodConfirmDialog';
 import { useSettingBind } from './utils/Settings';
-
 const randomSort = (arr) => {
     return arr.sort(() => Math.random() - 0.5)
 }
@@ -90,7 +90,7 @@ export default function MainPage(props) {
     const [gallarys, setGallarys] = useState([]);
     const pageOffset = useRef(0)
     const [states, setStates] = useState({})
-    const searhLocal = useSettingBind("搜索本地并合并结果", false)
+    const searhLocal = useSettingBind("搜索本地画廊", false)
     const apiUrl = useMemo(() => {
         const urlMap = {
             "/": "/list/?1=1",
@@ -214,6 +214,13 @@ export default function MainPage(props) {
             },
             icon: <SettingsIcon />,
             text: "设置"
+        },
+        {
+            onClick: () => {
+                props.openNew("/downloadlog", "")
+            },
+            icon: <LogoDevIcon />,
+            text: "logger"
         }
     ]
 
