@@ -6,7 +6,7 @@ import shutil
 from utils.EHDBManager import EHDBManager
 from utils.JobScheduler import JobScheduler
 from utils.tools import (atomWarpper, logger, makeTrackableExcption,
-                         printPerformance)
+                         printPerformance, printTrackableException)
 
 DOWNLOAD_START = 0
 DOWNLOAD_IMG = 1
@@ -54,7 +54,8 @@ class DownloadManager:
                     self.gallaryPath, f"{gid}_{token}"), filename)
                 shutil.move(src, dst)
                 return RESULT_IMG_SUCCESS
-            except Exception:
+            except Exception as e:
+                printTrackableException(makeTrackableExcption(e,"下载处理器下载图片失败\n{}".format(json.dumps(job, ensure_ascii=False, indent=4))))
                 return RESULT_IMG_FAILED
         elif job["action"] == DOWNLOAD_FINISH:
             self.downloading_gid = -1
@@ -145,7 +146,7 @@ class DownloadManager:
     def deleteDownloaded(self, __gid, token):
         gid = int(__gid)
         self.JobSchedulerInstance.rm_job(gid)
-        self.JobSchedulerInstance.add_job({
+        self.JobSchedulerInstance.insert_job({
             "gid": gid,
             "token": token,
             "action": DELETE_DOWNLOAD,

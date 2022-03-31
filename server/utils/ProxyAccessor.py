@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -15,7 +16,8 @@ from utils.DownloadManager import DownloadManager
 from utils.EHDBManager import EHDBManager
 from utils.MulthreadCache import MulthreadCache
 from utils.tools import (atomWarpper, checkImg, logger, makeTrackableExcption,
-                         printPerformance, timestamp_to_str)
+                         printPerformance, printTrackableException,
+                         timestamp_to_str)
 
 cache = MulthreadCache()
 
@@ -55,7 +57,7 @@ class ProxyAccessor:
             else None
         )
 
-    @ printPerformance
+    @printPerformance
     def queryDownloaded(self):
         results = []
         gids = self.dbm.listDownload()
@@ -137,7 +139,7 @@ class ProxyAccessor:
         except Exception as e:
             raise e
 
-    @ printPerformance
+    @printPerformance
     def _getHtml_ignore_cache(self, url):
         try:
             req = urllib.request.Request(
@@ -305,7 +307,7 @@ class ProxyAccessor:
                 "download": self.getDownloadExtendvalue(gid),
             }
             self.setCache(gid, token, "g_data", query_g_data)
-            logger.info(f"get g_data from db {gid}_{token}")
+            # logger.info(f"get g_data from db {gid}_{token}")
             return query_g_data
         try:
             g_data = self.g_data_from_pageHtml(gid, token)
@@ -394,7 +396,7 @@ class ProxyAccessor:
             )
         return infos
 
-    @ printPerformance
+    # @printPerformance
     def get_cover(self, gid, token):
         filename = "{}_{}.jpg".format(gid, token)
         cachedCover = os.path.join(self.cachePath, filename)
@@ -408,7 +410,7 @@ class ProxyAccessor:
         else:
             url = self.getCache(gid, token, "cover")
             if url is None:
-                logger.debug(f"封面 {filename} 从页面获取中...")
+                # logger.debug(f"封面 {filename} 从页面获取中...")
                 try:
                     g_data = self.get_g_data(gid, token)
                     url = g_data["thumb"].replace("exhentai.org", "ehgt.org")
@@ -417,7 +419,7 @@ class ProxyAccessor:
                     raise makeTrackableExcption(e, f"封面 {filename} 下载失败")
             try:
                 self.downloadImgFile(url, cachedCover)
-                logger.debug(f"封面 {filename} 下载完成")
+                # logger.debug(f"封面 {filename} 下载完成")
                 return cachedCover
             except Exception as e:
                 logger.error(f"封面 {filename} 下载失败")
@@ -433,7 +435,7 @@ class ProxyAccessor:
         except Exception as e:
             raise makeTrackableExcption(e, f"获取页面{gid}_{token}:{index} 失败")
 
-    @ printPerformance
+    @printPerformance
     def get_gallary_html_ignore_cache(self, gid, token, index=0):
         page_key = "P_{}".format(index)
         url = "/g/{}/{}/?p={}".format(gid, token, index)
@@ -464,7 +466,7 @@ class ProxyAccessor:
         except Exception as e:
             raise makeTrackableExcption(e, f"预览图 {gid}_{token}:{index} 数据下载失败")
 
-    @ printPerformance
+    @printPerformance
     def get_comment(self, gid, token):
         html = None
         logger.debug(f"获取评论 {gid}_{token}")
@@ -511,7 +513,7 @@ class ProxyAccessor:
         except Exception as e:
             raise makeTrackableExcption(e, f"获取评论 html解析失败,{html}")
 
-    @ printPerformance
+    @printPerformance
     def get_img(self, gid, token, index):
         formatedindex = "{0:08d}".format(int(index))
         filename = "{}_{}_{}.jpg".format(gid, token, formatedindex)
@@ -582,7 +584,11 @@ class ProxyAccessor:
         return cachePath
 
     def download(self, gid, token):
-        self.downloadManager.addDownload(gid, token)
+        try:
+            self.downloadManager.addDownload(gid, token)
+        except Exception as e:
+            raise makeTrackableExcption(e, f"添加下载失败")
+
 
     def deleteDownload(self, gid, token):
         self.downloadManager.deleteDownloaded(gid, token)
@@ -591,19 +597,27 @@ class ProxyAccessor:
         return []
 
     def downloadMany(self, gid_token_list):
-        for gid_token in gid_token_list:
-            gid, token = gid_token.split("_")
-            self.download(gid, token)
+        for (gid, token) in gid_token_list:
+            try:
+                self.download(gid, token)
+            except Exception as e:
+                printTrackableException(e)
 
     def reDownloadAllFailed(self):
-        # gid_tokens = []
-        # for gid in self.dbm.listDownload():
-        #     dw = self.dbm.getDownload(gid)
-        #     if dw["over"] != dw["total"]:
-        #         gid_tokens.append(gid)
-        # threading.Thread(target=self.downloadMany, args=(gid_tokens,)).start()
-        # return gid_tokens
-        return []
+        gid_tokens = []
+        for gid in self.dbm.listDownload():
+            rec = self.dbm.getDownloadREC(gid)
+            if rec:
+                over = rec["over"]
+                g_data = self.dbm.getGdata(gid)
+                if g_data and over == int(g_data["filecount"]):
+                    pass
+                else:
+                    gid_tokens.append((gid, rec["token"]))    
+            else:
+                logger.error(f"严重错误 {gid} 没有记录")
+        threading.Thread(target=self.downloadMany, args=(gid_tokens,)).start()
+        return gid_tokens
 
     def check_search(self,g_data, words, tags):
         for word in words:
@@ -653,27 +667,7 @@ class ProxyAccessor:
                     )
 
         return result
-        # for (g_data_str,) in self.dbm.execQuery(sql):
-        #     g_data = json.loads(g_data_str)
-        #     gid = g_data["gid"]
-        #     token = g_data["token"]
-        #     result.append(
-        #         {
-        #             "gid": f"{gid}",
-        #             "token": token,
-        #             "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
-        #             "name": g_data["title_jpn"] if g_data["title_jpn"] != "" else g_data["title"],
-        #             "rank": float(g_data["rating"]),
-        #             "category": g_data["category"],
-        #             "uploadtime": timestamp_to_str("%Y-%m-%d %H:%M",  int(g_data["posted"])),
-        #             "download": self.getDownloadExtendvalue(gid),
-        #             "favo": self.getLocalFavoValue(gid),
-        #             "lang": "chinese" if "language:chinese" in g_data["tags"] else "",
-        #             "pages": g_data["filecount"],
-        #         }
-        #     )
-        # logger.info(f"本地检索到{len(result)}条结果")
-        # return result
+
 
     def getStauseForWS(self):
         downloading_gid = self.downloadManager.downloading_gid
@@ -683,6 +677,17 @@ class ProxyAccessor:
         result = []
         for _gid in self.dbm.listDownload():
             g_data = self.dbm.getGdata(_gid)
+            if g_data:
+                pass
+            else:
+                logger.error(f"g_data is None for gid: {_gid}")
+                rec = self.dbm.getDownloadREC(_gid)
+                if rec:
+                    token = rec["token"]
+                    g_data = self.get_g_data(_gid, token)
+                else:
+                    logger.error(f"rec is None for gid: {_gid}")
+                    continue
             gid = g_data["gid"]
             token = g_data["token"]
             result.append(
