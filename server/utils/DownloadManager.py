@@ -152,3 +152,6 @@ class DownloadManager:
             "action": DELETE_DOWNLOAD,
             "index": -1
         }, gid, False)
+
+    def listLog(self):
+        return self.JobSchedulerInstance.listLog()
