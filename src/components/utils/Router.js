@@ -4,8 +4,8 @@ import { useLocation } from "react-router";
 import AppSetting from "../AppSetting";
 import GallaryPage from "../GallaryPage";
 import MainPage from "../MainPage";
+import DownloadLog from "../utils/DownloadLog";
 import ViewPage from "../ViewPage";
-
 
 const replaceLast = (arr, item) => {
     if (arr.length === 0) {
@@ -89,7 +89,7 @@ export function SwitchRouter(props) {
             "/watched",
             "/popular",
             "/favorites",
-            "/downloaded"
+            "/downloaded",
         ].includes(pathname)) {
             return <MainPage key={`${pathname}${search}`} openCurrent={openCurrent} openNew={openNew} location={{ pathname: pathname, search: search }} />
         } else if (pathname.slice(0, 3) === "/g/") {
@@ -98,7 +98,9 @@ export function SwitchRouter(props) {
             return <ViewPage key={`${pathname}${search}`} openCurrent={openCurrent} openNew={openNew} location={{ pathname: pathname, search: search }} />
         } else if (pathname.slice(0, 8) === "/setting") {
             return <AppSetting key={`${pathname}${search}`} openCurrent={openCurrent} openNew={openNew} location={{ pathname: pathname, search: search }} />
-        } else {
+        }else if (pathname.slice(0, 12) === "/downloadlog") {
+            return <DownloadLog/>
+        }else {
             return <a>UNKNOW PATH</a>
         }
     }

@@ -80,7 +80,7 @@ const updateData = (myChart, server_time, data) => {
             name = `删除 `
             index = 5
         }
-        renderData.push(
+        renderData.unshift(
             {
                 name: "等待" + name,
                 value: [index, acquiring, acquired, acquired - acquiring],
@@ -91,7 +91,7 @@ const updateData = (myChart, server_time, data) => {
                 }
             }
         )
-        renderData.push(
+        renderData.unshift(
             {
                 name: name,
                 value: [index, acquired, released, released - acquired],
@@ -109,7 +109,7 @@ const updateData = (myChart, server_time, data) => {
             min: startTime,
             axisLabel: {
                 formatter: function (val) {
-                    return Math.max(0, val - startTime).toFixed(4) + ' ms';
+                    return Math.max(0, val - startTime).toFixed(4) + ' s';
                 }
             }
         },
@@ -139,7 +139,7 @@ function SingleLogChart(props) {
                         if (params.value === undefined) {
                             return ""
                         } else {
-                            return params.marker + params.name + ': ' + params.value[3].toFixed(4) + ' ms';
+                            return params.marker + params.name + ': ' + params.value[3].toFixed(4) + ' s';
                         }
                     } catch (e) {
                         console.log(e, params)
@@ -260,7 +260,7 @@ export default function DownloadLog(props) {
 
     useEffect(() => {
         init();
-        setInterval(init, 3000);
+        setInterval(init, 1000);
         return () => {
             clearInterval(init);
         }
