@@ -35,7 +35,11 @@ export default function ViewPage(props) {
 
 
     const setPageNum = (value) => {
-        if (pageNumRef.current === value) return
+        // console.log("setPageNum", value,"current",pageNumRef.current)
+        if (pageNumRef.current === value) {
+            // console.log("重复的页码")
+            return
+        }
         pageNumRef.current = value
         _setPageNum(value);
         localStorage.setItem(`/viewing/${gid}/${token}/`, value);
@@ -133,9 +137,28 @@ export default function ViewPage(props) {
 
     const refreshKey = useMemo(
         () => {
-            return  (horizontalView?10:0) + (switchDirection?1:0)
+            return (horizontalView ? 10 : 0) + (switchDirection ? 1 : 0)
         }, [horizontalView, switchDirection]
     )
+
+
+    const onKeyUP = (e) => {
+        const jmpNum = horizontalView ? 2 : 1
+        const postion = switchDirection ? -1 : 1
+        if (e.key === "ArrowLeft") {
+            setPageNum(pageNumRef.current + postion * jmpNum)
+
+        } else if (e.key === "ArrowRight") {
+            setPageNum(pageNumRef.current - postion * jmpNum)
+        }
+    }
+
+    useEffect(() => {
+        window.addEventListener("keyup", onKeyUP)
+        return () => {
+            window.removeEventListener("keyup", onKeyUP)
+        }
+    }, []);
 
     return (
         pageCount === 0 ?

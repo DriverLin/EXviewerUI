@@ -6,7 +6,6 @@ import {
   HashRouter, Route, Routes
 } from "react-router-dom";
 import './App.css';
-import DownloadLog from './components/utils/DownloadLog';
 import PopoverNotifier from "./components/utils/PopoverNotifier";
 import { SwitchRouter } from './components/utils/Router';
 import { useSettingBind } from './components/utils/Settings';
@@ -223,7 +222,6 @@ function App() {
       <div id='mainContainer' style={{ backgroundColor: theme.palette.page.background, width: "100%" }}    >
         <HashRouter>
           <Routes>
-            <Route path="/downloadlog" element={<DownloadLog/>} />
             <Route path="*" element={<SwitchRouter/>} />
             
             {/* <Route path="/" element={serverType === "full" ? <MainPage {...props} /> : <StaticMainPage />} />
