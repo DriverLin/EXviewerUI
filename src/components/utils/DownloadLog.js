@@ -51,11 +51,14 @@ const updateData = (myChart, server_time, data) => {
         }
     }
 
+    // console.log(jobLifeCycle)
+
     const releasedTime = [0, 0, 0, 0, 0]
     for (let key of Object.keys(jobLifeCycle)) {
         const acquiring = jobLifeCycle[key].acquiring;
-        const acquired = jobLifeCycle[key].hasOwnProperty("acquired") ? jobLifeCycle[key].acquired : data.server_time;
-        const released = jobLifeCycle[key].hasOwnProperty("released") ? jobLifeCycle[key].released : data.server_time;
+        const acquired = jobLifeCycle[key].hasOwnProperty("acquired") ? jobLifeCycle[key].acquired : server_time;
+        const released = jobLifeCycle[key].hasOwnProperty("released") ? jobLifeCycle[key].released : server_time;
+        console.log(jobLifeCycle[key].hasOwnProperty("acquired"),jobLifeCycle[key].hasOwnProperty("released"),acquired,acquired,released)
 
         const jobInfo = JSON.parse(key)
         let name = null
@@ -194,7 +197,7 @@ function SingleLogChart(props) {
 
     useEffect(() => {
         updateData(myChart.current, props.server_time, props.data)
-        console.log("useEffect",props.data)
+        console.log(props.name,props.data)
     }, [props.data.length])
 
     return <div

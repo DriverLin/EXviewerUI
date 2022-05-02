@@ -9,29 +9,26 @@ import sqlite3
 import ssl
 import threading
 import time
-from turtle import down
-import urllib.request
 import urllib.error
+import urllib.request
+from turtle import down
 from typing import List
-from urllib.parse import urljoin, parse_qs
+from urllib.parse import parse_qs, urljoin
 
 import coloredlogs
 import requests
 import uvicorn
 from bs4 import BeautifulSoup
 from cacheout import LRUCache
-from fastapi import (
-    FastAPI,
-    HTTPException,
-    Request,
-    Response,
-    WebSocket,
-    WebSocketDisconnect,
-)
+from fastapi import (FastAPI, HTTPException, Request, Response, WebSocket,
+                     WebSocketDisconnect)
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
-from utils.tools import timestamp_to_str, checkImg, atomWarpper, makeTrackableExcption, printTrackableException, logger, printPerformance
+
 from utils.ProxyAccessor import ProxyAccessor
+from utils.tools import (atomWarpper, checkImg, logger, makeTrackableException,
+                         printPerformance, printTrackableException,
+                         timestamp_to_str)
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
