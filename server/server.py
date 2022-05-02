@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
 from utils.ProxyAccessor import ProxyAccessor
-from utils.tools import (atomWarpper, checkImg, logger, makeTrackableExcption,
+from utils.tools import (atomWarpper, checkImg, logger, makeTrackableException,
                          printPerformance, printTrackableException,
                          timestamp_to_str)
 
@@ -150,6 +150,23 @@ def nofityDownloadMessage(messages):
         logger.error(f"发送消息失败 {e}")
 
 
+# msgQueue = queue.Queue()
+# def nofityDownloadMessage(messages):
+#     msgQueue.put(messages)
+
+# def DownloadMessageSendThread():
+#     while True:
+#         messages = msgQueue.get()
+#         global wsManager
+#         async def sendMessage():
+#             # logger.info(f"发送消息 {message} 到 {len(wsManager.active_connections)} 个连接")
+#             await wsManager.broadcast(messages)
+#         try:
+#             asyncio.run(sendMessage())
+#         except Exception as e:
+#             logger.error(f"发送消息失败 {e}")
+# threading.Thread(target=DownloadMessageSendThread,args=()).start()
+
 pa = ProxyAccessor(
     "https://exhentai.org/",
     headers,
@@ -198,7 +215,7 @@ def download(gid_token):
         pa.download(gid, token)
         return {"msg": "已提交下载"}
     except Exception as e:
-        trackE = makeTrackableExcption(e, f"请求下载 {gid_token} 失败")
+        trackE = makeTrackableException(e, f"请求下载 {gid_token} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=417, detail=str(trackE))
 
@@ -240,7 +257,7 @@ def getfile(gid_token, filename, nocache=None):
                 },
             )
     except Exception as e:
-        trackE = makeTrackableExcption(e, f"请求文件 {gid_token} {filename} 失败")
+        trackE = makeTrackableException(e, f"请求文件 {gid_token} {filename} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=417, detail=str(trackE))
 
@@ -257,7 +274,7 @@ def getfile(gid_token, filename):
                      "Cache-Control": "max-age=31536000"},
         )
     except Exception as e:
-        trackE = makeTrackableExcption(e, f"请求预览 {gid_token} {filename} 失败")
+        trackE = makeTrackableException(e, f"请求预览 {gid_token} {filename} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=404, detail=str(trackE))
 
@@ -269,10 +286,22 @@ def comment(gid_token):
         comment = pa.get_comment(gid, token)
         return comment
     except Exception as e:
-        trackE = makeTrackableExcption(e, f"请求评论 {gid_token} 失败")
+        trackE = makeTrackableException(e, f"请求评论 {gid_token} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=417, detail=str(trackE))
 
+
+
+@app.post("/post_comment")
+async def post_comment(request: Request):
+    body = await request.json()
+    gid = body["gid"]
+    token = body["token"]
+    comment = body["comment"]
+    if pa.post_comment(gid, token, comment):
+        return {"msg": "success"}
+    else:
+        return {"msg": "fail"}
 
 @app.get("/api/data")
 def downloadedAll():
@@ -299,8 +328,6 @@ def loggerPage():
 
 
 logwsm = ConnectionManager()
-
-
 @app.websocket("/logws")
 async def websocket_endpoint(websocket: WebSocket):
     await logwsm.connect(websocket)
@@ -319,7 +346,7 @@ def gallaryList(path, request: Request):
         result = pa.get_main_gallarys(url)
         return result
     except Exception as e:
-        trackE = makeTrackableExcption(e, f"请求列表 {url} 失败")
+        trackE = makeTrackableException(e, f"请求列表 {url} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=417, detail=str(trackE))
 
@@ -335,7 +362,7 @@ def gallaryListNoPath(request: Request):
         result = extendResult + pa.get_main_gallarys(url)
         return result
     except Exception as e:
-        trackE = makeTrackableExcption(e, f"请求列表 {url} 失败")
+        trackE = makeTrackableException(e, f"请求列表 {url} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=417, detail=str(trackE))
 
@@ -351,7 +378,7 @@ def cover(filename):
                      "Cache-Control": "max-age=31536000"},
         )
     except Exception as e:
-        trackE = makeTrackableExcption(e, f"请求封面 {filename} 失败")
+        trackE = makeTrackableException(e, f"请求封面 {filename} 失败")
         printTrackableException(trackE)
         raise HTTPException(status_code=404, detail=str(trackE))
 
@@ -379,9 +406,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception:
         wsManager.disconnect(websocket)
 
-
 app.mount("/", StaticFiles(directory=SERVER_FILE), name="static")
-
 
 if __name__ == "__main__":
     uvicorn.run(

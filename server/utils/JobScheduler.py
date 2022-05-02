@@ -6,23 +6,23 @@ from utils.tools import atomWarpper, logger
 
 class JobScheduler(object):
     def __init__(
-        self, handeler, maxParallel=5, onChange=lambda action, info, result: None
+        self, handler, maxParallel=5, onChange=lambda action, info, result: None
     ):
-        # handeler不允许报错
+        # handler不允许报错
         #  出错直接用闭包的方式处理
         self.queue = []  # 任务队列 [并行? 标签 任务]
         self.queueSemaphore = threading.Semaphore(0)  # 队列信号量 等于长度 用于控制调度线程读取任务
         self.lock = threading.Lock()  # 锁 用于控制队列的读写
-        self.handeler = handeler  # 执行器 外部传入
+        self.handler = handler  # 执行器 外部传入
         self.MAXPARALLEL = maxParallel  # 最大并行数
         self.parallelJobs = threading.Semaphore(
             self.MAXPARALLEL)  # 并行任务信号量 用于控制并行任务数量
         self.jobsRunning = threading.Lock()  # 当前是否有任务正在运行   并行任务不可与串行任务同时运行
         self.handelingJobs = {}
-        self.onChange = onChange  # 当任务发生变化时调用 包括添加 删除 修改
+        self.__onChange = onChange  # 当任务发生变化时调用 包括添加 删除 修改
         self.runLog = []  # 运行日志
 
-        def shdule_thread():
+        def schedule_thread():
             @atomWarpper
             def add_handelingJob(key, jobInfo):
                 self.handelingJobs[key] = jobInfo
@@ -34,6 +34,7 @@ class JobScheduler(object):
                     del self.handelingJobs[key]
                     self.onChange("finished", jobInfo, result)
 
+
             while True:
                 [job, tag, parallel] = self.get_job()
                 if parallel:
@@ -42,8 +43,7 @@ class JobScheduler(object):
                         "type": "acquiring",
                         "time": time.time(),
                     })
-                    self.parallelJobAcquire(
-                        1, f"{job['action']}::img_{job['index']}")
+                    self.parallelJobAcquire(1, f"[{job['action']}] => img_{job['index']}")
                     self.runLog.append({
                         "job": job,
                         "type": "acquired",
@@ -59,10 +59,12 @@ class JobScheduler(object):
                         }
                         key = id(_job)
                         add_handelingJob(key, _jobInfo)
-                        result = self.handeler(_job)
+
+                        result = self.handler(_job)
                         finish_handelingJob(key, _jobInfo, result)
+                        
                         self.parallelJobRelease(
-                            1, f"{_job['action']}::img_{_job['index']}")
+                            1, f"[{_job['action']}] => img_{_job['index']}")
                         self.runLog.append({
                             "job": _job,
                             "type": "released",
@@ -91,7 +93,7 @@ class JobScheduler(object):
                     }
                     key = id(job)
                     add_handelingJob(key, jobInfo)
-                    result = self.handeler(job)
+                    result = self.handler(job)
                     finish_handelingJob(key, jobInfo, result)
                     self.parallelJobRelease(self.MAXPARALLEL, f"finish")
                     self.runLog.append({
@@ -100,22 +102,24 @@ class JobScheduler(object):
                         "time": time.time(),
                     })
 
-        threading.Thread(target=shdule_thread).start()
+        threading.Thread(target=schedule_thread).start()
+
+    def onChange(self,action,info,result):
+        self.__onChange(action,info,result)
+        # threading.Thread(target=self.__onChange,args=(action,info,result)).start()
+
 
     def parallelJobAcquire(self, count=1, msg=""):
-        # Semaphore.acquire
-        # 是一旦有 则直接取出
-        # 是不是应该改成一次性取出所有，不够则不取出的方式
-        logger.debug(f"{msg} need {count} , now {self.parallelJobs._value}")
+        logger.debug(f"{msg} ({self.parallelJobs._value}) - {count}")
         [self.parallelJobs.acquire() for _ in range(count)]
-        logger.debug(f"{msg} get {count} , now {self.parallelJobs._value}")
+        logger.debug(f"{msg} (x) - {count} = {self.parallelJobs._value}")
 
     def parallelJobRelease(self, count=1, msg=""):
         logger.debug(
-            f"{msg} will release {count} , now {self.parallelJobs._value}")
+            f"{msg} ({self.parallelJobs._value}) + {count}")
         [self.parallelJobs.release() for _ in range(count)]
         logger.debug(
-            f"{msg} released {count} , now {self.parallelJobs._value}")
+            f"{msg} (x) + {count} = {self.parallelJobs._value}")
 
     def add_job(self, job, tag, parallel=False):
         self.lock.acquire()

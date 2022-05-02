@@ -2,10 +2,11 @@
 import json
 import os
 import shutil
+import time
 
 from utils.EHDBManager import EHDBManager
 from utils.JobScheduler import JobScheduler
-from utils.tools import (atomWarpper, logger, makeTrackableExcption,
+from utils.tools import (atomWarpper, logger, makeTrackableException,
                          printPerformance, printTrackableException)
 
 DOWNLOAD_START = 0
@@ -23,21 +24,21 @@ FULL = 1
 
 
 class DownloadManager:
-    def __init__(self, dbm: EHDBManager, getG_data, getImg, getCover, report, gallaryPath, covePath):
+    def __init__(self, dbm: EHDBManager, getG_data, getImg, getCover, report, galleryPath, covePath):
         self.dbm = dbm
         self.getG_data = getG_data
         self.getImg = getImg
         self.getCover = getCover
         self.report = report
-        self.gallaryPath = gallaryPath
+        self.galleryPath = galleryPath
         self.covePath = covePath
         self.downloading_gid = -1
         self.downloadingQueue = []
         self.downloadSuccess = 0
-        self.JobSchedulerInstance = JobScheduler(handeler=self.handeler,
+        self.JobSchedulerInstance = JobScheduler(handler=self.handler,
                                                  maxParallel=5, onChange=self.onJobChange)
-
-    def handeler(self, job):
+    @printPerformance
+    def handler(self, job):
         gid = job["gid"]
         token = job["token"]
         action = job["action"]
@@ -50,12 +51,11 @@ class DownloadManager:
             try:
                 src = self.getImg(gid, token, index)
                 filename = "{0:08d}.jpg".format(int(index))
-                dst = os.path.join(os.path.join(
-                    self.gallaryPath, f"{gid}_{token}"), filename)
-                shutil.move(src, dst)
+                dst = os.path.join(os.path.join(self.galleryPath, f"{gid}_{token}"), filename)
+                shutil.move(src, dst) if src != dst else None
                 return RESULT_IMG_SUCCESS
             except Exception as e:
-                printTrackableException(makeTrackableExcption(e,"下载处理器下载图片失败\n{}".format(json.dumps(job, ensure_ascii=False, indent=4))))
+                printTrackableException(makeTrackableException(e,"下载处理器下载图片失败\n{}".format(json.dumps(job, ensure_ascii=False, indent=4))))
                 return RESULT_IMG_FAILED
         elif job["action"] == DOWNLOAD_FINISH:
             self.downloading_gid = -1
@@ -67,7 +67,7 @@ class DownloadManager:
             self.downloadingQueue = [
                 x for x in self.downloadingQueue if x[0] != gid]
             coverPath = os.path.join(self.covePath, f"{gid}_{token}.jpg")
-            saveDir = os.path.join(self.gallaryPath, f"{gid}_{token}")
+            saveDir = os.path.join(self.galleryPath, f"{gid}_{token}")
             shutil.rmtree(saveDir) if os.path.exists(saveDir) else None
             os.remove(coverPath) if os.path.exists(coverPath) else None
             self.dbm.rmDownload(gid)
@@ -109,15 +109,15 @@ class DownloadManager:
                 logger.info(
                     f"\n下载 {gid} {token}\n {json.dumps(g_data, ensure_ascii=False,indent=4)}")
             except Exception as e:
-                raise makeTrackableExcption(e, "下载失败 无法获取g_data")
+                raise makeTrackableException(e, "下载失败 无法获取g_data")
             try:
                 src = self.getCover(gid, token)
                 dst = os.path.join(self.covePath, f"{gid}_{token}.jpg")
                 shutil.move(src, dst)
             except Exception as e:
-                raise makeTrackableExcption(e, "下载失败 无法获取cover")
+                raise makeTrackableException(e, "下载失败 无法获取cover")
             self.dbm.addGdata(gid, g_data)  # 这里更新g_data
-            savePath = os.path.join(self.gallaryPath, f"{gid}_{token}")
+            savePath = os.path.join(self.galleryPath, f"{gid}_{token}")
             os.makedirs(savePath, exist_ok=True)
             g_data_path = os.path.join(savePath, "g_data.json")
             json.dump(g_data, open(g_data_path, "w"),

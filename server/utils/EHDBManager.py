@@ -135,10 +135,15 @@ class EHDBManager:
         gids = set(self.download.keys()).union(set(self.favo.keys()))
         result = {}
         for gid in gids:
+            g_data = self.getGdata(gid)
+            total = -1
+            if g_data:
+                total = int(g_data["filecount"])
             result[gid] = [
                 gid == downloading_gid,
                 self.getFavo(gid),
-                self.getDownload(gid)
+                self.getDownload(gid),
+                total
             ]
         return result
 

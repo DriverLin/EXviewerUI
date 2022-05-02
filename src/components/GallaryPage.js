@@ -273,7 +273,7 @@ function GallaryInfoPage(props) {
             },
             matches_borderCard: {
                 margin: "0 auto",
-                marginBottom: 40,
+                marginBottom: 0,
                 color: theme.palette.background.mainCard,
                 overflow: "hidden"
             },
@@ -323,7 +323,8 @@ function GallaryInfoPage(props) {
     </Grid>
 
     return (
-        <div className={matches ? classes.borderCard : classes.matches_borderCard} >
+        <div>
+            <div className={matches ? classes.borderCard : classes.matches_borderCard} >
             <KeyboardController />
             <ServerSyncKeepAlive gid={props.g_data.gid} />
             <div className={classes.elemContainer}>
@@ -450,6 +451,13 @@ function GallaryInfoPage(props) {
                 />
             </div>
             <div className={classes.elemContainer} />
+        </div>
+        <div
+            style={{
+                width: "100%",
+                height: 1,
+            }}
+        ></div>
         </div>
     )
 }

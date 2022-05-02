@@ -10,6 +10,7 @@ import FileDownloadOffIcon from '@mui/icons-material/FileDownloadOff';
 import HomeIcon from '@mui/icons-material/Home';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import LogoDevIcon from '@mui/icons-material/LogoDev';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
 import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
@@ -292,21 +293,26 @@ export default function MainPage(props) {
         }
     }
 
-
-
-
-
-
     const longClickCallback = (gid, token, name, x, y) => {
         //未完成的下载
         const items = []
+        console.log(gid, token, name , states[Number(gid)])
         const downloaded = states[Number(gid)] ? states[Number(gid)][2] > -2 : false
         const favoted = states[Number(gid)] ? states[Number(gid)][1] > -1 : false
+        let can_continue_download = downloaded && (states[Number(gid)][2] != states[Number(gid)][3]) 
         items.push({
             text: "阅读",
             onClick: () => { getRead(gid, token) },
             icon: <AutoStoriesIcon />
         })
+        if(can_continue_download){
+            items.push({
+                text: "继续下载",
+                onClick: () => { addDownload(gid, token) },
+                icon: <FileDownloadIcon />
+            })
+        }
+
         if (downloaded) {
             items.push({
                 text: "删除下载",
@@ -387,6 +393,12 @@ export default function MainPage(props) {
         getRefresh()
         requestData()
     }
+    
+    const reDownloadAll = () => {
+        fetch("/redownloadall").then(res => res.json()).then(res => {
+            console.log(res)
+        })
+    }
 
     const action_gototop = {
         name: "回到顶部",
@@ -408,10 +420,15 @@ export default function MainPage(props) {
         icon: <CachedIcon />,
         onClick: refreshGallary
     }
+    const re_download_all = {
+        name: "",
+        icon:<PlayArrowIcon/>,
+        onClick: reDownloadAll
+    }
 
 
-    const normalActions = [action_gototop, action_randomsort, action_namehashsort, action_refresh]
-    const downloadPageActions = [action_gototop, action_randomsort, action_namehashsort, action_refresh]
+    const normalActions = [re_download_all,action_gototop, action_randomsort, action_namehashsort, action_refresh]
+    const downloadPageActions = [re_download_all,action_gototop, action_randomsort, action_namehashsort, action_refresh,]
 
 
 

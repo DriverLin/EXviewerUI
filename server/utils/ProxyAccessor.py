@@ -15,7 +15,7 @@ from cacheout import LRUCache
 from utils.DownloadManager import DownloadManager
 from utils.EHDBManager import EHDBManager
 from utils.MulthreadCache import MulthreadCache
-from utils.tools import (atomWarpper, checkImg, logger, makeTrackableExcption,
+from utils.tools import (atomWarpper, checkImg, logger, makeTrackableException,
                          printPerformance, printTrackableException,
                          timestamp_to_str)
 
@@ -57,7 +57,6 @@ class ProxyAccessor:
             else None
         )
 
-    @printPerformance
     def queryDownloaded(self):
         results = []
         gids = self.dbm.listDownload()
@@ -70,13 +69,15 @@ class ProxyAccessor:
             results.append(g_data)
         return results
 
+
+    @printPerformance
     def downloadImgFile(self, url, filePath):
         bytes = None
         try:
             bytes = urllib.request.urlopen(url, timeout=15).read()
         except Exception as e:
             logger.error(e.__str__())
-            raise makeTrackableExcption(e, f"图片下载失败{filePath}")
+            raise makeTrackableException(e, f"图片下载失败{filePath}")
         if checkImg(bytes):
             with open(filePath, "wb") as f:
                 f.write(bytes)
@@ -89,7 +90,6 @@ class ProxyAccessor:
             ("t", token),
             ("act", "addfav"),
         )
-
         data = {"favcat": str(index), "favnote": "", "update": "1"}
         try:
             response = requests.post(
@@ -97,6 +97,7 @@ class ProxyAccessor:
                 headers=self.headers,
                 params=params,
                 data=data,
+                timeout=8,
             )
             self.dbm.addFavo(int(gid), int(index))
             self.getReport(0)
@@ -124,6 +125,7 @@ class ProxyAccessor:
                 headers=self.headers,
                 params=params,
                 data=data,
+                timeout=8
             )
             self.dbm.rmFavo(int(gid))
             self.getReport(0)
@@ -132,7 +134,7 @@ class ProxyAccessor:
             logger.error(f"删除收藏 失败{e.__str__()}")
             return False
 
-    @ cache.memoize
+    @cache.memoize
     def _getHtml(self, url):
         try:
             return self._getHtml_ignore_cache(url)
@@ -142,13 +144,15 @@ class ProxyAccessor:
     @printPerformance
     def _getHtml_ignore_cache(self, url):
         try:
-            req = urllib.request.Request(
-                url=urljoin(self.root, url), headers=self.headers
-            )
-            resp = urllib.request.urlopen(req, timeout=8)
-            return resp.read().decode("utf-8")
+            # req = urllib.request.Request(
+            #     url=urljoin(self.root, url), headers=self.headers
+            # )
+            # resp = urllib.request.urlopen(req, timeout=8)
+            # return resp.read().decode("utf-8")
+            return requests.get(urljoin(self.root, url), headers=self.headers, timeout=8).text
         except urllib.error.URLError as e:
-            raise makeTrackableExcption(e, f"获取HTML{url} 失败 ")
+            raise makeTrackableException(e, f"获取HTML{url} 失败 ")
+
 
     def getLocalFavoValue(self, gid):
         return self.dbm.getFavo(gid)
@@ -156,12 +160,11 @@ class ProxyAccessor:
     def getDownloadExtendvalue(self, gid):
         return self.dbm.getDownload(gid)
 
-    @printPerformance
     def g_data_from_pageHtml(self, gid, token):
         try:
             html = self.get_gallary_html_ignore_cache(gid, token)
         except Exception as e:
-            raise makeTrackableExcption(e, f"从html获取g_data {gid}_{token} 失败 ")
+            raise makeTrackableException(e, f"从html获取g_data {gid}_{token} 失败 ")
         try:
             pageElem = BeautifulSoup(html, features="html.parser")
             urlSplit = pageElem.select_one(
@@ -264,7 +267,7 @@ class ProxyAccessor:
             )
             return g_data
         except Exception as e:
-            raise makeTrackableExcption(e, f"从html创建g_data 页面解析失败,{html}")
+            raise makeTrackableException(e, f"从html创建g_data 页面解析失败,{html}")
 
     def g_data_official(self, gid, token):
         try:
@@ -293,7 +296,7 @@ class ProxyAccessor:
             )  # 只有下载时 才会请求官方API 紧接着就会需要下载封面
             return g_data
         except Exception as e:
-            raise makeTrackableExcption(e, f"官方API获取g_data {gid}_{token} 失败")
+            raise makeTrackableException(e, f"官方API获取g_data {gid}_{token} 失败")
 
     def get_g_data(self, gid, token):
         if self.getCache(gid, token, "g_data") != None:
@@ -319,7 +322,7 @@ class ProxyAccessor:
             logger.info(f"get g_data from pageHtml {gid}_{token}")
             return g_data
         except Exception as e:
-            raise makeTrackableExcption(e, f"获取g_data {gid}_{token} 失败 ")
+            raise makeTrackableException(e, f"获取g_data {gid}_{token} 失败 ")
 
     def get_main_gallarys(self, url=""):
         html = None
@@ -329,7 +332,7 @@ class ProxyAccessor:
                 self._getHtml_ignore_cache(url), features="html.parser"
             )
         except Exception as e:
-            raise makeTrackableExcption(e, f"获取主页画廊列表失败 url={url}")
+            raise makeTrackableException(e, f"获取主页画廊列表失败 url={url}")
 
         infos = []
         mainElem = html.select("div.gl1t")
@@ -396,7 +399,6 @@ class ProxyAccessor:
             )
         return infos
 
-    # @printPerformance
     def get_cover(self, gid, token):
         filename = "{}_{}.jpg".format(gid, token)
         cachedCover = os.path.join(self.cachePath, filename)
@@ -416,15 +418,16 @@ class ProxyAccessor:
                     url = g_data["thumb"].replace("exhentai.org", "ehgt.org")
                 except Exception as e:
                     logger.error(f"封面 {filename} 从页面获取失败")
-                    raise makeTrackableExcption(e, f"封面 {filename} 下载失败")
+                    raise makeTrackableException(e, f"封面 {filename} 下载失败")
             try:
                 self.downloadImgFile(url, cachedCover)
                 # logger.debug(f"封面 {filename} 下载完成")
                 return cachedCover
             except Exception as e:
                 logger.error(f"封面 {filename} 下载失败")
-                raise makeTrackableExcption(e, f"封面 {filename} 下载失败")
-
+                raise makeTrackableException(e, f"封面 {filename} 下载失败")
+    
+    @printPerformance
     def get_gallary_html(self, gid, token, index=0):
         page_key = "P_{}".format(index)
         cached = self.getCache(gid, token, page_key)
@@ -433,9 +436,8 @@ class ProxyAccessor:
         try:
             return self.get_gallary_html_ignore_cache(gid, token, index)
         except Exception as e:
-            raise makeTrackableExcption(e, f"获取页面{gid}_{token}:{index} 失败")
+            raise makeTrackableException(e, f"获取页面{gid}_{token}:{index} 失败")
 
-    @printPerformance
     def get_gallary_html_ignore_cache(self, gid, token, index=0):
         page_key = "P_{}".format(index)
         url = "/g/{}/{}/?p={}".format(gid, token, index)
@@ -445,7 +447,7 @@ class ProxyAccessor:
             return result
         except Exception as e:
             # raise e
-            raise makeTrackableExcption(e, f"忽略缓存获取页面{gid}_{token}:{index} 失败")
+            raise makeTrackableException(e, f"忽略缓存获取页面{gid}_{token}:{index} 失败")
 
     def get_preview(self, gid, token, index):
         html = None
@@ -453,7 +455,7 @@ class ProxyAccessor:
             html = self.get_gallary_html(gid, token, (index - 1) // 20)
         except Exception as e:
             # raise Exception(f"{e.__str__()}\n预览图 {gid}_{token}:{index} 画廊页面获取失败")
-            raise makeTrackableExcption(
+            raise makeTrackableException(
                 e, f"预览图 {gid}_{token}:{index} 画廊页面获取失败")
         soup = BeautifulSoup(html, features="html.parser")
         picUrl = (
@@ -464,16 +466,15 @@ class ProxyAccessor:
         try:
             return urllib.request.urlopen(picUrl).read()
         except Exception as e:
-            raise makeTrackableExcption(e, f"预览图 {gid}_{token}:{index} 数据下载失败")
+            raise makeTrackableException(e, f"预览图 {gid}_{token}:{index} 数据下载失败")
 
-    @printPerformance
     def get_comment(self, gid, token):
         html = None
         logger.debug(f"获取评论 {gid}_{token}")
         try:
             html = self.get_gallary_html(gid, token)
         except Exception as e:
-            raise makeTrackableExcption(e, f"评论 {gid}_{token} 画廊页面获取失败")
+            raise makeTrackableException(e, f"评论 {gid}_{token} 画廊页面获取失败")
         try:
             result = []
             for comment in BeautifulSoup(html, features="html.parser").select("div.c1"):
@@ -511,7 +512,23 @@ class ProxyAccessor:
                 )
             return result
         except Exception as e:
-            raise makeTrackableExcption(e, f"获取评论 html解析失败,{html}")
+            raise makeTrackableException(e, f"获取评论 html解析失败,{html}")
+
+
+    def post_comment(self,gid,token,comment):
+        data = {
+            'commenttext_new': comment ,
+        }
+        try:
+            response = requests.post(
+                f"https://exhentai.org/g/{gid}/{token}/",
+                headers=self.headers,
+                data=data,
+            )
+            return response.status_code == 302
+        except Exception as e:
+            logger.error(f"添加评论 error {e.__str__()}")
+            return False
 
     @printPerformance
     def get_img(self, gid, token, index):
@@ -519,7 +536,7 @@ class ProxyAccessor:
         filename = "{}_{}_{}.jpg".format(gid, token, formatedindex)
         cachePath = os.path.join(self.cachePath, filename)
         if os.path.exists(cachePath):
-            logger.debug(f"图片 {gid}_{token}:{index} 已缓存")
+            # logger.debug(f"图片 {gid}_{token}:{index} 已缓存")
             return cachePath
         localPath = os.path.join(
             self.gallaryPath,
@@ -528,14 +545,14 @@ class ProxyAccessor:
         )
 
         if os.path.exists(localPath):
-            logger.debug(f"图片 {gid}_{token}:{index} 已下载")
+            # logger.debug(f"图片 {gid}_{token}:{index} 已下载")
             return localPath
         html = None
-        logger.debug(f"获取图片 {gid}_{token}:{index}")
+        # logger.debug(f"获取图片 {gid}_{token}:{index}")
         try:
             html = self.get_gallary_html(gid, token, (index - 1) // 20)
         except Exception as e:
-            raise makeTrackableExcption(
+            raise makeTrackableException(
                 e, f"获取图片 {gid}_{token}:{index} 画廊页面获取失败")
 
         soup = BeautifulSoup(html, features="html.parser")
@@ -549,7 +566,7 @@ class ProxyAccessor:
         try:
             pageHtml = self._getHtml_ignore_cache(pageUrl)
         except Exception as e:
-            raise makeTrackableExcption(
+            raise makeTrackableException(
                 e, f"获取图片 {gid}_{token}:{index} 图片页面获取失败")
 
         skipHathKey = re.findall(
@@ -579,7 +596,7 @@ class ProxyAccessor:
                 imgSrc = pageSoup.select_one("#img").get("src")
                 self.downloadImgFile(imgSrc, cachePath)
             except Exception as e:
-                raise makeTrackableExcption(
+                raise makeTrackableException(
                     e, f"获取图片 {gid}_{token}:{index} 跳过h@h失败")
         return cachePath
 
@@ -587,7 +604,7 @@ class ProxyAccessor:
         try:
             self.downloadManager.addDownload(gid, token)
         except Exception as e:
-            raise makeTrackableExcption(e, f"添加下载失败")
+            raise makeTrackableException(e, f"添加下载失败")
 
 
     def deleteDownload(self, gid, token):
@@ -720,5 +737,4 @@ class ProxyAccessor:
             return []
 
     def getReport(self, type=0):
-        self.downloadNotifyer(self.makeSyncData(
-            "syncState" if type == 0 else "syncAll"))
+        self.downloadNotifyer(self.makeSyncData("syncState" if type == 0 else "syncAll"))
