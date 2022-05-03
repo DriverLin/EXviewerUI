@@ -9,6 +9,7 @@ import FloatAddButton from './MainPageComponents/FloatAddButton';
 import LeftMenu from './MainPageComponents/LeftMenu';
 import OnlineManinPage from './MainPageComponents/OnlineMainPage';
 import TopSearchBar from './MainPageComponents/TopSearchBar';
+import timeTools from './utils/TimeFormatTools';
 
 
 
@@ -41,7 +42,7 @@ const translateGdata2CardData = (g_data) => {
         name: g_data.title_jpn || g_data.title,
         rank: Number(g_data.rating),
         category: g_data.category,
-        uploadtime: formatTime(Number(g_data.posted), 'yy-MM-dd hh:mm'),
+        uploadtime: timeTools.timestamp_to_str(Number(g_data.posted), 'yy-MM-dd hh:mm'),
         lang: g_data.tags.indexOf("language:chinese") !== -1 ? "chinese" : "",
         pages: Number(g_data.filecount),
         tags: g_data.tags,
