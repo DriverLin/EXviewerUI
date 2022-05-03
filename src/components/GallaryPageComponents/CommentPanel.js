@@ -3,7 +3,7 @@ import { Button, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { makeStyles } from '@mui/styles';
 import React, { useEffect, useState } from 'react';
-
+import timeTools from '../utils/TimeFormatTools';
 
 /**
  * width = 100%的组件
@@ -25,9 +25,31 @@ const useStyles = makeStyles((theme) => ({
     },
     innerHTML: {
         color: theme.palette.text.primary,
-        maxWidth: "100%"  
+        maxWidth: "100%"
     }
 }));
+
+
+const month_2_num = [
+    "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
+]
+const post_date_format = (date_str) => {
+    let format = date_str
+    month_2_num.forEach((month, index) => {
+        format = format.replace(month, index + 1)
+    })
+    const reg = /(\d+) (\d+) (\d+), (\d+):(\d+)/
+    const [, day, month, year, hour, minute] = reg.exec(format)
+    //8小时时差
+    const greenwich_time = new Date(year, month - 1, day, hour, minute).getTime() + 8 * 60 * 60 * 1000
+    const date = new Date(greenwich_time)
+    if (new Date().getTime() - date.getTime() < 24 * 60 * 60 * 1000) {
+        return `${Math.floor((new Date().getTime() - date.getTime()) / (60 * 60 * 1000))} hours ago`
+    } else {
+        return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`
+    }
+
+}
 
 
 export default function CommentPanel(props) {
@@ -37,17 +59,17 @@ export default function CommentPanel(props) {
     useEffect(() => {
         if (props.comments.length <= 4) {
             let flag = false;
-            for (let comment of props.comments) { 
-                if (comment.text.length > 40) { 
+            for (let comment of props.comments) {
+                if (comment.text.length > 40) {
                     flag = true;
                 }
             }
             setCommentButtonShow(flag)//评论小于4条 且每条长度小于40 则直接显示
-        } else { 
+        } else {
             setCommentButtonShow(true)//否则显示查看更多按钮
         }
     }, [props.comments]);
-    
+
 
     const BottomButton = styled(Button)(({ theme }) => ({
         marginTop: props.spacingPX + "px",
@@ -62,7 +84,7 @@ export default function CommentPanel(props) {
 
 
     return (
-        <div style={{width: "100%",}}>
+        <div style={{ width: "100%", }}>
             <Grid
                 sx={{
                     width: "100%",
@@ -78,9 +100,9 @@ export default function CommentPanel(props) {
                             <div key={index} style={{ width: "100%", }}>
                                 <div name='clickable' style={{ width: "100%", }}>
                                     <div className={classes.head}>
-                                        <div style={{ float: "left" }}><a>{row.poster}{row.score === "" ? " (上传者)" : " "}</a></div>
+                                        <div style={{ float: "left" }}><a style={{ marginRight: 16 }} >{"["+timeTools.comment_time_reformat(row.post_date)+"]"}</a><a>{row.poster}{row.score === "" ? " (上传者)" : " "}</a></div>
                                         <div style={{ float: "right" }}><a>{row.score}</a></div>
-                                    </div    >
+                                    </div>
                                     {
                                         !commentButtonShow ?
                                             <div className={classes.innerHTML} dangerouslySetInnerHTML={{ __html: row.text }} /> :
@@ -98,7 +120,7 @@ export default function CommentPanel(props) {
                     commentButtonShow ?
                         <BottomButton
                             name='clickable'
-                            onClick={() => { setCommentButtonShow(false)}} >
+                            onClick={() => { setCommentButtonShow(false) }} >
                             {'展开'}
                         </BottomButton>
                         : null

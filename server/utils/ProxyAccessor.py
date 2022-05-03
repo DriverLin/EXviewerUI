@@ -69,12 +69,12 @@ class ProxyAccessor:
             results.append(g_data)
         return results
 
-
     @printPerformance
     def downloadImgFile(self, url, filePath):
         bytes = None
         try:
-            bytes = urllib.request.urlopen(url, timeout=15).read()
+            # bytes = urllib.request.urlopen(url, timeout=15).read()
+            bytes = requests.get(url, timeout=15).content
         except Exception as e:
             logger.error(e.__str__())
             raise makeTrackableException(e, f"图片下载失败{filePath}")
@@ -153,7 +153,6 @@ class ProxyAccessor:
         except urllib.error.URLError as e:
             raise makeTrackableException(e, f"获取HTML{url} 失败 ")
 
-
     def getLocalFavoValue(self, gid):
         return self.dbm.getFavo(gid)
 
@@ -191,7 +190,7 @@ class ProxyAccessor:
                         "%Y-%m-%d %H:%M",
                     )
                 )
-            )
+            )+8*60*60
             filecount = pageElem.select_one(
                 "#gdd > table > tr:nth-child(6) > td.gdt2 "
             ).text.split(" ")[0]
@@ -271,25 +270,15 @@ class ProxyAccessor:
 
     def g_data_official(self, gid, token):
         try:
-            apiUrl = urljoin(self.root, "/api.php")
-            r = (
-                urllib.request.urlopen(
-                    urllib.request.Request(
-                        url=apiUrl,
-                        data=json.dumps(
-                            {
-                                "method": "gdata",
-                                "gidlist": [[gid, token]],
-                                "namespace": 1,
-                            }
-                        ).encode("UTF-8"),
-                        headers=self.headers,
-                    )
-                )
-                .read()
-                .decode("utf-8")
-            )
-            g_data = json.loads(r)["gmetadata"][0]
+            g_data = requests.post(
+                url="https://exhentai.org/api.php",
+                json={
+                    "method": "gdata",
+                    "gidlist": [[gid, token]],
+                    "namespace": 1,
+                },
+                headers=self.headers,
+            ).json()["gmetadata"][0]
             self.setCache(
                 gid, token, "cover", g_data["thumb"].replace(
                     "exhentai.org", "ehgt.org")
@@ -364,9 +353,15 @@ class ProxyAccessor:
             category = elem.select_one(
                 "div.gl5t > div:nth-child(1) > div:nth-child(1)"
             ).text
-            uploadtime = elem.select_one(
-                "div.gl5t > div > div:nth-child(2)").text
-
+            timestamp = int(
+                time.mktime(
+                    time.strptime(
+                        elem.select_one("div.gl5t > div > div:nth-child(2)").text,
+                        "%Y-%m-%d %H:%M",
+                    )
+                )
+            )+8*60*60
+            uploadtime = timestamp_to_str("%Y-%m-%d %H:%M",  timestamp)
             favo = (
                 elem.select_one(
                     "div.gl5t > div > div:nth-child(2)").get("style")
@@ -426,7 +421,7 @@ class ProxyAccessor:
             except Exception as e:
                 logger.error(f"封面 {filename} 下载失败")
                 raise makeTrackableException(e, f"封面 {filename} 下载失败")
-    
+
     @printPerformance
     def get_gallary_html(self, gid, token, index=0):
         page_key = "P_{}".format(index)
@@ -447,7 +442,8 @@ class ProxyAccessor:
             return result
         except Exception as e:
             # raise e
-            raise makeTrackableException(e, f"忽略缓存获取页面{gid}_{token}:{index} 失败")
+            raise makeTrackableException(
+                e, f"忽略缓存获取页面{gid}_{token}:{index} 失败")
 
     def get_preview(self, gid, token, index):
         html = None
@@ -464,9 +460,10 @@ class ProxyAccessor:
             .replace("exhentai.org", "ehgt.org")
         )
         try:
-            return urllib.request.urlopen(picUrl).read()
+            return requests.get(picUrl).content
         except Exception as e:
-            raise makeTrackableException(e, f"预览图 {gid}_{token}:{index} 数据下载失败")
+            raise makeTrackableException(
+                e, f"预览图 {gid}_{token}:{index} 数据下载失败")
 
     def get_comment(self, gid, token):
         html = None
@@ -514,10 +511,9 @@ class ProxyAccessor:
         except Exception as e:
             raise makeTrackableException(e, f"获取评论 html解析失败,{html}")
 
-
-    def post_comment(self,gid,token,comment):
+    def post_comment(self, gid, token, comment):
         data = {
-            'commenttext_new': comment ,
+            'commenttext_new': comment,
         }
         try:
             response = requests.post(
@@ -606,7 +602,6 @@ class ProxyAccessor:
         except Exception as e:
             raise makeTrackableException(e, f"添加下载失败")
 
-
     def deleteDownload(self, gid, token):
         self.downloadManager.deleteDownloaded(gid, token)
 
@@ -630,13 +625,13 @@ class ProxyAccessor:
                 if g_data and over == int(g_data["filecount"]):
                     pass
                 else:
-                    gid_tokens.append((gid, rec["token"]))    
+                    gid_tokens.append((gid, rec["token"]))
             else:
                 logger.error(f"严重错误 {gid} 没有记录")
         threading.Thread(target=self.downloadMany, args=(gid_tokens,)).start()
         return gid_tokens
 
-    def check_search(self,g_data, words, tags):
+    def check_search(self, g_data, words, tags):
         for word in words:
             if word not in g_data["title"] and word not in g_data["title_jpn"]:
                 return False
@@ -645,7 +640,6 @@ class ProxyAccessor:
                 return False
         # logger.debug(f"{json.dumps(g_data, ensure_ascii=False,indent=4)}")
         return True
-
 
     def localSearch(self, query):
         str = parse_qs(query)['f_search'][0]
@@ -659,7 +653,8 @@ class ProxyAccessor:
 
         result = []
 
-        logger.info(f"localSearch words: {json.dumps(words, ensure_ascii=False)}")
+        logger.info(
+            f"localSearch words: {json.dumps(words, ensure_ascii=False)}")
         logger.info(f"localSearch tags: {json.dumps(tags)}")
 
         for gid in self.dbm.listDownload():
@@ -684,7 +679,6 @@ class ProxyAccessor:
                     )
 
         return result
-
 
     def getStauseForWS(self):
         downloading_gid = self.downloadManager.downloading_gid
@@ -737,4 +731,5 @@ class ProxyAccessor:
             return []
 
     def getReport(self, type=0):
-        self.downloadNotifyer(self.makeSyncData("syncState" if type == 0 else "syncAll"))
+        self.downloadNotifyer(self.makeSyncData(
+            "syncState" if type == 0 else "syncAll"))

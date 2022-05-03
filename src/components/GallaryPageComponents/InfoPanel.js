@@ -2,31 +2,9 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 import { Rating, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
-
-
-
-
+import timeTools from '../utils/TimeFormatTools';
 
 export default function InfoPanel(props) {
-    const formatTime = (time, format) => {
-        const date = new Date(Number(time + "000"))
-        // console.log(time, date)
-        var o = {
-            "M+": date.getMonth() + 1, // 月份
-            "d+": date.getDate(), // 日
-            "h+": date.getHours(), // 小时
-            "m+": date.getMinutes(), // 分
-            "s+": date.getSeconds(), // 秒
-            "q+": Math.floor((date.getMonth() + 3) / 3), // 季度
-            "S": date.getMilliseconds() // 毫秒
-        };
-        if (/(y+)/.test(format))
-            format = format.replace(RegExp.$1, (date.getFullYear() + ""));
-        for (var k in o)
-            if (new RegExp("(" + k + ")").test(format)) format = format.replace(RegExp.$1, (RegExp.$1.length === 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
-        return format;
-    }
-
     const colormap = {
         "Manga": "#FF9700",
         "Doujinshi": "#F44236",
@@ -67,7 +45,7 @@ export default function InfoPanel(props) {
 
             {
                 props.shows.indexOf("posted") === -1 ? null :
-                    <Typography sx={{ color: "text.primary" }} variant="body1" gutterBottom component="div">{formatTime(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>}
+                    <Typography sx={{ color: "text.primary" }} variant="body1" gutterBottom component="div">{timeTools.timestamp_to_str(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>}
 
             {
                 props.shows.indexOf("category") === -1 ? null :
