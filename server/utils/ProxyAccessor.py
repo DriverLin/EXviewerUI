@@ -495,7 +495,7 @@ class ProxyAccessor:
 
                 if len(comment_bref) > 40:
                     comment_bref = comment_bref[:40] + "..."
-                poster = comment.select_one("div.c3 > a").text
+                poster = comment.select_one("div.c3 > a").text if comment.select_one("div.c3 > a") != None else ""#评论者删号了？
                 post_date = comment.select_one(
                     "div.c3").text.split(" by: ")[0][10:]
                 result.append(
