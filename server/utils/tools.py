@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -60,7 +61,7 @@ def makeTrackableException(e, appendE):
 
 printPerformance__log = {}
 printPerformance__lock = threading.Lock()
-def printPerformance(func):
+def __printPerformance(func:callable) -> callable:
     def wrapper(*args, **kwargs):
         start = time.time()
         rec = {
@@ -95,10 +96,17 @@ def printPerformance(func):
 
     return wrapper
 
+def printPerformance(func:callable) -> callable:
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        logger.debug(f"{func.__name__}{args[1:]} 耗时 {time.time() - start}")
+        return result
+    return wrapper
 
-def atomWarpper(func):
+
+def atomWarpper(func:callable) -> callable:
     lock = threading.Lock()
-
     def f(*args, **kwargs):
         lock.acquire()
         try:
@@ -108,5 +116,20 @@ def atomWarpper(func):
         finally:
             lock.release()
         return result
-
     return f
+
+
+
+def asyncWarpper(func:callable) -> callable:
+    async def wrapper(*args, **kwargs):
+        print(f"{func.__name__} : {args} {kwargs}")
+        return await asyncio.get_event_loop().run_in_executor(
+            None, func, *args, **kwargs
+        )
+    return wrapper 
+
+
+async def asyncExecutor(func, *args, **kwargs):
+    return await asyncio.get_event_loop().run_in_executor(
+        None, func, *args, **kwargs
+    )

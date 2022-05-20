@@ -14,9 +14,9 @@ from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
 from utils.ProxyAccessor import ProxyAccessor
-from utils.tools import (atomWarpper, checkImg, logger, makeTrackableException,
-                         printPerformance, printTrackableException,
-                         timestamp_to_str)
+from utils.tools import (asyncExecutor, asyncWarpper, atomWarpper, checkImg,
+                         logger, makeTrackableException, printPerformance,
+                         printTrackableException, timestamp_to_str)
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -140,7 +140,6 @@ wsManager = ConnectionManager()
 @atomWarpper
 def nofityDownloadMessage(messages):
     global wsManager
-
     async def sendMessage():
         # logger.info(f"发送消息 {message} 到 {len(wsManager.active_connections)} 个连接")
         await wsManager.broadcast(messages)
@@ -148,7 +147,6 @@ def nofityDownloadMessage(messages):
         asyncio.run(sendMessage())
     except Exception as e:
         logger.error(f"发送消息失败 {e}")
-
 
 # msgQueue = queue.Queue()
 # def nofityDownloadMessage(messages):
@@ -182,7 +180,6 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 ispublic = os.environ.get("PUBLIC_ENV", "false") == "true"
 
-
 @app.get("/addfavo/{gid_token}/{index}")
 def addfavo(gid_token, index):
     if ispublic:
@@ -193,7 +190,6 @@ def addfavo(gid_token, index):
         return {"msg": "success"}
     else:
         return {"msg": "fail"}
-
 
 @app.get("/rmfavo/{gid_token}")
 def rmfavo(gid_token):
@@ -234,7 +230,7 @@ def redownloadall():
 
 
 @app.get("/gallarys/{gid_token}/{filename}")
-def getfile(gid_token, filename, nocache=None):
+async def getfile(gid_token, filename, nocache=None):
     gid, token = gid_token.split("_")
     try:
         if filename == "g_data.json":
@@ -242,13 +238,13 @@ def getfile(gid_token, filename, nocache=None):
                 return pa.get_g_data(gid, token)
             else:
                 try:
-                    # nocache模式 优先去获取HTML
                     return pa.g_data_from_pageHtml(gid, token)
                 except Exception as e:  # 获取失败则尝试其他方法 例如尝试访问一个被删除的画廊
                     return pa.get_g_data(gid, token)  # 其他方法页失败则raise
         else:
             index = int(filename.split(".")[0])
-            filepath = pa.get_img(gid, token, index)
+            # filepath = pa.get_img(gid, token, index)
+            filepath = await asyncExecutor(pa.get_img, gid, token, index)
             return FileResponse(
                 filepath,
                 headers={
@@ -263,11 +259,11 @@ def getfile(gid_token, filename, nocache=None):
 
 
 @app.get("/previews/{gid_token}/{filename}")
-def getfile(gid_token, filename):
+async def getfile(gid_token, filename):
     gid, token = gid_token.split("_")
     index = int(filename.split(".")[0])
     try:
-        bytes = pa.get_preview(gid, token, index)
+        bytes = await asyncExecutor(pa.get_preview, gid, token, index)
         return Response(
             bytes,
             headers={"Content-Type": "image/jpeg",
@@ -368,14 +364,14 @@ def gallaryListNoPath(request: Request):
 
 
 @app.get("/cover/{filename}")
-def cover(filename):
+async def asyncCover(filename):
     gid, token = filename.split(".")[0].split("_")
     try:
-        filepath = pa.get_cover(gid, token)
+        filepath = await asyncExecutor(pa.get_cover, gid, token)
         return FileResponse(
             filepath,
             headers={"Content-Type": "image/jpeg",
-                     "Cache-Control": "max-age=31536000"},
+                    "Cache-Control": "max-age=31536000"},
         )
     except Exception as e:
         trackE = makeTrackableException(e, f"请求封面 {filename} 失败")
@@ -390,7 +386,6 @@ def get_download_logs():
         "logs": pa.listLog()
     }
 
-
 @app.get("/")
 def index():
     return FileResponse(os.path.join(SERVER_FILE, "index.html"))
@@ -398,6 +393,7 @@ def index():
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    logger.info("websocket connected"+str(websocket))
     await wsManager.connect(websocket)
     try:
         while True:
@@ -410,5 +406,8 @@ app.mount("/", StaticFiles(directory=SERVER_FILE), name="static")
 
 if __name__ == "__main__":
     uvicorn.run(
-        app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)), log_level="error"
+        app, 
+        host="0.0.0.0", 
+        port=int(os.environ.get("PORT", 8080)), 
+        log_level="error",
     )
