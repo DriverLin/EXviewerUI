@@ -24,7 +24,7 @@ class EHDBManager:
         for (gid,g_data) in self.db.execute("SELECT gid,g_data FROM g_data"):
             self.g_data[gid] = json.loads(g_data)
         
-        self.addSerialMax = self.db.execute("SELECT MAX(addSerial) FROM download").fetchone()[0]
+        self.addSerialMax = self.db.execute("SELECT MAX(addSerial) FROM download").fetchone()[0] or 0
 
         def excuteMany(args):
             start = time()

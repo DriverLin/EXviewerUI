@@ -396,7 +396,7 @@ export default function MainPage(props) {
     
     const reDownloadAll = () => {
         fetch("/redownloadall").then(res => res.json()).then(res => {
-            console.log(res)
+            notifyMessage("success", `已开始${res.length}项下载`)
         })
     }
 

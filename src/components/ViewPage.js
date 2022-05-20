@@ -31,7 +31,7 @@ export default function ViewPage(props) {
 
 
     const pageNumRef = useRef(Number(localStorage.getItem(`/viewing/${gid}/${token}/`)) || 1)
-    const [pageNum, _setPageNum] = useState(Number(localStorage.getItem(`/viewing/${gid}/${token}/`)) || 1);
+    const [pageNum, _setPageNum] = useState(pageNumRef.current);
 
 
     const setPageNum = (value) => {
@@ -162,6 +162,26 @@ export default function ViewPage(props) {
 
     return (
         pageCount === 0 ?
+            // <div >
+            //     <ViewSettingPanel
+            //         open={settingPanelOpen}
+            //         onClose={onViewSettingPanelClose}
+            //         onOpen={onViewSettingPanelOpen}
+            //     />
+            //     <div style={{ height: '100vh', width: '100vw', }} onClick={handelTap}>
+            //         {
+            //             <MultPageSwiper
+            //                 key={""}
+            //                 value={pageNum}
+            //                 setValue={() => {}}
+            //                 reverse={false}
+            //                 double={false}
+            //                 headsingle={false}
+            //                 urls={[`/gallarys/${gid}_${token}/${fixto8(pageNumRef.current)}.jpg`]}
+            //             />
+            //         }
+            //     </div>
+            // </div>
             null
             :
             <div >

@@ -199,8 +199,8 @@ export function ServerSyncKeepAlive(props) {
         if (ws.current != null )return
         const wssOrWS = window.location.protocol === "https:" ? "wss:" : "ws:"
         let wsUrl = `${wssOrWS}//${window.location.host}/ws`
-        if (window.location.host.includes(":3000")) {
-            wsUrl = wsUrl.replace(":3000", ":8080")
+        if (window.location.host.includes("3000")) {
+            wsUrl = wsUrl.replace("3000", "8080")
         }
         ws.current = new ReconnectingWebSocket(wsUrl)
         

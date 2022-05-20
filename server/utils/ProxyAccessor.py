@@ -47,6 +47,7 @@ class ProxyAccessor:
             self.coverPath
         )
 
+
     def setCache(self, gid, token, key, value):
         self.cachedMap.add("{}_{}:{}".format(gid, token, key), value)
 
@@ -144,11 +145,6 @@ class ProxyAccessor:
     @printPerformance
     def _getHtml_ignore_cache(self, url):
         try:
-            # req = urllib.request.Request(
-            #     url=urljoin(self.root, url), headers=self.headers
-            # )
-            # resp = urllib.request.urlopen(req, timeout=8)
-            # return resp.read().decode("utf-8")
             return requests.get(urljoin(self.root, url), headers=self.headers, timeout=8).text
         except urllib.error.URLError as e:
             raise makeTrackableException(e, f"获取HTML{url} 失败 ")
@@ -393,7 +389,7 @@ class ProxyAccessor:
                 }
             )
         return infos
-
+    
     def get_cover(self, gid, token):
         filename = "{}_{}.jpg".format(gid, token)
         cachedCover = os.path.join(self.cachePath, filename)
