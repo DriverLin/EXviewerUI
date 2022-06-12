@@ -54,11 +54,9 @@ class worker():
             except Exception as e:
                 logger.error(str(e))
                 logger.error(f"下载任务已终止  {self.gid}_{self.token}")
-                if self.aioAccessorInstance.db.download[self.gid]:
-                    self.aioAccessorInstance.db.download[self.gid]['state'] = DOWNLOAD_STATE.FINISHED
+                self.aioAccessorInstance.db.download[self.gid]['state'] = DOWNLOAD_STATE.FINISHED
                 return
-            if self.aioAccessorInstance.db.download[self.gid]:
-                self.aioAccessorInstance.db.download[self.gid]['state'] = DOWNLOAD_STATE.NOW_DOWNLOADING
+            self.aioAccessorInstance.db.download[self.gid]['state'] = DOWNLOAD_STATE.NOW_DOWNLOADING
             self.loop.create_task(self.downloader())
             for _ in range(self.fileCount):
                 signal = await self.channel.get()
