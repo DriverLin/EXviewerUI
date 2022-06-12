@@ -17,10 +17,10 @@ class AsyncCacheWarper():
     # 第二次执行 如果第一次执行抛出异常 则再次尝试执行 否则直接返回第一次执行的结果
     # 函数会变成 result,err 的返回形式
     def __init__(
-        self, loop: asyncio.AbstractEventLoop,
+        self,
         cacheContainer=LRUCache(maxsize=512, default=None)
     ) -> None:
-        self.cacheRWLock = asyncio.Lock(loop=loop)
+        self.cacheRWLock = asyncio.Lock()
         self.cache = cacheContainer
 
     async def executer(self, func, *arg, **kwargs):
@@ -42,7 +42,6 @@ class AsyncCacheWarper():
         )
 
     def __call__(self, func):
-
         async def executeRE(*arg, **kwargs):
             key = (func, str(arg), str(kwargs))
             await self.cacheRWLock.acquire()

@@ -150,7 +150,7 @@ class downloadManager():
     def __init__(self, aioAccessorInstance) -> None:
         self.aioAccessorInstance = aioAccessorInstance
         self.loop = aioAccessorInstance.loop
-        self.wrLock = asyncio.Lock(loop=self.loop)
+        self.wrLock = asyncio.Lock()
         self.workingWorker = None
         self.workerQueue = asyncio.Queue(loop=self.loop)
         self.workers: List[worker] = []
