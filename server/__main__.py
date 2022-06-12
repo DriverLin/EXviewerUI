@@ -24,7 +24,7 @@ serverLoop = asyncio.new_event_loop()
 ssl._create_default_https_context = ssl._create_unverified_context
 ROOT_PATH = os.path.split(os.path.realpath(__file__))[0]
 # SERVER_FILE = path_join(ROOT_PATH, r"static_file")
-SERVER_FILE = path_join(ROOT_PATH, r"..\build")
+SERVER_FILE = path_join(os.path.abspath(path_join(ROOT_PATH, r"..")),"build")
 CONFIG_PATH = path_join(ROOT_PATH, r"config.json")
 if not os.path.exists(CONFIG_PATH):
     logger.error("配置文件不存在")
