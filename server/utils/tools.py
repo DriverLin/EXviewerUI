@@ -9,7 +9,6 @@ import coloredlogs
 
 printPerformance__log_path = r"p:\printPerformance.log"
 
-
 logger = logging.getLogger(f'{"main"}:{"loger"}')
 fmt = f"%(asctime)s.%(msecs)03d .%(levelname)s \t%(message)s"
 coloredlogs.install(
@@ -45,7 +44,7 @@ def printTrackableException(e):
         for excTrack in json.loads(str(e)):
             logger.error(str(excTrack))
         logger.info("=" * 40)
-    except Exception as e:
+    except Exception:
         logger.error(str(e))
         logger.info("=" * 40)
 
@@ -61,7 +60,9 @@ def makeTrackableException(e, appendE):
 
 printPerformance__log = {}
 printPerformance__lock = threading.Lock()
-def __printPerformance(func:callable) -> callable:
+
+
+def __printPerformance(func: callable) -> callable:
     def wrapper(*args, **kwargs):
         start = time.time()
         rec = {
@@ -96,16 +97,27 @@ def __printPerformance(func:callable) -> callable:
 
     return wrapper
 
-def printPerformance(func:callable) -> callable:
-    def wrapper(*args, **kwargs):
-        start = time.time()
-        result = func(*args, **kwargs)
-        logger.debug(f"{func.__name__}{args[1:]} 耗时 {time.time() - start}")
-        return result
+
+def printPerformance(func: callable) -> callable:
+    if asyncio.iscoroutinefunction(func):
+        async def wrapper(*args, **kwargs):
+            start = time.perf_counter_ns()
+            result = await func(*args, **kwargs)
+            logger.debug(
+                f"{func.__name__}{args[1:]}{kwargs} 耗时 {(time.perf_counter_ns() - start) / 1000000} ms")
+            return result
+        return wrapper
+    else:
+        def wrapper(*args, **kwargs):
+            start = time.perf_counter_ns()
+            result = func(*args, **kwargs)
+            logger.debug(
+                f"{func.__name__}{args[1:]}{kwargs} 耗时 {(time.perf_counter_ns() - start) / 1000000} ms")
+            return result
     return wrapper
 
 
-def atomWarpper(func:callable) -> callable:
+def atomWarpper(func: callable) -> callable:
     lock = threading.Lock()
     def f(*args, **kwargs):
         lock.acquire()
@@ -119,14 +131,13 @@ def atomWarpper(func:callable) -> callable:
     return f
 
 
-
-def asyncWarpper(func:callable) -> callable:
+def asyncWarper(func: callable) -> callable:
     async def wrapper(*args, **kwargs):
         print(f"{func.__name__} : {args} {kwargs}")
         return await asyncio.get_event_loop().run_in_executor(
             None, func, *args, **kwargs
         )
-    return wrapper 
+    return wrapper
 
 
 async def asyncExecutor(func, *args, **kwargs):

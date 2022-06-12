@@ -1,31 +1,35 @@
 
 import { CssBaseline } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import React, { useEffect, useMemo } from 'react';
-import {
-  HashRouter, Route, Routes
-} from "react-router-dom";
+import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
+import GalleryPage from './components/ui/GalleryPage';
 import PopoverNotifier from "./components/utils/PopoverNotifier";
+import { useSettingBind } from './components/utils/SettingHooks';
+import ViewPage from './components/ui/ViewPage';
+import { useWsHandeler } from './components/utils/useSyncDict';
+import syncedDB from './components/utils/mobxSyncedState';
+import { observer } from "mobx-react";
+import DownloadCircularProgress from './components/ui/MainPageComponents/DownloadCircularProgress';
+import GalleryCard from './components/ui/MainPageComponents/GalleryCard';
+import VScrollCardContainer from './components/ui/MainPageComponents/VScrollCardContainer';
+import { action, toJS } from 'mobx';
+import MainPage from './components/ui/MainPage';
 import { SwitchRouter } from './components/utils/Router';
-import { useSettingBind } from './components/utils/Settings';
+import { Route, Routes } from 'react-router';
+import { HashRouter } from 'react-router-dom';
 
+function App_inner() {
+  const wssOrWS = window.location.protocol === "https:" ? "wss:" : "ws:"
+  let wsUrl = `${wssOrWS}//${window.location.host}/`
+  if (window.location.host.includes("3000")) {
+    wsUrl = wsUrl.replace("3000", "7964")
+  }
 
-
-
-
-
-
-
-
-
-
-
-
-function App() {
-
-  const colorMode = useSettingBind('色彩主题', '暗色')
-  
+  useWsHandeler(wsUrl + 'download', syncedDB.getEventHandeler('download'))
+  useWsHandeler(wsUrl + 'favorite', syncedDB.getEventHandeler('favorite'))
+  useWsHandeler(wsUrl + 'card_info', syncedDB.getEventHandeler('card_info'))
+  const colorMode = useSettingBind('色彩主题', '亮色')
   const dark = useMemo(() => {
     if (colorMode === "跟随系统") {
       return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -35,8 +39,8 @@ function App() {
   }, [colorMode])
 
   useEffect(() => {
-    document.querySelector('meta[name="theme-color"]').setAttribute('content',dark ? '#303030' : '#ECEFF1')
-  },[dark])
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#303030' : '#ECEFF1')
+  }, [dark])
   const theme = createTheme({
     components: {
       MuiCssBaseline: {
@@ -109,7 +113,7 @@ function App() {
           hover: "#646464",
           text: "#ffffff"
         },
-        gallaryCard: {
+        galleryCard: {
           main: "#212121",
         }
       },
@@ -181,7 +185,7 @@ function App() {
             hover: "#eeeeee",
             text: "#000000"
           },
-          gallaryCard: {
+          galleryCard: {
             main: "#ffffff",
           }
         },
@@ -210,31 +214,102 @@ function App() {
 
   const openNew = (pathname, search) => window.open(`/#${pathname}${search}`, "_blank")
   const openCurrent = (pathname, search) => window.location.href = `/#${pathname}${search}`
-  const props = {
-    openCurrent: openCurrent,
-    openNew: openNew,
-    // location: location
-  }
+
+  // const downloadList = useMemo(() => {
+  //   Object.values(syncedDB.card_info).reverse()
+  // }, [syncedDB.card_info])
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <PopoverNotifier />
       <div id='mainContainer' style={{ backgroundColor: theme.palette.page.background, width: "100%" }}    >
+        {/* <HashRouter>
+          <Routes>
+            <Route path="*" element={<SwitchRouter />} />
+          </Routes>
+        </HashRouter> */}
+
+
+        {/* <ViewPage
+          gid={2234446}
+          token={"3c2ec893e0"}
+          pages={30}
+          title={"[山含]Miyu sex in the park-霞泽美游公园色色"}
+          /> */}
+        {/* <GalleryPage
+            gid={2242255}
+            token={'c5218dcf95'}
+          /> */}
+
+        {/* <GalleryCard
+          small_matches={true}
+          download={syncedDB.download[2242255] || { state: 0, success: 0 }}
+          favorite={syncedDB.favorite[2241178] || { state: 0 }}
+          // cardInfo={{
+          //   gid: 2241178,
+          //   token: "926d812d1e",
+          //   name: "name",
+          //   rank: 5,
+          //   category: "Manga",
+          //   uploadTime: "2020-19-19 25:30",
+          //   lang: "chinese",
+          //   pages: 100,
+          // }}
+          cardInfo={
+            syncedDB.card_info[2241178]
+          }
+          onImageClick={(...args) => { console.log("onImageClick", args) }}
+          onLongClick={(...args) => { console.log("onLongClick", args) }}
+          onCardClick={(...args) => { console.log("onCardClick", args) }}
+        /> */}
+        {/* <div>
+          {
+            Object.keys(syncedDB.card_info).slice(10000, 10010).map(gid =>
+              <GalleryCard
+                download={syncedDB.download[gid] || { state: 0, success: 0 }}
+                favorite={syncedDB.favorite[gid] || { state: 0 }}
+                // cardInfo={{
+                //   gid: 2241178,
+                //   token: "926d812d1e",
+                //   name: "name",
+                //   rank: 5,
+                //   category: "Manga",
+                //   uploadTime: "2020-19-19 25:30",
+                //   lang: "chinese",
+                //   pages: 100,
+                // }}
+                cardInfo={
+                  syncedDB.card_info[gid]
+                }
+                small_matches={false}
+
+                onImageClick={(...args) => { console.log("onImageClick", args) }}
+                onLongClick={(...args) => { console.log("onLongClick", args) }}
+                onCardClick={(...args) => { console.log("onCardClick", args) }}
+              />
+            )
+          }
+        </div> */}
+
+        {/* <VScrollCardContainer
+          cardInfoList={
+            // downloadList
+            Object.values(syncedDB.card_info).reverse()
+          }
+          setScrollTop={(...args) => { console.log("setScrollTop", args) }}
+          loading={false}
+          onImageClick={(...args) => { console.log("onImageClick", args) }}
+          onLongClick={(...args) => { console.log("onLongClick", args) }}
+          onCardClick={(...args) => { console.log("onCardClick", args) }}
+          onReachEnd={(...args) => { console.log("onReachEnd", args) }}
+        /> */}
+
+        {/*  */}
+
         <HashRouter>
           <Routes>
-            <Route path="*" element={<SwitchRouter/>} />
-            
-            {/* <Route path="/" element={serverType === "full" ? <MainPage {...props} /> : <StaticMainPage />} />
-            <Route path="/search" element={<MainPage {...props} />} />
-            <Route path="/watched" element={<MainPage {...props} />} />
-            <Route path="/popular" element={<MainPage {...props} />} />
-            <Route path="/favorites" element={<MainPage {...props} />} />
-            <Route path="/downloaded" element={<MainPage {...props} />} />
-            <Route path="/g/:id/:token/" element={<GallaryPage {...props} />} />
-            <Route path="/viewing/:id/:token/" element={<ViewPage {...props} />} />
-            <Route path="/setting" element={<AppSetting {...props} />} />
-           */}
-          
+            <Route path="*" element={<SwitchRouter />} />
           </Routes>
         </HashRouter>
       </div >
@@ -242,4 +317,13 @@ function App() {
   );
 }
 
-export default App;
+
+const ItemsObserver = observer(App_inner);
+
+function App() {
+  return <div>
+    <ItemsObserver />
+  </div>
+}
+
+export default App;//最终是不需要在app中observer的 observer会分散到最小组件

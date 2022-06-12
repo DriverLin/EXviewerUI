@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const setStorage = (key, value) => {//不阻塞 但是数据会不同步
     setTimeout(()=>{
@@ -41,6 +41,17 @@ export function useLocalStorage(key, defaultValue) {
     })
     return [value, setValue]
 }
+
+export function useRefState(defaultValue) {
+    const [value, _setValue] = useState(defaultValue)
+    const ref = useRef(value)
+    const setValue = (val) => {
+        ref.current = val
+        _setValue(val)
+    }
+    return [ref,value,setValue]
+}
+
 
 
 

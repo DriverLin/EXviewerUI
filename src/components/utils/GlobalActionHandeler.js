@@ -69,7 +69,7 @@ export function addFavo(gid, token, index) {
     )
 }
 
-export function rmFavo(gid, token) {
+export function rmFavorite(gid, token) {
     const reportSuccess = () => {
         // notifyMessage("success", "取消收藏成功")
         dispatchEvent("rmFavo", {
