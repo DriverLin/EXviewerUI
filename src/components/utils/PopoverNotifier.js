@@ -38,7 +38,7 @@ export default function PopoverNotifier(props) {
         notifyMessage === null ? null :
             <Snackbar
                 open={open}
-                autoHideDuration={3000}
+                autoHideDuration={1500}
                 onClose={handleClose}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
             >

@@ -1,157 +1,211 @@
-
+import asyncio
 import json
 import os
 import shutil
-import time
+from typing import List
 
-from utils.EHDBManager import EHDBManager
-from utils.JobScheduler import JobScheduler
-from utils.tools import (atomWarpper, logger, makeTrackableException,
-                         printPerformance, printTrackableException)
+from utils.DBM import DOWNLOAD_STATE
+from utils.tools import logger, printTrackableException
 
-DOWNLOAD_START = 0
-DOWNLOAD_IMG = 1
-DOWNLOAD_FINISH = 2
-DELETE_DOWNLOAD = 3
-
-RESULT_INIT_FINISH = 0
-RESULT_IMG_SUCCESS = 1
-RESULT_IMG_FAILED = 2
-RESULT_DOWNLOAD_FINISH = 3
-RESULT_DELETE_FINISH = 4
-
-FULL = 1
+SIGNAL_SUCCESS = 0
+SIGNAL_FAILURE = 1
+SIGNAL_INTERRUPT = 2
 
 
-class DownloadManager:
-    def __init__(self, dbm: EHDBManager, getG_data, getImg, getCover, report, galleryPath, covePath):
-        self.dbm = dbm
-        self.getG_data = getG_data
-        self.getImg = getImg
-        self.getCover = getCover
-        self.report = report
-        self.galleryPath = galleryPath
-        self.covePath = covePath
-        self.downloading_gid = -1
-        self.downloadingQueue = []
-        self.downloadSuccess = 0
-        self.JobSchedulerInstance = JobScheduler(handler=self.handler,
-                                                 maxParallel=5, onChange=self.onJobChange)
-    @printPerformance
-    def handler(self, job):
-        gid = job["gid"]
-        token = job["token"]
-        action = job["action"]
-        index = job["index"]
-        if action == DOWNLOAD_START:
-            self.downloading_gid = gid
-            self.downloadSuccess = 0
-            return RESULT_INIT_FINISH
-        elif action == DOWNLOAD_IMG:
+class worker():
+    def __init__(self, aioAccessorInstance, loop: asyncio.AbstractEventLoop, gid: int, token: str, g_data=None) -> None:
+        self.aioAccessorInstance = aioAccessorInstance
+        self.loop = loop
+        self.gid = gid
+        self.token = token
+        self.g_data = g_data
+        self.interrupted = False
+        self.running = False
+        self.channel = asyncio.Queue()
+        self.lock = asyncio.Lock()
+        self.imgPathMap = {}
+        self.fileCount = 0
+        self.coverPath = ""
+
+    def match(self, gid: int, token: str):
+        return self.gid == gid and self.token == token
+
+    async def mainLoop(self):
+        async with self.lock:
+            self.running = True
+            success = 0
             try:
-                src = self.getImg(gid, token, index)
-                filename = "{0:08d}.jpg".format(int(index))
-                dst = os.path.join(os.path.join(self.galleryPath, f"{gid}_{token}"), filename)
-                shutil.move(src, dst) if src != dst else None
-                return RESULT_IMG_SUCCESS
+                if self.g_data == None:
+                    fetch_g_data = self.aioAccessorInstance.fetchG_dataOfficial(
+                        [(self.gid, self.token)])
+                    fetch_cover = self.aioAccessorInstance.getGalleryCover(
+                        self.gid, self.token)
+                    g_data_list, coverPath = await asyncio.gather(fetch_g_data, fetch_cover)
+                    self.g_data = g_data_list[0]
+                    self.coverPath = coverPath
+                else:
+                    self.coverPath = await self.aioAccessorInstance.getGalleryCover(self.gid, self.token)
+                logger.debug(
+                    f"下载中 G_data : \n{json.dumps(self.g_data,indent=4,ensure_ascii=False)}")
+                logger.debug(f"下载中 cover : {self.coverPath}")
+                await self.aioAccessorInstance.updateCardInfo(self.gid, self.token)#更新card_info 因为添加下载的时候出错也无视 这里有g_data 就一定可以更新
+                self.aioAccessorInstance.db.g_data[self.gid] = self.g_data
+                self.fileCount = int(self.g_data["filecount"])
             except Exception as e:
-                printTrackableException(makeTrackableException(e,"下载处理器下载图片失败\n{}".format(json.dumps(job, ensure_ascii=False, indent=4))))
-                return RESULT_IMG_FAILED
-        elif job["action"] == DOWNLOAD_FINISH:
-            self.downloading_gid = -1
-            self.downloadSuccess = 0
-            self.downloadingQueue = [
-                x for x in self.downloadingQueue if x[0] != gid]
-            return RESULT_DOWNLOAD_FINISH
-        elif job["action"] == DELETE_DOWNLOAD:
-            self.downloadingQueue = [
-                x for x in self.downloadingQueue if x[0] != gid]
-            coverPath = os.path.join(self.covePath, f"{gid}_{token}.jpg")
-            saveDir = os.path.join(self.galleryPath, f"{gid}_{token}")
-            shutil.rmtree(saveDir) if os.path.exists(saveDir) else None
-            os.remove(coverPath) if os.path.exists(coverPath) else None
-            self.dbm.rmDownload(gid)
-            self.dbm.rmGdata(gid)
-            return RESULT_DELETE_FINISH
-        return "OK"
+                logger.error(str(e))
+                logger.error(f"下载任务已终止  {self.gid}_{self.token}")
+                self.aioAccessorInstance.db.download[self.gid]['state'] = DOWNLOAD_STATE.FINISHED
+                return
+            self.aioAccessorInstance.db.download[self.gid]['state'] = DOWNLOAD_STATE.NOW_DOWNLOADING
+            self.loop.create_task(self.downloader())
+            for _ in range(self.fileCount):
+                signal = await self.channel.get()
+                if signal == SIGNAL_SUCCESS:
+                    success += 1
+                    if self.aioAccessorInstance.db.download[self.gid]:
+                        self.aioAccessorInstance.db.download[self.gid]['success'] = success
+                elif signal == SIGNAL_FAILURE:
+                    pass
+                elif signal == SIGNAL_INTERRUPT:
+                    logger.warning(f"下载中断 {self.gid}_{self.token}")
+                    if self.aioAccessorInstance.db.download[self.gid]:
+                        self.aioAccessorInstance.db.download[self.gid]['state'] = DOWNLOAD_STATE.FINISHED
+                    return
+            if self.aioAccessorInstance.db.download[self.gid]:
+                self.aioAccessorInstance.db.download[self.gid]['state'] = DOWNLOAD_STATE.FINISHED
+            if success == self.fileCount:
+                saveDir = os.path.join(
+                    self.aioAccessorInstance.galleryPath, f"{self.gid}_{self.token}")
+                if not os.path.exists(saveDir):
+                    os.makedirs(saveDir)
+                for i in range(self.fileCount):
+                    dst = os.path.join(saveDir, f"{(i + 1):08d}.jpg")
+                    src = self.imgPathMap[i]
+                    shutil.copyfile(src, dst) if not os.path.exists(
+                        dst) else None
+                    logger.debug(f"cp {src} -> {dst}")
+                g_data_json_save_path = os.path.join(saveDir, "g_data.json")
+                with open(g_data_json_save_path, "w", encoding="utf-8") as f:
+                    json.dump(self.g_data, f, ensure_ascii=True, indent=4)
+                logger.debug(f"保存 g_data.json 到 {g_data_json_save_path}")
+                cover_save_path = os.path.join(
+                    self.aioAccessorInstance.coverPath, f"{self.gid}_{self.token}.jpg")
+                shutil.copyfile(self.coverPath, cover_save_path) if not os.path.exists(
+                    cover_save_path) else None
+                logger.debug(f"cp {self.coverPath} -> {cover_save_path}")
 
-    @atomWarpper
-    def onSuccess(self):
-        self.downloadSuccess += 1
-        self.dbm.updateDownload(self.downloading_gid, self.downloadSuccess)
+    async def downloader(self,):
+        queueSem = asyncio.Semaphore(5)
+        async def downloadFunc(index):
+            await queueSem.acquire()
+            if not self.interrupted:
+                try:
+                    imgPath = await self.aioAccessorInstance.getGalleryImage(self.gid, self.token, index+1)
+                    self.imgPathMap[index] = imgPath
+                    await asyncio.sleep(1/1000)
+                    await self.channel.put(SIGNAL_SUCCESS)
+                except Exception as e:
+                    printTrackableException(e)
+                    await self.channel.put(SIGNAL_FAILURE)
 
-    def onJobChange(self, action, info, result):
-        if action == "finished":  # job完成
-            if result == RESULT_INIT_FINISH:
-                self.report(FULL)
-            elif result == RESULT_IMG_SUCCESS:
-                self.onSuccess()
-                self.report()
-            elif result == RESULT_IMG_FAILED:
-                self.report()
-            elif result == RESULT_DOWNLOAD_FINISH:
-                self.report()
-            elif result == RESULT_DELETE_FINISH:
-                self.report(FULL)
+                logger.debug(f"图片下载已完成 {self.gid}_{self.token}/{index}")
             else:
-                pass
+                logger.warning(f"图片下载已撤销 {self.gid}_{self.token}/{index}")
+            queueSem.release()
 
-    def addDownload(self, __gid, token):
-        logger.info(f"addDownload {__gid} {token}")
-        gid = int(__gid)
-        if (gid, token) in self.downloadingQueue:
-            return  # 在队列中 则返回
-        else:
-            self.dbm.addDownload(gid, token)  # 立即添加下载记录
-            g_data = None
-            try:
-                g_data = self.getG_data(gid, token)
-                logger.info(
-                    f"\n下载 {gid} {token}\n {json.dumps(g_data, ensure_ascii=False,indent=4)}")
-            except Exception as e:
-                raise makeTrackableException(e, "下载失败 无法获取g_data")
-            try:
-                src = self.getCover(gid, token)
-                dst = os.path.join(self.covePath, f"{gid}_{token}.jpg")
-                shutil.move(src, dst)
-            except Exception as e:
-                raise makeTrackableException(e, "下载失败 无法获取cover")
-            self.dbm.addGdata(gid, g_data)  # 这里更新g_data
-            savePath = os.path.join(self.galleryPath, f"{gid}_{token}")
-            os.makedirs(savePath, exist_ok=True)
-            g_data_path = os.path.join(savePath, "g_data.json")
-            json.dump(g_data, open(g_data_path, "w"),
-                      ensure_ascii=True, indent=4)
-            self.downloadingQueue.append((gid, token))
-            self.JobSchedulerInstance.add_job({
-                "gid": gid,
-                "token": token,
-                "action": DOWNLOAD_START,
-                "index": -1
-            }, gid, False)
-            for i in range(int(g_data["filecount"])):
-                self.JobSchedulerInstance.add_job({
-                    "gid": gid,
-                    "token": token,
-                    "action": DOWNLOAD_IMG,
-                    "index": i+1
-                }, gid, True)
-            self.JobSchedulerInstance.add_job({
-                "gid": gid,
-                "token": token,
-                "action": DOWNLOAD_FINISH,
-                "index": -1
-            }, gid, False)
+        tasks = [asyncio.create_task(downloadFunc(i))
+                 for i in range(self.fileCount)]
+        await asyncio.gather(*tasks)
 
-    def deleteDownloaded(self, __gid, token):
-        gid = int(__gid)
-        self.JobSchedulerInstance.rm_job(gid)
-        self.JobSchedulerInstance.insert_job({
-            "gid": gid,
-            "token": token,
-            "action": DELETE_DOWNLOAD,
-            "index": -1
-        }, gid, False)
+    async def interrupt(self,):
+        self.interrupted = True
+        if self.running:
+            await self.channel.put(SIGNAL_INTERRUPT)
 
-    def listLog(self):
-        return self.JobSchedulerInstance.listLog()
+    async def deleteGallery(self,):
+        logger.warning(f"deleteGallery{self.gid}{self.token}")
+        saveDir = os.path.join(
+            self.aioAccessorInstance.galleryPath, f"{self.gid}_{self.token}")
+        cover_save_path = os.path.join(
+            self.aioAccessorInstance.coverPath, f"{self.gid}_{self.token}.jpg")
+        async with self.lock:
+            if self.aioAccessorInstance.db.download[self.gid] != None:
+                del self.aioAccessorInstance.db.download[self.gid]
+                logger.warning(f"删除download记录 {self.gid}")
+            if self.aioAccessorInstance.db.g_data[self.gid] != None:
+                del self.aioAccessorInstance.db.g_data[self.gid]
+                logger.warning(f"删除g_data记录 {self.gid}")
+            if self.aioAccessorInstance.db.card_info[self.gid]:
+                del self.aioAccessorInstance.db.card_info[self.gid]
+                logger.warning(f"删除card_info记录 {self.gid}")
+            if os.path.exists(saveDir):
+                logger.warning(f"删除 {saveDir}")
+                shutil.rmtree(saveDir)
+            if os.path.exists(cover_save_path):
+                logger.warning(f"删除 {cover_save_path}")
+                os.remove(cover_save_path)
+
+
+class downloadManager():
+    def __init__(self, aioAccessorInstance) -> None:
+        self.aioAccessorInstance = aioAccessorInstance
+        self.loop = aioAccessorInstance.loop
+        self.wrLock = asyncio.Lock(loop=self.loop)
+        self.workingWorker = None
+        self.workerQueue = asyncio.Queue(loop=self.loop)
+        self.workers: List[worker] = []
+        self.workersCountSem = asyncio.Semaphore(0, loop=self.loop)
+        self.simulateFunctionCall = asyncio.Queue(loop=self.loop)
+
+        # 等待信号量
+        # 取出第一个worker
+        # 执行mainLoop与startWorker
+        # 等待结束
+        # 从队列中删除worker
+        async def asyncLoop():
+            while True:
+                await self.workersCountSem.acquire()
+                async with self.wrLock:
+                    worker = self.workers[0]  # 拿到一个worker
+                await worker.mainLoop()
+                async with self.wrLock:
+                    self.workers.pop(0)  # 删除worker
+        self.loop.create_task(asyncLoop())
+
+    async def addDownload(self, gid: int, token: str, g_data=None):
+        # 添加一个worker到尾部
+        # 信号量+1
+        logger.info(f"添加下载 {gid}_{token}")
+        self.loop.create_task(
+            self.aioAccessorInstance.updateCardInfo(gid, token))
+        async with self.wrLock:
+            downloadWorker = worker(
+                self.aioAccessorInstance, self.loop, gid, token, g_data)
+            self.workers.append(downloadWorker)
+            if self.aioAccessorInstance.db.download[gid] == None:
+                self.aioAccessorInstance.db.download[gid] = {
+                    'gid': gid,
+                    'token': token,
+                    'success': 0,
+                    'state': DOWNLOAD_STATE.NOW_DOWNLOADING,
+                    'index': self.aioAccessorInstance.getNowDownloadIndex()
+                }
+            else:
+                self.aioAccessorInstance.db.download[gid]['state'] = DOWNLOAD_STATE.IN_QUEUE
+            self.workersCountSem.release()
+
+    async def deleteDownload(self, gid, token):
+        # 遍历worker
+        # 如果match 则执行interrupt然后执行delete
+        # 否则直接创建一个worker 并执行delete
+        logger.info(f"删除下载 {gid}_{token}")
+        self.aioAccessorInstance.deleteCardInfo(gid)
+        async with self.wrLock:
+            inQueueWorker = False
+            for workerInstance in self.workers:
+                if workerInstance.match(gid, token):
+                    inQueueWorker = True
+                    await workerInstance.interrupt()
+                    await workerInstance.deleteGallery()
+        if not inQueueWorker:
+            await worker(self.aioAccessorInstance, self.loop, gid, token, None).deleteGallery()
