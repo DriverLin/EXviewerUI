@@ -154,10 +154,10 @@ class downloadManager():
         self.loop = aioAccessorInstance.loop
         self.wrLock = asyncio.Lock()
         self.workingWorker = None
-        self.workerQueue = asyncio.Queue()
+        self.workerQueue = asyncio.Queue(loop=self.loop)
         self.workers: List[worker] = []
-        self.workersCountSem = asyncio.Semaphore(0)
-        self.simulateFunctionCall = asyncio.Queue()
+        self.workersCountSem = asyncio.Semaphore(0, loop=self.loop)
+        self.simulateFunctionCall = asyncio.Queue(loop=self.loop)
 
         # 等待信号量
         # 取出第一个worker
