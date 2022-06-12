@@ -187,7 +187,7 @@ class downloadManager():
                     'gid': gid,
                     'token': token,
                     'success': 0,
-                    'state': DOWNLOAD_STATE.NOW_DOWNLOADING,
+                    'state': DOWNLOAD_STATE.IN_QUEUE,
                     'index': self.aioAccessorInstance.getNowDownloadIndex()
                 }
             else:
