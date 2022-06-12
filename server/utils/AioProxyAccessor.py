@@ -73,9 +73,9 @@ class aoiAccessor():
                 return html
             except Exception as e:
                 raise e
-        self._getHtmlAlwaysCache = AsyncCacheWarper(loop=self.loop, cacheContainer=LRUCache(
+        self._getHtmlAlwaysCache = AsyncCacheWarper(cacheContainer=LRUCache(
             maxsize=512, ttl=1, default=None),)(_getHtmlAlwaysCache)
-        self.preGetCover = AsyncCacheWarper(loop=self.loop, cacheContainer=LRUCache(
+        self.preGetCover = AsyncCacheWarper(cacheContainer=LRUCache(
             maxsize=512, default=None),)(self.getGalleryCover)
 
     def __del__(self):
