@@ -4,7 +4,7 @@ E站的(PWA)客户端，于在线浏览，下载以及管理本地画廊。基�
 ## 截图
 
 <div style="display: flex;">
-<img src="https://raw.githubusercontent.com/DriverLin/EXviewerUI/master/Screenshot/IMG_0001.jpg" width="30%" title="home"/>
+<img src="https://raw.githubusercontent.com/DriverLin/EXviewerUI/master/Screenshot/IMG_0006.jpg" width="30%" title="home"/>
 <img src="https://raw.githubusercontent.com/DriverLin/EXviewerUI/master/Screenshot/IMG_0012.jpg" width="30%" title="home" />
 <img src="https://raw.githubusercontent.com/DriverLin/EXviewerUI/master/Screenshot/IMG_0007.jpg" width="30%" title="home" />
 </div>
