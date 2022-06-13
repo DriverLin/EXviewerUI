@@ -72,10 +72,26 @@ class aoiAccessor():
                 return html
             except Exception as e:
                 raise e
-        self._getHtmlAlwaysCache = AsyncCacheWarper(cacheContainer=LRUCache(
+        self.r_e_getHtmlAlwaysCache = AsyncCacheWarper(cacheContainer=LRUCache(
             maxsize=512, ttl=1, default=None),)(_getHtmlAlwaysCache)
         self.preGetCover = AsyncCacheWarper(cacheContainer=LRUCache(
             maxsize=512, default=None),)(self.getGalleryCover)
+
+        self.loop.create_task(self.inlineSetOnInit())
+
+    async def inlineSetOnInit(self):
+        try:
+            await self.getHtml("https://exhentai.org/?inline_set=ts_l", cached=False)
+        except Exception as e:
+            logger.error(f"set / to Thumbnail failed: {e}")
+
+        try:
+            await self.getHtml("https://exhentai.org/?inline_set=dm_t", cached=False)
+        except Exception as e:
+            logger.error(f"set /g/ to large failed: {e}")
+            
+
+
 
     def __del__(self):
         self.session.close()
@@ -94,7 +110,7 @@ class aoiAccessor():
         '''
         if cached and self.cache_html.has(url):
             return self.cache_html.get(url)
-        result, err = await self._getHtmlAlwaysCache(url)
+        result, err = await self.r_e_getHtmlAlwaysCache(url)
         if not err:
             self.cache_html.set(
                 key=url,

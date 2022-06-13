@@ -1,4 +1,5 @@
 {
-    "DOWNLOAD_PATH": "./",
-    "cookie": ""
+    "EH_DOWNLOAD_PATH": "",
+    "EH_CACHE_PATH": "",
+    "EH_COOKIE": ""
 }

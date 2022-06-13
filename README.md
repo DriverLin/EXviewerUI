@@ -21,7 +21,7 @@ git clone https://github.com/DriverLin/EXviewerUI
 cd EXviewerUI
 pip install -r requirements.txt
 ```
-创建config.json并填写cookie
+创建server/config.json并填写cookie
 ```
 {
     "DOWNLOAD_PATH":"./",
