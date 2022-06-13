@@ -161,7 +161,7 @@ class EHDBM():
 class wsDBMBinder():
     def __init__(self, tab: Table, loop: asyncio.AbstractEventLoop) -> None:
         self.loop = loop
-        self._actionQueue = asyncio.Queue(loop=self.loop)
+        self._actionQueue = asyncio.Queue()#loop=self.loop
         self._dbm = EHDBM(tab=tab, actionQueue=self._actionQueue,
                           actionHandeler=self.handelAction)
         self._active_connections: List[WebSocket] = []

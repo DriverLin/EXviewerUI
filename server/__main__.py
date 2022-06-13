@@ -19,7 +19,7 @@ from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor
 from utils.DBM import wsDBMBinder
 from utils.tools import logger, makeTrackableException, printTrackableException
 
-serverLoop = asyncio.new_event_loop()
+serverLoop = asyncio.get_event_loop()
 
 ssl._create_default_https_context = ssl._create_unverified_context
 ROOT_PATH = os.path.split(os.path.realpath(__file__))[0]
@@ -51,7 +51,7 @@ if DOWNLOAD_PATH == "":
     logger.error("下载目录不存在")
     exit(1)
 
-GALLERY_PATH = path_join(DOWNLOAD_PATH, r"Gallarys")
+GALLERY_PATH = path_join(DOWNLOAD_PATH, r"Gallerys")
 COVER_PATH = path_join(DOWNLOAD_PATH, r"cover")
 DB_PATH = path_join(DOWNLOAD_PATH, path_join("api", "NosqlDB.json"))
 
@@ -332,6 +332,16 @@ async def asyncCover(filename: str):
         raise HTTPException(status_code=404, detail=str(
             makeTrackableException(e, f"请求封面 {filename} 失败")))
 
+@app.get("/getDiskCacheSize")
+def getDiskCacheSize():
+    text =  aioPa.getDiskCacheSize()
+    return {"msg": text}
+
+@app.get("/clearDiskCache")
+def clearDiskCache():
+    # return aioPa.clearDiskCache()
+    text =  aioPa.clearDiskCache()
+    return {"msg": text}
 
 @app.get("/")
 def index():
