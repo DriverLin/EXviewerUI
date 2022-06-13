@@ -7,7 +7,6 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import DownloadCircularProgress from './DownloadCircularProgress';
 // import Rating from '@mui/material/Rating';
 import Rating from './Rating';
-import syncedDB from '../../utils/mobxSyncedState';
 import { observer } from "mobx-react";
 
 const colorMap = {
