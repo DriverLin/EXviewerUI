@@ -26,7 +26,7 @@ export default function ZipDownloadButton(props) {
 
     const makeZipAsync = async () => {
         var new_zip = new JsZip();
-        const response = await fetch(`/gallery/${props.gid}_${props.token}/g_data.json`)
+        const response = await fetch(`/Gallery/${props.gid}_${props.token}/g_data.json`)
         if (!response.ok) {
             notifyMessage("error", "Failed to fetch g_data.json")
             setTimeout(() => { setNoError(false) }, 450);
@@ -39,7 +39,7 @@ export default function ZipDownloadButton(props) {
         new_zip.file("g_data.json", JSON.stringify(g_data, null, 4))
         let over = 0
         const jobs = Array.from(Array(Number(g_data.filecount)), (v, k) => k + 1).map(async (i) => {
-            const pic = await fetch(`/gallery/${g_data.gid}_${g_data.token}/${(Array(8).join(0) + i).slice(-8)}.jpg`)
+            const pic = await fetch(`/Gallery/${g_data.gid}_${g_data.token}/${(Array(8).join(0) + i).slice(-8)}.jpg`)
             if (!pic.ok) {
                 notifyMessage("error", `Failed to fetch ${(Array(8).join(0) + i).slice(-8)}.jpg`)
             } else {

@@ -4,6 +4,7 @@ import json
 from lib2to3.pgen2.token import tok_name
 import os
 from os.path import join as path_join
+import shutil
 from typing import List
 from urllib.parse import parse_qs
 
@@ -41,7 +42,7 @@ class aoiAccessor():
         self.coverPath = coverPath
         self.cachePath = cachePath
         self.galleryPath = galleryPath
-        self.cache_html = LRUCache(maxsize=512, default=None)
+        self.cache_html = LRUCache(maxsize=512,   default=None)
         self.cache_cardInfo = LRUCache(maxsize=512, default=None)
         # 下载时可以用， 获取g_data 然后更新数据库和此cache
         # 注意这个与数据库的cardInfo格式不同的 是他的超集
@@ -53,7 +54,7 @@ class aoiAccessor():
         self.db = db
         self.loop = loop
         self.downloadManagerInstance = downloadManager(self)
-        self.session = ClientSession(loop=loop)
+        self.session = ClientSession()  # loop=loop
 
         async def _getHtmlAlwaysCache(url: str):
             # cache 但是ttl极短
@@ -81,6 +82,14 @@ class aoiAccessor():
     def __del__(self):
         self.session.close()
 
+    def getUrlTTL(self, url):
+        if '.org/g/' in url:
+            return None
+        elif '.org/s/' in url:
+            return 60
+        else:
+            return None
+
     async def getHtml(self, url: str, cached=True):
         '''
         默认使用缓存
@@ -89,7 +98,11 @@ class aoiAccessor():
             return self.cache_html.get(url)
         result, err = await self._getHtmlAlwaysCache(url)
         if not err:
-            self.cache_html.set(url, result)
+            self.cache_html.set(
+                key=url,
+                value=result,
+                ttl=self.getUrlTTL(url)
+            )
             return result
         else:
             raise makeTrackableException(err, f"getHtml({url})")
@@ -305,7 +318,17 @@ class aoiAccessor():
                     return False
             return True
         downloadedGid = self.db.download.keys()
-        return [self.parseG_dataToCardInfo(g_data) for g_data in self.db.g_data.search((Query().tags.all(tags)) & ((Query().title.test(checkTitle)) | Query().title_jpn.test(checkTitle)) & (Query().gid.one_of(downloadedGid)))]
+        return sorted(
+            [
+                self.parseG_dataToCardInfo(g_data)
+                for g_data in self.db.g_data.search(
+                    (Query().tags.all(tags))
+                    & ((Query().title.test(checkTitle)) | Query().title_jpn.test(checkTitle))
+                    & (Query().gid.one_of(downloadedGid)))
+            ],
+            key=lambda x: self.db.download[x['gid']]['index'],
+            reverse=True
+        )
 
     async def getGalleryImage(self, gid, token, index) -> str:  # index 从一开始
         cachePath = path_join(self.cachePath, f"{gid}_{token}_{index:08d}.jpg")
@@ -409,11 +432,11 @@ class aoiAccessor():
         splittedUnFinishList = [unFinishList[i:i+25]
                                 for i in range(0, len(unFinishList), 25)]
 
-        for gidlist in splittedUnFinishList:
-            for g_data in await self.fetchG_dataOfficial(gidlist):
+        for gidList in splittedUnFinishList:
+            for g_data in await self.fetchG_dataOfficial(gidList):
                 g_data_map[(g_data['gid'], g_data['token'])] = g_data
         for (gid, token) in unFinishList:
-            self.downloadManagerInstance.addDownload(
+            await self.downloadManagerInstance.addDownload(
                 int(gid), token, g_data_map[(gid, token)])
         # print(f"unFinishList: {}")
         return len(unFinishList)
@@ -465,3 +488,13 @@ class aoiAccessor():
         if len(indexList) == 0:
             return 0
         return max(indexList) + 1
+
+    def getDiskCacheSize(self) -> str:
+        size = sum(os.path.getsize(path_join(self.cachePath,file)) for file in os.listdir(self.cachePath) )
+        return f"{size / 1024 / 1024:.2f} MB"
+
+    def clearDiskCache(self) -> str:
+        size = self.getDiskCacheSize()
+        shutil.rmtree(self.cachePath)
+        os.makedirs(self.cachePath)
+        return size

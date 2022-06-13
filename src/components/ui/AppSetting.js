@@ -1,7 +1,7 @@
 
-import { Grid, useMediaQuery , Button, Switch ,  List, Menu, MenuItem } from "@mui/material";
+import { Grid, useMediaQuery, Button, Switch, List, Menu, MenuItem } from "@mui/material";
 import { makeStyles } from '@mui/styles';
-import React,{ useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSetting } from "../utils/SettingHooks";
 
 
@@ -220,6 +220,79 @@ function SwitchType(props) {
         </Button>
     )
 }
+
+
+function ClearDiskCache() {
+    const classes = useStyles();
+    const [cacheSize,setCacheSize] = useState(0);
+    
+    const getDiskCacheSize = async () => {
+        try{
+            const response = await fetch("/getDiskCacheSize");
+            const data = await response.json();
+            setCacheSize(data["msg"]);
+        }catch(e){
+            console.log(e);
+        }
+    }
+    const clearDiskCache = async () => {
+        try{
+            const response = await fetch("/clearDiskCache");
+            const data = await response.json();
+            setCacheSize("已清除"+data["msg"]);
+        }catch(e){
+            console.log(e);
+        }
+    }
+
+    useEffect(() => {
+        getDiskCacheSize()
+    },[])
+
+
+    return <Button
+        sx={{
+            height: "75px",
+            padding: "10px 20px 10px 20px",
+            borderRadius: "0px",
+            width: "100%",
+            color: "text.primary",
+            "&:hover": {
+                backgroundColor: "#00000000",
+            }
+        }}
+        onClick={clearDiskCache}
+    >
+        <Grid
+            container
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{
+                width: "100%",
+            }}
+        >
+            <Grid item >
+                <Grid
+                    container
+                    direction="column"
+                    justifyContent="space-between"
+                    alignItems="flex-start"
+                >
+                    <Grid item>
+                        <div className={classes.name_text}>
+                            <a>{"清除缓存"}</a>
+                        </div>
+                    </Grid>
+                    
+                </Grid>
+            </Grid>
+            <Grid item >
+                <a>{cacheSize}</a>
+            </Grid>
+        </Grid>
+    </Button>
+}
 export default function AppSetting(props) {
     const classes = useStyles();
     const matches = useMediaQuery('(min-width:800px)');
@@ -296,6 +369,13 @@ export default function AppSetting(props) {
                         help={(value) => value ? "搜索结果优先显示已下载的画廊" : "不优先显示已下载的画廊"}
                     />
                 </Grid>
+
+                <div className={classes.splitLine} />
+
+                <Grid item xs={12} sx={{ width: "100%" }}>
+                    <ClearDiskCache />
+                </Grid>
+
             </Grid>
         </div>
     )
