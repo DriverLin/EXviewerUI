@@ -30,7 +30,8 @@ if not os.path.exists(CONFIG_PATH):
     open(CONFIG_PATH, "w").write(json.dumps({
         "EH_DOWNLOAD_PATH": "",
         "EH_CACHE_PATH": "",
-        "EH_COOKIE": ""
+        "EH_COOKIE": "",
+        "PORT": 7964
     }, indent=4))
 CONFIG = json.load(open(CONFIG_PATH))
 
@@ -71,7 +72,7 @@ logger.info(f"缓存目录 {CACHE_PATH}")
 FAVORITE_DISABLED = getConfig("EH_FAVORITE_DISABLED", 'false')
 DOWNLOAD_DISABLED = getConfig("EH_DOWNLOAD_DISABLED", 'false')
 EH_POST_COMMENT_DISABLED = getConfig("EH_POST_COMMENT_DISABLED", 'false')
-PORT = int(getConfig("EH_PORT", 7964))
+PORT = int(getConfig("PORT", 7964))
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36",
