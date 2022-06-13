@@ -8,7 +8,7 @@ import { useLocation } from "react-router-dom";
 import { getGuess } from "../GetTranslate";
 
 function HideOnScroll(props) {
-    const { children, __window , hidden } = props;
+    const { children, __window, hidden } = props;
     return (
         <Slide appear={false} direction="down" in={!hidden}>
             {children}
@@ -23,10 +23,10 @@ HideOnScroll.propTypes = {
 
 
 export default function TopSearchBar(props) {
- 
+
     const small_matches = useMediaQuery('(min-width:560px)')
     const break_matches = useMediaQuery('(min-width:840px)')
-    
+
     const rootWidth = useMemo(() => {
         if (small_matches) {
             if (break_matches) {
@@ -38,7 +38,7 @@ export default function TopSearchBar(props) {
             return "calc(100vw - 120px)"
         }
     }, [small_matches, break_matches])
-    
+
     const autoCompleteWidth = useMemo(() => {
         if (small_matches) {
             if (break_matches) {
@@ -49,7 +49,7 @@ export default function TopSearchBar(props) {
         } else {
             return "calc(100vw - 20px)"
         }
-    }, [small_matches,break_matches])
+    }, [small_matches, break_matches])
 
 
 
@@ -139,12 +139,13 @@ export default function TopSearchBar(props) {
         handelAutoComplete(e.target.value)
     }
     const doSearch = () => {
+        if (searchValueRef.current === "") return
         props.doSearch(searchValueRef.current)
     }
 
     const inputFocusState = useRef(false)
 
-    const AutoCompleteItem = ({data}) =>
+    const AutoCompleteItem = ({ data }) =>
         <ButtonBase
             onClick={() => { finishAutoComplete(data) }}
             sx={{

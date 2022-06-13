@@ -133,12 +133,6 @@ class aoiAccessor():
     # @printPerformance
     def updateLocalFavorite(self, gid: int, index: int):
         # logger.info(f"self.db.favorite[{gid}]({type(gid)}) = {self.db.favorite[gid]}")
-        if index == 999:
-            if self.db.favorite[gid] == None:
-                logger.info(f"{gid} 本地没有记录且未知收藏夹index")
-                self.db.favorite[gid] = {'gid': gid, 'state': 2, 'index': 999}
-            return
-
         if index == -1:
             if self.db.favorite[gid] != None:
                 logger.info(f"{gid} 删除本地收藏")
@@ -245,7 +239,7 @@ class aoiAccessor():
         try:
             html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?p=0", cached=cached)
             g_data = getG_dataFromGalleryPage(html)
-            self.updateLocalFavorite(gid, g_data['extended']['favorite'])
+            self.updateLocalFavorite(gid, g_data['extended']['favoriteIndex'])
             self.cache_g_data.set(gid, g_data)
             return g_data
         except Exception as e:
@@ -256,7 +250,7 @@ class aoiAccessor():
         for cardInfo in cardInfos:
             self.cache_cardInfo.set(cardInfo['gid'], cardInfo)
             self.updateLocalFavorite(
-                cardInfo['gid'], 999 if cardInfo['favorite'] else -1)
+                cardInfo['gid'], cardInfo['favoriteIndex'])
             self.loop.create_task(self.preGetCover(
                 cardInfo['gid'], cardInfo['token']))
 
@@ -294,7 +288,7 @@ class aoiAccessor():
             "lang": "chinese" if "language:chinese" in g_data["tags"] else "",
             "pages": g_data["filecount"],
             # 用于刷新本地状态 前端用不到 因为前端靠全局状态判断favorite和download
-            "favorite": self.db.favorite[g_data['gid']]['index'] if self.db.favorite[g_data['gid']] else -1,
+            "favoriteIndex": self.db.favorite[g_data['gid']]['index'] if self.db.favorite[g_data['gid']] else -1,
         }
 
     @printPerformance
