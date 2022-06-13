@@ -1,5 +1,6 @@
 {
     "EH_DOWNLOAD_PATH": "",
     "EH_CACHE_PATH": "",
-    "EH_COOKIE": ""
+    "EH_COOKIE": "",
+    "PORT": 7964
 }
