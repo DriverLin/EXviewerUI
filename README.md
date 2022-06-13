@@ -1,70 +1,56 @@
-# Getting Started with Create React App
+# EXviewer
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+E站的(PWA)客户端，于在线浏览，下载以及管理本地画廊。基于React与MaterialUI构建
+## 截图
 
-## Available Scripts
+<div style="display: flex;">
+<img src="https://raw.githubusercontent.com/DriverLin/EXviewerUI/master/Screenshot/IMG_0001.jpg" width="30%" title="home"/>
+<img src="https://raw.githubusercontent.com/DriverLin/EXviewerUI/master/Screenshot/IMG_0012.jpg" width="30%" title="home" />
+<img src="https://raw.githubusercontent.com/DriverLin/EXviewerUI/master/Screenshot/IMG_0007.jpg" width="30%" title="home" />
+</div>
+<div style="display: flex;">
+<img src="https://raw.githubusercontent.com/DriverLin/EXviewerUI/master/Screenshot/Screenshot_20220613-210439.jpg" width="30%" title="home" />
+<img src="https://raw.githubusercontent.com/DriverLin/EXviewerUI/master/Screenshot/Screenshot_20220613-210111.jpg" width="30%" title="detail"/>
+<img src="https://raw.githubusercontent.com/DriverLin/EXviewerUI/master/Screenshot/Screenshot_20220613-210501.jpg" width="30%" title="detail"/>
+</div>
 
-In the project directory, you can run:
+## 本地部署
 
-### `npm start`
+```
+git clone https://github.com/DriverLin/EXviewerUI
+cd EXviewerUI
+pip install -r requirements.txt
+```
+创建config.json并填写cookie
+```
+{
+    "DOWNLOAD_PATH":"./",
+    "cookie": "ipb_member_id=***; ipb_pass_hash=***; igneous=***; sl=dm_1; sk=***; s=***"
+}
+```
+运行
+```
+python server 
+访问 http://YOUR_IP:7964 
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 部署到Heroku
+使用Heroku托管运行
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://dashboard.heroku.com/new?template=https://github.com/DriverLin/EXviewerUI) 
 
-### `npm test`
+## 环境变量
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+可使用环境变量来指定相关配置
 
-### `npm run build`
+如果指定了环境变量 则会忽略配置文件中的项
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+EHCOOKIE : cookie字符串
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+EH_DOWNLOAD_PATH : 下载路径
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+EH_CACHE_PATH : 缓存路径
 
-### `npm run eject`
+PORT : 端口
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
