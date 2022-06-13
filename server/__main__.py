@@ -71,7 +71,7 @@ logger.info(f"缓存目录 {CACHE_PATH}")
 FAVORITE_DISABLED = getConfig("EH_FAVORITE_DISABLED", 'false')
 DOWNLOAD_DISABLED = getConfig("EH_DOWNLOAD_DISABLED", 'false')
 EH_POST_COMMENT_DISABLED = getConfig("EH_POST_COMMENT_DISABLED", 'false')
-
+PORT = int(getConfig("EH_PORT", 7964))
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36",
@@ -353,7 +353,7 @@ if __name__ == "__main__":
     serverConfig = Config(
         app=app,
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 7964)),
+        port=PORT,
         log_level="info",
         loop=serverLoop,
     )

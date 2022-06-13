@@ -45,7 +45,7 @@ python server
 
 如果指定了环境变量 则会忽略配置文件中的项
 
-EHCOOKIE : cookie字符串
+EH_COOKIE : cookie字符串
 
 EH_DOWNLOAD_PATH : 下载路径
 
@@ -53,4 +53,8 @@ EH_CACHE_PATH : 缓存路径
 
 PORT : 端口
 
+## 致谢
+
+- UI参考 [seven332/EhViewer](https://github.com/seven332/EhViewer)
+- 翻译数据 [EhTagTranslation](https://github.com/EhTagTranslation/Database)
 

@@ -5,7 +5,7 @@ import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from "react-router-dom";
-import { getGuess } from "../GetTranslate";
+import { getGuess } from "../../utils/GetTranslate";
 
 function HideOnScroll(props) {
     const { children, __window, hidden } = props;

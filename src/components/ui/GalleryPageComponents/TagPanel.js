@@ -1,7 +1,7 @@
 import Button from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
 import * as React from 'react';
-import GetTranslate from "../GetTranslate.js";
+import GetTranslate from "../../utils/GetTranslate.js";
 
 
 
