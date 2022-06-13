@@ -81,18 +81,29 @@ class worker():
                 for i in range(self.fileCount):
                     dst = os.path.join(saveDir, f"{(i + 1):08d}.jpg")
                     src = self.imgPathMap[i]
-                    shutil.copyfile(src, dst) if not os.path.exists(
+                    # shutil.copyfile(src, dst) if not os.path.exists(
+                    #     dst) else None
+                    # logger.debug(f"cp {src} -> {dst}")
+                    shutil.move(src, dst) if not os.path.exists(
                         dst) else None
-                    logger.debug(f"cp {src} -> {dst}")
+                    logger.debug(f"mv {src} -> {dst}")
+
+
                 g_data_json_save_path = os.path.join(saveDir, "g_data.json")
                 with open(g_data_json_save_path, "w", encoding="utf-8") as f:
                     json.dump(self.g_data, f, ensure_ascii=True, indent=4)
                 logger.debug(f"保存 g_data.json 到 {g_data_json_save_path}")
                 cover_save_path = os.path.join(
                     self.aioAccessorInstance.coverPath, f"{self.gid}_{self.token}.jpg")
-                shutil.copyfile(self.coverPath, cover_save_path) if not os.path.exists(
+                # shutil.copyfile(self.coverPath, cover_save_path) if not os.path.exists(
+                #     cover_save_path) else None
+                # logger.debug(f"cp {self.coverPath} -> {cover_save_path}")
+                shutil.move(self.coverPath, cover_save_path) if not os.path.exists(
                     cover_save_path) else None
-                logger.debug(f"cp {self.coverPath} -> {cover_save_path}")
+                logger.debug(f"mv {self.coverPath} -> {cover_save_path}")
+
+
+
 
     async def downloader(self,):
         queueSem = asyncio.Semaphore(5)
