@@ -1,14 +1,12 @@
 
 import asyncio
 import json
-from lib2to3.pgen2.token import tok_name
 import os
 from os.path import join as path_join
 import shutil
 from typing import List
 from urllib.parse import parse_qs
 
-import requests
 from aiohttp import ClientSession, ClientTimeout
 from cacheout import LRUCache
 from tinydb import Query
