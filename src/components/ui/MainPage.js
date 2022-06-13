@@ -111,33 +111,48 @@ function MainPage_inner(props) {
     const lock = useRef(false)
     const [loading, setLoading] = useState(false)
 
-    const syncDBToHooks = (forceUpdate, download, card_info) => {
-        // console.log("syncDBToHooks", forceUpdate, download, card_info)
-        const download_values = Object.values(download)
-        const card_info_values = Object.values(card_info)
-        if (!forceUpdate) {
-            if (download_values.length !== card_info_values.length) {//数据还没同步完成 忽略
-                console.log("数据还没同步完成 忽略")
-                return
-            }
-            if (download_values.length === downloadCount.current) {//长度没有改变 即不是删除或者添加 忽略
-                console.log("长度没有改变 即不是删除或者添加 忽略")
+    const syncDBToHooks = (
+        forceUpdate,
+        download_key_set,
+        card_info_key_set,
+        download,
+        card_info
+    ) => {
+        // console.log("同步DB到HOOKS触发")
+        if (download_key_set.size !== card_info_key_set.size) {
+            // console.log("key长度不同 跳过")
+            return
+        }
+
+        for (let gid_key in download_key_set) {
+            if (!card_info[gid_key]) {
+                // console.log("download与card_info数据未同步 跳过", gid_key)
                 return
             }
         }
-        downloadCount.current = download_values.length
+
+        if (!forceUpdate) {
+            if (download_key_set.size === downloadCount.current) {//长度没有改变 即不是删除或者添加 忽略
+                // console.log("长度没有改变 跳过")
+                return
+            }
+        }
+        downloadCount.current = download_key_set.size
+
         const indexedDownload = []
-        download_values.forEach(item => {
+        Object.values(download).forEach(item => {
             indexedDownload[item.index] = item.gid
         })
+
         const newCardList = indexedDownload.filter(item => item !== undefined).reverse()
+
         if (forceUpdate) {
-            console.log("强制更新", newCardList.length)
+            // console.log("强制更新", newCardList.length)
             setCardInfoMap(toJS(card_info))
-            setCardGidList(toJS(newCardList))
+            setCardGidList(newCardList)
         } else {
             setCardInfoMap(toJS(card_info))
-            console.log("更新", cardGidList.length, newCardList.length)
+            // console.log("更新", cardGidList.length, newCardList.length)
             setCardGidList((old) => removeAndInsert(old, newCardList))
         }
     }
@@ -146,7 +161,13 @@ function MainPage_inner(props) {
 
     const requestData = async () => {
         if (props.downloadPage) {
-            syncDBToHooks(true, syncedDB.download, syncedDB.card_info)
+            syncDBToHooks(
+                true,
+                toJS(syncedDB.keys.download),
+                toJS(syncedDB.keys.card_info),
+                syncedDB.download,
+                syncedDB.card_info
+            )
             lock.current = false
             setLoading(false)
         } else {
@@ -211,14 +232,18 @@ function MainPage_inner(props) {
         console.log("useEffect 注册autorun")
         autorun(
             () => {
-                // console.log("autorun 触发", props.downloadPage)
                 if (!props.downloadPage) {
                     console.log("autorun 不是下载页面 退出")
                     return
                 }
                 console.time("autorun 同步数据库到hooks")
-                syncDBToHooks(false, syncedDB.download, syncedDB.card_info)
-                console.log("syncedDB.download, syncedDB.card_info",typeof syncedDB.download,typeof syncedDB.card_info)
+                syncDBToHooks(
+                    false,
+                    toJS(syncedDB.keys.download),
+                    toJS(syncedDB.keys.card_info),
+                    syncedDB.download,
+                    syncedDB.card_info
+                )
                 console.timeEnd("autorun 同步数据库到hooks")
             }
         )

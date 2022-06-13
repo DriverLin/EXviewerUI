@@ -7,25 +7,30 @@ class GlobalState {
   download = {}
   favorite = {}
   card_info = {}
+  keys={
+    g_data:new Set(),
+    download:new Set(),
+    favorite:new Set(),
+    card_info:new Set()
+  }
   constructor() {
     makeAutoObservable(this);
     console.log("GlobalState init")
   }
 
   set_kv(attrName, key, value) {
-    // console.time("set_kv")
     this[attrName][key] = value
-    // console.timeEnd("set_kv")
+    this.keys[attrName].add(key)
   }
   del_k(attrName, key) {
-    // this[attrName][key] = undefined
     delete this[attrName][key]
+    this.keys[attrName].delete(key)
   }
   load_data(attrName, data) {
     console.time("load_data")
     this[attrName] = data
+    this.keys[attrName] = new Set(Object.keys(data))
     console.timeEnd("load_data")
-    console.log('data length = ',JSON.stringify(data).length)
   }
 
   getEventHandeler(attrName) {
