@@ -51,7 +51,7 @@ if DOWNLOAD_PATH == "":
     logger.error("下载目录不存在")
     exit(1)
 
-GALLERY_PATH = path_join(DOWNLOAD_PATH, r"Gallerys")
+GALLERY_PATH = path_join(DOWNLOAD_PATH, r"Gallery")
 COVER_PATH = path_join(DOWNLOAD_PATH, r"cover")
 DB_PATH = path_join(DOWNLOAD_PATH, path_join("api", "NosqlDB.json"))
 
