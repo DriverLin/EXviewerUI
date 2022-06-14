@@ -6,3 +6,4 @@ websockets==10.3
 aiohttp==3.8.1
 lxml==4.9.0
 tinydb==4.7.0
+Pillow==9.1.0

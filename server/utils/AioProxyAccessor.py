@@ -124,7 +124,12 @@ class aoiAccessor():
         下载url 返回bytes
         '''
         try:
-            resp = await self.session.get(url, headers=self.headers, proxy=self.proxy)
+            resp = await self.session.get(
+                url,
+                headers=self.headers,
+                proxy=self.proxy,
+                timeout=ClientTimeout(total=8)
+            )
             return await resp.read()
         except Exception as e:
             raise makeTrackableException(e, f"download({url}) -> bytes failed")
@@ -484,9 +489,9 @@ class aoiAccessor():
     def deleteCardInfo(self, gid):
         if self.db.card_info[gid]:
             del self.db.card_info[gid]
-            logger.debug(f"deleteCardInfo({gid})")
+            logger.warning(f"deleteCardInfo({gid})")
         else:
-            logger.debug(f"deleteCardInfo({gid}) record not found")
+            logger.warning(f"deleteCardInfo({gid}) record not found")
 
     @printPerformance
     def getNowDownloadIndex(self) -> int:
@@ -497,7 +502,8 @@ class aoiAccessor():
         return max(indexList) + 1
 
     def getDiskCacheSize(self) -> str:
-        size = sum(os.path.getsize(path_join(self.cachePath,file)) for file in os.listdir(self.cachePath) )
+        size = sum(os.path.getsize(path_join(self.cachePath, file))
+                   for file in os.listdir(self.cachePath))
         return f"{size / 1024 / 1024:.2f} MB"
 
     def clearDiskCache(self) -> str:
