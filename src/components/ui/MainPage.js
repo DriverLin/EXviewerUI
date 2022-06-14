@@ -114,26 +114,24 @@ function MainPage_inner(props) {
     const syncDBToHooks = (
         forceUpdate,
         download_key_set,
-        card_info_key_set,
         download,
         card_info
     ) => {
-        // console.log("同步DB到HOOKS触发")
-        if (download_key_set.size !== card_info_key_set.size) {
-            // console.log("key长度不同 跳过")
-            return
-        }
-
+        console.log("同步DB到HOOKS触发")
+        // if (download_key_set.size !== card_info_key_set.size) {
+        //     console.log("key长度不同 跳过")
+        //     return
+        // }
         for (let gid_key in download_key_set) {
             if (!card_info[gid_key]) {
-                // console.log("download与card_info数据未同步 跳过", gid_key)
+                console.log("download与card_info数据未同步 跳过", gid_key)
                 return
             }
         }
 
         if (!forceUpdate) {
             if (download_key_set.size === downloadCount.current) {//长度没有改变 即不是删除或者添加 忽略
-                // console.log("长度没有改变 跳过")
+                console.log("长度没有改变 跳过")
                 return
             }
         }
@@ -147,12 +145,12 @@ function MainPage_inner(props) {
         const newCardList = indexedDownload.filter(item => item !== undefined).reverse()
 
         if (forceUpdate) {
-            // console.log("强制更新", newCardList.length)
+            console.log("强制更新", newCardList.length)
             setCardInfoMap(toJS(card_info))
             setCardGidList(newCardList)
         } else {
             setCardInfoMap(toJS(card_info))
-            // console.log("更新", cardGidList.length, newCardList.length)
+            console.log("更新", cardGidList.length, newCardList.length)
             setCardGidList((old) => removeAndInsert(old, newCardList))
         }
     }
@@ -164,7 +162,6 @@ function MainPage_inner(props) {
             syncDBToHooks(
                 true,
                 toJS(syncedDB.keys.download),
-                toJS(syncedDB.keys.card_info),
                 syncedDB.download,
                 syncedDB.card_info
             )
@@ -240,7 +237,6 @@ function MainPage_inner(props) {
                 syncDBToHooks(
                     false,
                     toJS(syncedDB.keys.download),
-                    toJS(syncedDB.keys.card_info),
                     syncedDB.download,
                     syncedDB.card_info
                 )

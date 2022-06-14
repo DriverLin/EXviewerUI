@@ -8,6 +8,7 @@ from typing import List
 from urllib.parse import parse_qs
 
 from aiohttp import ClientSession, ClientTimeout
+from async_timeout import timeout
 from cacheout import LRUCache
 from tinydb import Query
 
@@ -73,7 +74,7 @@ class aoiAccessor():
             except Exception as e:
                 raise e
         self.r_e_getHtmlAlwaysCache = AsyncCacheWarper(cacheContainer=LRUCache(
-            maxsize=512, ttl=1, default=None),)(_getHtmlAlwaysCache)
+            maxsize=512, ttl=3, default=None),)(_getHtmlAlwaysCache)
         self.preGetCover = AsyncCacheWarper(cacheContainer=LRUCache(
             maxsize=512, default=None),)(self.getGalleryCover)
 
@@ -89,9 +90,6 @@ class aoiAccessor():
             await self.getHtml("https://exhentai.org/?inline_set=dm_t", cached=False)
         except Exception as e:
             logger.error(f"set /g/ to large failed: {e}")
-            
-
-
 
     def __del__(self):
         self.session.close()
@@ -228,6 +226,7 @@ class aoiAccessor():
                 },
                 headers=self.headers,
                 proxy=self.proxy,
+                timeout=ClientTimeout(total=8),
             )
             text = await resp.text()
             g_data_list = json.loads(text)["gmetadata"]
