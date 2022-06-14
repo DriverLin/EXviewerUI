@@ -12,6 +12,7 @@ import { style } from '@mui/system';
 function ImageRender(props) {
     const [state, setState] = useState("loading")
     const loadImage = () => {
+        setState("loading")
         const img = new Image()
         img.onload = () => {
             // setTimeout(() => {
@@ -35,7 +36,7 @@ function ImageRender(props) {
     }, [])
     return <div style={{
         ...(props.style || {}),
-        border: "1px solid #D90051",
+        // border: "1px solid #D90051",
     }}>
         {
             state === "loading" ? <div style={{//正方形
@@ -66,7 +67,7 @@ function ImageRender(props) {
                     justifyContent: "center",
                     alignItems: "center",
                 }}
-                    onClick={() => { }}
+                    onClick={loadImage}
                 >
                     <BrokenImageIcon />
                 </div>

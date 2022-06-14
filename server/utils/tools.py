@@ -1,10 +1,11 @@
 import asyncio
+import io
 import json
 import logging
 import os
 import threading
 import time
-
+from PIL import Image
 import coloredlogs
 
 printPerformance__log_path = r"p:\printPerformance.log"
@@ -15,24 +16,6 @@ coloredlogs.install(
     level=logging.DEBUG, logger=logger, milliseconds=True, datefmt="%X", fmt=fmt
 )
 
-
-def checkImg(img):
-    if img == None:
-        return False
-    lastBytes = b""
-    if type(img) == str:
-        if not os.path.exists(img):
-            return False
-        else:
-            f = open(img, "rb")
-            f.seek(-2, 2)
-            lastBytes = f.read()
-            f.close()
-    elif type(img) == bytes:
-        lastBytes = img[-2:]
-    else:
-        logger.warning("checkImg: unknow arg type", type(img))
-    return lastBytes in [b"\xff\xd9", b"\x60\x82", b"\x00\x3b"]
 
 
 def timestamp_to_str(formatstr, timestamp):
@@ -144,3 +127,45 @@ async def asyncExecutor(func, *args, **kwargs):
     return await asyncio.get_event_loop().run_in_executor(
         None, func, *args, **kwargs
     )
+
+
+# @printPerformance
+# def checkImg(img):
+#     if img == None:
+#         return False
+#     lastBytes = b""
+#     if type(img) == str:
+#         if not os.path.exists(img):
+#             return False
+#         else:
+#             f = open(img, "rb")
+#             f.seek(-2, 2)
+#             lastBytes = f.read()
+#             f.close()
+#     elif type(img) == bytes:
+#         lastBytes = img[-2:]
+#     else:
+#         logger.warning("checkImg: unknown arg type", type(img))
+#     return lastBytes in [b"\xff\xd9", b"\x60\x82", b"\x00\x3b"]
+
+def checkImg(img):
+    if img == None:
+        return False
+    if type(img) == str:
+        if not os.path.exists(img):
+            return False
+        else:
+            try:
+                Image.open(img).verify()
+                return True
+            except Exception as e:
+                logger.warning(f"checkImg: verify failed: {e}")
+    elif type(img) == bytes:
+        try:
+            Image.open(io.BytesIO(img)).verify()
+            return True
+        except Exception as e:
+            logger.warning(f"checkImg:  verify failed: {e}")
+    else:
+        logger.warning("checkImg: unknown arg type", type(img))
+        return False
