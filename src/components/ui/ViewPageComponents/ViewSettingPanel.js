@@ -17,7 +17,7 @@ import Switch from '@mui/material/Switch';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { useSetting } from '../../utils/SettingHooks';
-
+import SwipeVerticalIcon from '@mui/icons-material/SwipeVertical';
 
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -76,7 +76,7 @@ export default function ViewSettingPanel(props) {
     const [horizontalView, setHorizontalView] = useSetting("横屏模式", false);
     const [switchPagination, setSwitchPagination] = useSetting("分页模式", false);
     const [switchDirection, setSwitchDirection] = useSetting("阅读方向", true);
-
+    const [readVertical, setReadVertical] = useSetting("竖屏阅读", false);
     return (
         <div>
             <BootstrapDialog
@@ -103,9 +103,23 @@ export default function ViewSettingPanel(props) {
                 >
                     <ListItem>
                         <ListItemIcon>
+                            <SwipeVerticalIcon color='primary' />
+                        </ListItemIcon>
+                        <ListItemText primary="竖向滚动" />
+                        <Switch
+                            edge="end"
+                            onChange={() => setReadVertical(!readVertical)}
+                            checked={readVertical}
+                            inputProps={{
+                                'aria-labelledby': 'switch-list-label-wifi',
+                            }}
+                        />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemIcon>
                             <ScreenRotationIcon color='primary' />
                         </ListItemIcon>
-                        <ListItemText primary="横屏模式" />
+                        <ListItemText primary="双页阅读" />
                         <Switch
                             edge="end"
                             onChange={() => setHorizontalView(!horizontalView)}

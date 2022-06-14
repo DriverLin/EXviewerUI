@@ -8,6 +8,7 @@ import RevSlider from './ViewPageComponents/RevSlider';
 import ViewSettingPanel from './ViewPageComponents/ViewSettingPanel';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import LoadingAnime from './LoadingAnime';
+import VerticalScrollViewer from './ViewPageComponents/VerticalScrollViewer';
 
 const fix8 = (num) => (Array(8).join(0) + num).slice(-8)
 
@@ -17,7 +18,7 @@ export default function ViewPage(props) {
     const [errorInfo, setErrorInfo] = useState(["unknown error"])
     const [pages, setPages] = useState(0)
     const [title, setTitle] = useState("")
-    
+
     const fetchData = async () => {
         const g_data_response = await fetch(`/Gallery/${props.gid}_${props.token}/g_data.json`)
         if (g_data_response.ok) {
@@ -38,7 +39,7 @@ export default function ViewPage(props) {
     }
     useEffect(() => {
         fetchData()
-    },[props.gid, props.token])
+    }, [props.gid, props.token])
 
     return <div>
         {pageState === "init" ? <div /> : null}
@@ -152,6 +153,7 @@ function ViewPageUI(props) {
     const horizontalView = useSettingBind("横屏模式", false);
     const switchPagination = useSettingBind("分页模式", false);
     const switchDirection = useSettingBind("阅读方向", true);
+    const readVertical = useSettingBind("竖屏阅读", false);
 
     const onViewSettingPanelClose = () => { setSettingPanelOpen(false) }
     const onViewSettingPanelOpen = () => { setSettingPanelOpen(true) }
@@ -190,15 +192,18 @@ function ViewPageUI(props) {
             />
             <div style={{ height: '100vh', width: '100vw', }} onClick={handelTap}>
                 {
-                    <MultiPageSwiper
-                        key={refreshKey}//切换横屏模式  就重新渲染 避免了页数切换的BUG
-                        value={pageNum}
-                        setValue={setPageNum}
-                        reverse={switchDirection}
-                        double={horizontalView}
-                        pagination={switchPagination}
+                    readVertical ? <VerticalScrollViewer
                         urls={urls}
-                    />
+                    /> :
+                        <MultiPageSwiper
+                            key={refreshKey}//切换横屏模式  就重新渲染 避免了页数切换的BUG
+                            value={pageNum}
+                            setValue={setPageNum}
+                            reverse={switchDirection}
+                            double={horizontalView}
+                            pagination={switchPagination}
+                            urls={urls}
+                        />
                 }
             </div>
             <RevSlider

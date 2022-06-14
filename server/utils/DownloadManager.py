@@ -108,21 +108,20 @@ class worker():
     async def downloader(self,):
         queueSem = asyncio.Semaphore(5)
         async def downloadFunc(index):
-            await queueSem.acquire()
-            if not self.interrupted:
-                try:
-                    imgPath = await self.aioAccessorInstance.getGalleryImage(self.gid, self.token, index+1)
-                    self.imgPathMap[index] = imgPath
-                    await asyncio.sleep(1/1000)
-                    await self.channel.put(SIGNAL_SUCCESS)
-                except Exception as e:
-                    printTrackableException(e)
-                    await self.channel.put(SIGNAL_FAILURE)
+            async with queueSem:
+                if not self.interrupted:
+                    try:
+                        imgPath = await self.aioAccessorInstance.getGalleryImage(self.gid, self.token, index+1)
+                        self.imgPathMap[index] = imgPath
+                        await asyncio.sleep(1/1000)
+                        await self.channel.put(SIGNAL_SUCCESS)
+                    except Exception as e:
+                        printTrackableException(e)
+                        await self.channel.put(SIGNAL_FAILURE)
 
-                logger.debug(f"图片下载已完成 {self.gid}_{self.token}/{index}")
-            else:
-                logger.warning(f"图片下载已撤销 {self.gid}_{self.token}/{index}")
-            queueSem.release()
+                    logger.debug(f"图片下载已完成 {self.gid}_{self.token}/{index}")
+                else:
+                    logger.warning(f"图片下载已撤销 {self.gid}_{self.token}/{index}")
 
         tasks = [asyncio.create_task(downloadFunc(i))
                  for i in range(self.fileCount)]
