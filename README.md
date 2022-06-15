@@ -24,14 +24,17 @@ pip install -r requirements.txt
 创建server/config.json并填写cookie
 ```
 {
-    "DOWNLOAD_PATH":"./",
-    "cookie": "ipb_member_id=***; ipb_pass_hash=***; igneous=***; sl=dm_1; sk=***; s=***"
+    "EH_DOWNLOAD_PATH": "",
+    "EH_CACHE_PATH": "",
+    "EH_COOKIE": "ipb_member_id=***; ipb_pass_hash=***; igneous=***; sl=dm_1; sk=***; s=***",
+    "PORT": 7964
 }
 ```
 运行
 ```
 python server 
-访问 http://YOUR_IP:7964 
+访问 http://IP:PORT 
+并将网站安装到桌面
 ```
 
 ## 部署到Heroku

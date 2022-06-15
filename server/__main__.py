@@ -87,7 +87,7 @@ class CachingMiddlewareAutoWrite(CachingMiddleware):
         self.lastWriteCount = 0
         self.running = True
         self.writeLock = threading.Lock()
-        threading.Thread(target=self.writeWatcherThread).start()
+        self.stopSignal = threading.Event()
 
     def write(self, data):
         with self.writeLock:
@@ -95,16 +95,29 @@ class CachingMiddlewareAutoWrite(CachingMiddleware):
             self._cache_modified_count += 1
 
     def writeWatcherThread(self):
-        while self.running:
-            if self._cache_modified_count != self.lastWriteCount:
-                with self.writeLock:
-                    self.lastWriteCount = self._cache_modified_count
-                    self.flush()
-                logger.debug(f"write cache to file")
-            sleep(self.ttw)
+        logger.info("CachingMiddlewareAutoWrite write thread start")
+        while True:
+            if not self.stopSignal.wait(self.ttw):
+                if self._cache_modified_count != self.lastWriteCount:
+                    with self.writeLock:
+                        self.lastWriteCount = self._cache_modified_count
+                        self.flush()
+                    logger.debug(f"write cache to file")
+            else:
+                if self._cache_modified_count != self.lastWriteCount:
+                    with self.writeLock:
+                        self.lastWriteCount = self._cache_modified_count
+                        self.flush()
+                        logger.debug(f"write cache to file")
+                logger.info(f"CachingMiddlewareAutoWrite write thread stopped")
+                break
+
+    def stop(self):
+        self.stopSignal.set()
 
 
-NOSQL_DB = TinyDB(DB_PATH, storage=CachingMiddlewareAutoWrite(JSONStorage))
+NOSQL_CACHE = CachingMiddlewareAutoWrite(JSONStorage)
+NOSQL_DB = TinyDB(DB_PATH, storage=NOSQL_CACHE)
 g_data_wsBinder = wsDBMBinder(NOSQL_DB.table('g_data'), serverLoop)
 download_wsBinder = wsDBMBinder(NOSQL_DB.table('download'), serverLoop)
 favorite_wsBinder = wsDBMBinder(NOSQL_DB.table('favorite'), serverLoop)
@@ -359,4 +372,8 @@ if __name__ == "__main__":
         loop=serverLoop,
     )
     appServer = Server(serverConfig)
+    DB_CACHE_WRITER = threading.Thread(target=NOSQL_CACHE.writeWatcherThread)
+    DB_CACHE_WRITER.start()
     serverLoop.run_until_complete(appServer.serve())
+    NOSQL_CACHE.stop()
+    DB_CACHE_WRITER.join()
