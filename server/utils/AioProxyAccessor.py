@@ -55,29 +55,6 @@ class aoiAccessor():
         self.downloadManagerInstance = downloadManager(self)
         self.session = ClientSession()  # loop=loop
 
-        async def _getHtmlAlwaysCache(url: str):
-            # cache 但是ttl极短
-            # 仅用于短时间内大量请求
-            # 需要外部函数调用 并单独缓存
-            try:
-                resp = await self.session.get(
-                    url,
-                    headers=self.headers,
-                    proxy=self.proxy,
-                    timeout=ClientTimeout(total=8)
-                )
-                html = await resp.text()
-                removeIndex = html.find("<html")
-                if removeIndex != -1:
-                    html = html[removeIndex:]
-                return html
-            except Exception as e:
-                raise e
-        self.r_e_getHtmlAlwaysCache = AsyncCacheWarper(cacheContainer=LRUCache(
-            maxsize=512, ttl=3, default=None),)(_getHtmlAlwaysCache)
-        self.preGetCover = AsyncCacheWarper(cacheContainer=LRUCache(
-            maxsize=512, default=None),)(self.getGalleryCover)
-
         self.loop.create_task(self.inlineSetOnInit())
 
     async def inlineSetOnInit(self):
@@ -102,22 +79,42 @@ class aoiAccessor():
         else:
             return None
 
+    @AsyncCacheWarper(cacheContainer=LRUCache(maxsize=512, ttl=3, default=None),)
+    async def getHtmlAlwaysCache(self, url: str):
+        # cache 但是ttl极短
+        # 仅用于短时间内大量请求
+        # 需要外部函数调用 并单独缓存
+        try:
+            resp = await self.session.get(
+                url,
+                headers=self.headers,
+                proxy=self.proxy,
+                timeout=ClientTimeout(total=8)
+            )
+            html = await resp.text()
+            removeIndex = html.find("<html")
+            if removeIndex != -1:
+                html = html[removeIndex:]
+            return html
+        except Exception as e:
+            raise e
+
     async def getHtml(self, url: str, cached=True):
         '''
         默认使用缓存
         '''
         if cached and self.cache_html.has(url):
             return self.cache_html.get(url)
-        result, err = await self.r_e_getHtmlAlwaysCache(url)
-        if not err:
+        try:
+            result = await self.getHtmlAlwaysCache(url)
             self.cache_html.set(
                 key=url,
                 value=result,
                 ttl=self.getUrlTTL(url)
             )
             return result
-        else:
-            raise makeTrackableException(err, f"getHtml({url})")
+        except Exception as e:
+            raise makeTrackableException(e, f"getHtml({url})")
 
     async def downloadImgBytes(self, url: str):
         '''
@@ -264,15 +261,21 @@ class aoiAccessor():
             raise makeTrackableException(
                 e, f"get_G_data({gid}, {token}, {cached})")
 
+    async def getGalleryCoverIgnoreError(self, gid, token):
+        try:
+            return await self.getGalleryCover(gid, token)
+        except Exception as e:
+            logger.warning(f"getGalleryCoverIgnoreError({gid}, {token}) {e}")
+
     def updateCardCacheAndFavorite(self, cardInfos):
         for cardInfo in cardInfos:
             self.cache_cardInfo.set(cardInfo['gid'], cardInfo)
             self.updateLocalFavorite(
                 cardInfo['gid'], cardInfo['favoriteIndex'])
-            self.loop.create_task(self.preGetCover(
+            self.loop.create_task(self.getGalleryCoverIgnoreError(
                 cardInfo['gid'], cardInfo['token']))
 
-    @printPerformance
+    # @printPerformance
     async def getMainPageGalleryCardInfo(self, url: str):
         '''
         获取主页面的卡片信息
@@ -395,7 +398,8 @@ class aoiAccessor():
             raise makeTrackableException(
                 e, f"getGalleryPreview({gid}, {token}, {index})")
 
-    @printPerformance
+    # @printPerformance
+    @AsyncCacheWarper(cacheContainer=LRUCache(maxsize=512, ttl=1, default=None),)
     async def getGalleryCover(self, gid, token) -> str:
         cachePath = path_join(self.cachePath, f"{gid}_{token}.jpg")
         if os.path.exists(cachePath):
@@ -493,7 +497,7 @@ class aoiAccessor():
         else:
             logger.warning(f"deleteCardInfo({gid}) record not found")
 
-    @printPerformance
+    # @printPerformance
     def getNowDownloadIndex(self) -> int:
         indexList = [item["index"]
                      for item in self.db.download.getDict().values()]

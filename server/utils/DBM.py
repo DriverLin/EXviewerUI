@@ -36,16 +36,6 @@ class DOWNLOAD_STATE():
     FINISHED: int = 3  # not success ,success is unknown
 
 
-def printPerformance(func: callable) -> callable:
-    def wrapper(*args, **kwargs):
-        # start = time.time()
-        start = time.perf_counter_ns()
-        result = func(*args, **kwargs)
-        logger.debug(
-            f"{func.__name__}{args[1:]} 耗时 {(time.perf_counter_ns() - start) / 1000000} ms")
-        return result
-    return wrapper
-
 
 class DBObject(dict):
     def __init__(self, key: int, obj: object, father) -> None:
@@ -64,7 +54,7 @@ class DBObject(dict):
         return self.data[key] if key in self.data else None
 
     def __setitem__(self, key, value):
-        logger.debug(f"__setitem__ set {key} to {value}")
+        # logger.debug(f"__setitem__ set {key} to {value}")
         self.data[key] = value
         self.father[self.key] = self.data
 
@@ -104,9 +94,8 @@ class EHDBM():
     def __getitem__(self, key: int) -> object:
         return DBObject(key, self.cache[key], self) if key in self.cache else None
 
-    # @printPerformance
     def __setitem__(self, key: int, value: object) -> None:
-        logger.debug(f"__setitem__ set {key} to {value}")
+        # logger.debug(f"__setitem__ set {key} to {value}")
         with self.versionLock:
             if 'gid' not in value:
                 value['gid'] = key
@@ -126,7 +115,7 @@ class EHDBM():
             self.db.upsert(value, Query().gid == key)
 
     def __delitem__(self, key: int) -> None:
-        logger.debug(f"__delitem__ del {key}")
+        # logger.debug(f"__delitem__ del {key}")
         with self.versionLock:
             _next = (self.version + 1) & 0xffff
             self.handelAction(

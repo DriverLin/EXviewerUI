@@ -10,6 +10,7 @@ class cacheItem():
         self.err = err
         self.executing = executing
 
+
 class AsyncCacheWarper():
     # 异步函数cache warper
     # 第一次执行过程中所有请求都会阻塞
@@ -54,7 +55,6 @@ class AsyncCacheWarper():
                 cacheItem = self.cache.get(key)
                 first = False
             self.cacheRWLock.release()
-
             if not first:
                 if cacheItem.executing:
                     await cacheItem.lock.acquire()
@@ -75,4 +75,12 @@ class AsyncCacheWarper():
                 self.setCache(key, executeLock, result, err, False)
                 executeLock.release()
                 return result, err
-        return executeRE
+
+        async def warper(*arg, **kwargs):
+            res, err = await executeRE(*arg, **kwargs)
+            if err != None:
+                raise err
+            else:
+                return res
+        # return executeRE
+        return warper

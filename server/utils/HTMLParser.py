@@ -215,7 +215,7 @@ def getInfoFromViewingPage(html):
     return (skipHathKey, imgSrc)
 
 
-@printPerformance
+# @printPerformance
 def getViewInfoFromPage(html):
     return [
         (
