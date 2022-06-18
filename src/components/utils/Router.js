@@ -4,6 +4,7 @@ import { useLocation } from "react-router";
 import AppSetting from "../ui/AppSetting";
 import GalleryPage from "../ui/GalleryPage";
 import MainPage from "../ui/MainPage";
+import UploadZip from "../ui/UploadZip";
 import ViewPage from "../ui/ViewPage";
 import { getSetting } from "./SettingHooks";
 const replaceLast = (arr, item) => {
@@ -158,6 +159,8 @@ export function SwitchRouter(props) {
             />
         } else if (pathname.slice(0, 8) === "/setting") {
             return <AppSetting />
+        }else if (pathname.slice(0, 10) === "/uploadZip") {
+            return <UploadZip />
         } else {
             return <a>UNKNOWN PATH</a>
         }

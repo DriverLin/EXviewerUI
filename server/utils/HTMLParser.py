@@ -163,7 +163,8 @@ def getG_dataFromGalleryPage(html: str) -> object:
 # @printPerformance
 def getCommentsFromGalleryPage(html: str) -> List[object]:
     result = []
-    for comment in etree.HTML(html).xpath('//div[@class="c1"]'):
+    xml = etree.HTML(html)
+    for comment in xml.xpath('//div[@class="c1"]'):
         # score = comment.select("div.c5.nosel > span")
         score = comment.xpath(
             'div[@class="c2"]/div[@class="c5 nosel"]/span/text()')
@@ -201,8 +202,10 @@ def getCommentsFromGalleryPage(html: str) -> List[object]:
                 "short": comment_short,
             }
         )
-    return result
-
+    return {
+        "data": result,
+        "all": len(xml.xpath('//div[@id="chd"]/p')) == 1,
+    }
 
 # @printPerformance
 def getInfoFromViewingPage(html):

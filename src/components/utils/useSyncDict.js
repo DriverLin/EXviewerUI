@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState ,useReducer } from "react"
 import ReconnectingWebSocket from "reconnecting-websocket"
 
 const INIT = 0
@@ -68,9 +68,30 @@ export function useWsHandeler(wsUrl, onEvent) {
 }
 
 
+const delKeyFromObj = (dict, key) => {
+    const newDict = { ...dict }
+    delete newDict[key]
+    return newDict
+}
+
+const deleteKey = (key) => {
+    return (dict) => {
+        return delKeyFromObj(dict, key)
+    }
+}
+
+const combineDict = (newDict) => {
+    return (oldDict) => {
+        return { ...oldDict, ...newDict }
+    }
+}
+
 
 export default function useSyncDict(wsUrl) {
-    const [data, setData] = useState({})
+    const [data, setData] = useState({
+       keySet: new Set(),
+       dict:{}
+    })
     const version = useRef(-1)
     const state = useRef(INIT)
     const ws = useRef(null)
@@ -83,9 +104,9 @@ export default function useSyncDict(wsUrl) {
                     if (recv.current === version.current) {
                         version.current = recv.next;
                         if (recv.action === SET_KV) {//set
-                            setData(data => ({ ...data, [recv.key]: recv.value }))
+                            setData(combineDict({ [recv.key]: recv.value }))
                         } else if (recv.action === DEL_K) {//delete
-                            setData(data => ({ ...data, [recv.key]: undefined }))
+                            setData(deleteKey(recv.key))
                         } else if (recv.action === LOAD) {
                             setData(recv.data)
                         }

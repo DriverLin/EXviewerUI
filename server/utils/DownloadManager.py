@@ -209,7 +209,6 @@ class downloadManager():
         # 如果match 则执行interrupt然后执行delete
         # 否则直接创建一个worker 并执行delete
         logger.info(f"删除下载 {gid}_{token}")
-        self.aioAccessorInstance.deleteCardInfo(gid)
         async with self.wrLock:
             inQueueWorker = False
             for workerInstance in self.workers:

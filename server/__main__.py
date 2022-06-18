@@ -1,12 +1,13 @@
 import asyncio
 import json
+from lib2to3.pgen2 import token
 import os
 import ssl
 from os.path import join as path_join
 import threading
 from time import sleep, time
 
-from fastapi import FastAPI, HTTPException, Request, Response, WebSocket
+from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
@@ -273,12 +274,20 @@ async def getfile(gid: int, token: str, index: int):
 @app.get("/comments/{gid}/{token}")
 async def comment(gid: int, token: str):
     try:
-        return await aioPa.getComments(gid, token)
+        return await aioPa.getComments(gid, token, False)
     except Exception as e:
         printTrackableException(e)
         raise HTTPException(status_code=500, detail=str(
             makeTrackableException(e, f"请求评论 {gid}/{token} 失败")))
 
+@app.get("/comments/all/{gid}/{token}")
+async def comment(gid: int, token: str):
+    try:
+        return await aioPa.getComments(gid, token, True)
+    except Exception as e:
+        printTrackableException(e)
+        raise HTTPException(status_code=500, detail=str(
+            makeTrackableException(e, f"请求评论 {gid}/{token} 失败")))
 
 # @app.post("/post_comment")
 # async def post_comment(request: Request):
@@ -359,6 +368,19 @@ def index():
     return FileResponse(path_join(SERVER_FILE, "index.html"))
 
 
+@app.websocket("/uploadZip")
+async def handelUploadZipGallery(ws: WebSocket):
+    try:
+        await ws.accept()
+        gid,token = (await ws.receive_text()).split("_")
+        logger.info(f"从浏览器接收画廊中 {gid}_{token}.zip")
+        bytes = await ws.receive_bytes()
+        logger.info(f"接收bytes{len(bytes)}")
+        await aioPa.addDownloadRecordFromZip(int(gid),token,bytes)
+    except WebSocketDisconnect as e:
+        print("ws 断开",e)
+        pass
+
 app.mount("/", StaticFiles(directory=SERVER_FILE), name="static")
 
 
@@ -370,6 +392,7 @@ if __name__ == "__main__":
         port=PORT,
         log_level="info",
         loop=serverLoop,
+        ws_max_size= 1024*1024*1024*1024
     )
     appServer = Server(serverConfig)
     DB_CACHE_WRITER = threading.Thread(target=NOSQL_CACHE.writeWatcherThread)

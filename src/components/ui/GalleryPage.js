@@ -382,6 +382,8 @@ function GalleryPageUI(props) {
                     <CommentPanel
                         comments={props.comments}
                         spacingPX={borderWidth}
+                        gid={props.g_data.gid}
+                        token={props.g_data.token}
                     />
                 </div>
 

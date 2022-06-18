@@ -1,11 +1,15 @@
 
 import asyncio
+from genericpath import exists
+from importlib.resources import path
+from io import BytesIO
 import json
 import os
 from os.path import join as path_join
 import shutil
 from typing import List
 from urllib.parse import parse_qs
+from zipfile import ZipFile
 
 from aiohttp import ClientSession, ClientTimeout
 from async_timeout import timeout
@@ -289,12 +293,15 @@ class aoiAccessor():
             raise makeTrackableException(
                 e, f"getMainPageGalleryCardInfo({url})")
 
-    async def getComments(self, gid, token):
+    async def getComments(self, gid, token , fetchAll=False):
         try:
-            html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?p=0", cached=True)
+            if fetchAll:
+                html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?hc=1#comments", cached=True)
+            else:
+                html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?p=0", cached=True)
             return getCommentsFromGalleryPage(html)
         except Exception as e:
-            raise makeTrackableException(e, f"getComments({gid}, {token})")
+            raise makeTrackableException(e, f"getComments({gid}, {token}, {fetchAll})")
 
     def parseG_dataToCardInfo(self, g_data):
         return {
@@ -490,13 +497,6 @@ class aoiAccessor():
                 logger.error(f"updateCardInfo({gid}, {token}) failed")
                 pass
 
-    def deleteCardInfo(self, gid):
-        if self.db.card_info[gid]:
-            del self.db.card_info[gid]
-            logger.warning(f"deleteCardInfo({gid})")
-        else:
-            logger.warning(f"deleteCardInfo({gid}) record not found")
-
     # @printPerformance
     def getNowDownloadIndex(self) -> int:
         indexList = [item["index"]
@@ -515,3 +515,18 @@ class aoiAccessor():
         shutil.rmtree(self.cachePath)
         os.makedirs(self.cachePath)
         return size
+
+
+    async def addDownloadRecordFromZip(self,gid,token,zipBytes):
+        extNames = ["jpg", "JPG", "png", "PNG", "gif", "GIF"]
+        z = ZipFile(BytesIO(zipBytes))
+        files = [file for file in z.filelist if file.filename.split(".")[-1] in extNames ]
+        files.sort(key=lambda x:x.filename)
+        extractDir = path_join(self.cachePath,f"{gid}_{token}_extract")
+        z.extractall(extractDir)
+        for index,file in enumerate(files):
+            cachePath = path_join(self.cachePath, f"{gid}_{token}_{(index+1):08d}.jpg")
+            extractedPath = path_join(extractDir,file.filename)
+            shutil.move(extractedPath,cachePath) if not os.path.exists(cachePath) else None 
+            logger.debug(f"mv {extractedPath} -> {cachePath}")
+        await self.addDownload([[gid,token]])

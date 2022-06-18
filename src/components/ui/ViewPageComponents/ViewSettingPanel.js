@@ -115,52 +115,52 @@ export default function ViewSettingPanel(props) {
                             }}
                         />
                     </ListItem>
-                    <ListItem>
-                        <ListItemIcon>
-                            <ScreenRotationIcon color='primary' />
-                        </ListItemIcon>
-                        <ListItemText primary="双页阅读" />
-                        <Switch
-                            edge="end"
-                            onChange={() => setHorizontalView(!horizontalView)}
-                            checked={horizontalView}
-                            inputProps={{
-                                'aria-labelledby': 'switch-list-label-wifi',
-                            }}
-                        />
-                    </ListItem>
-                    <ListItem>
-                        <ListItemIcon>
-                            <ViewColumnIcon color='primary' />
-                        </ListItemIcon>
-                        <ListItemText primary="切换分页" />
-                        <Switch
-                            edge="end"
-                            onChange={() => setSwitchPagination(!switchPagination)}
-                            checked={switchPagination}
-                            inputProps={{
-                                'aria-labelledby': 'switch-list-label-wifi',
-                            }}
-                        />
-                    </ListItem>
-
-
-                    <ListItem>
-                        <ListItemIcon>
-                            <MenuBookIcon color='primary' />
-                        </ListItemIcon>
-                        <ListItemText primary="切换方向" />
-                        <Switch
-                            edge="end"
-                            onChange={() => setSwitchDirection(!switchDirection)}
-                            checked={switchDirection}
-                            inputProps={{
-                                'aria-labelledby': 'switch-list-label-wifi',
-                            }}
-                        />
-                    </ListItem>
-
-
+                    {
+                        !readVertical ? <div>
+                            <ListItem>
+                                <ListItemIcon>
+                                    <ScreenRotationIcon color='primary' />
+                                </ListItemIcon>
+                                <ListItemText primary="双页阅读" />
+                                <Switch
+                                    edge="end"
+                                    onChange={() => setHorizontalView(!horizontalView)}
+                                    checked={horizontalView}
+                                    inputProps={{
+                                        'aria-labelledby': 'switch-list-label-wifi',
+                                    }}
+                                />
+                            </ListItem>
+                            {horizontalView ? <ListItem>
+                                <ListItemIcon>
+                                    <ViewColumnIcon color='primary' />
+                                </ListItemIcon>
+                                <ListItemText primary="切换分页" />
+                                <Switch
+                                    edge="end"
+                                    onChange={() => setSwitchPagination(!switchPagination)}
+                                    checked={switchPagination}
+                                    inputProps={{
+                                        'aria-labelledby': 'switch-list-label-wifi',
+                                    }}
+                                />
+                            </ListItem> : null}
+                            <ListItem>
+                                <ListItemIcon>
+                                    <MenuBookIcon color='primary' />
+                                </ListItemIcon>
+                                <ListItemText primary="切换方向" />
+                                <Switch
+                                    edge="end"
+                                    onChange={() => setSwitchDirection(!switchDirection)}
+                                    checked={switchDirection}
+                                    inputProps={{
+                                        'aria-labelledby': 'switch-list-label-wifi',
+                                    }}
+                                />
+                            </ListItem>
+                        </div> : null
+                    }
                     <ListItem>
                         <Button sx={{ width: "100%" }} variant="contained" startIcon={<RestartAltIcon />}
                             onClick={() => {

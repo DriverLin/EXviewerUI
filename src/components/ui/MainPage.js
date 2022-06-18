@@ -29,7 +29,7 @@ import syncedDB from '../utils/mobxSyncedState';
 import { observer } from "mobx-react";
 import { addFavorite, continueDownload, deleteGallery, downloadGallery, removeFavorite } from '../api/serverApi';
 import { autorun, toJS } from 'mobx';
-
+import FolderZipIcon from '@mui/icons-material/FolderZip';
 const mergeGallery = (arr1, arr2) => {
     const result = []
     const set = new Set()
@@ -117,12 +117,7 @@ function MainPage_inner(props) {
         download,
         card_info
     ) => {
-        console.log("同步DB到HOOKS触发")
-        // if (download_key_set.size !== card_info_key_set.size) {
-        //     console.log("key长度不同 跳过")
-        //     return
-        // }
-        for (let gid_key in download_key_set) {
+        for (let gid_key of download_key_set) {
             if (!card_info[gid_key]) {
                 console.log("download与card_info数据未同步 跳过", gid_key)
                 return
@@ -229,6 +224,7 @@ function MainPage_inner(props) {
         console.log("useEffect 注册autorun")
         autorun(
             () => {
+                console.log("autorun 触发",typeof syncedDB.keys.download , typeof syncedDB.download , typeof syncedDB.card_info)
                 if (!props.downloadPage) {
                     console.log("autorun 不是下载页面 退出")
                     return
@@ -350,6 +346,11 @@ function MainPage_inner(props) {
             onClick: () => { props.openURL("/downloaded", "") },
             icon: <DownloadIcon />,
             text: "下载"
+        },
+        {
+            onClick: () => { props.openURL("/uploadZip", "") },
+            icon: <FolderZipIcon />,
+            text: "导入"
         },
         {
             onClick: () => { props.openURL("/setting", "") },

@@ -214,99 +214,12 @@ function App_inner() {
 
   const openNew = (pathname, search) => window.open(`/#${pathname}${search}`, "_blank")
   const openCurrent = (pathname, search) => window.location.href = `/#${pathname}${search}`
-
-  // const downloadList = useMemo(() => {
-  //   Object.values(syncedDB.card_info).reverse()
-  // }, [syncedDB.card_info])
-
-  return (
+ 
+ return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <PopoverNotifier />
       <div id='mainContainer' style={{ backgroundColor: theme.palette.page.background, width: "100%" }}    >
-        {/* <HashRouter>
-          <Routes>
-            <Route path="*" element={<SwitchRouter />} />
-          </Routes>
-        </HashRouter> */}
-
-
-        {/* <ViewPage
-          gid={2234446}
-          token={"3c2ec893e0"}
-          pages={30}
-          title={"[山含]Miyu sex in the park-霞泽美游公园色色"}
-          /> */}
-        {/* <GalleryPage
-            gid={2242255}
-            token={'c5218dcf95'}
-          /> */}
-
-        {/* <GalleryCard
-          small_matches={true}
-          download={syncedDB.download[2242255] || { state: 0, success: 0 }}
-          favorite={syncedDB.favorite[2241178] || { state: 0 }}
-          // cardInfo={{
-          //   gid: 2241178,
-          //   token: "926d812d1e",
-          //   name: "name",
-          //   rank: 5,
-          //   category: "Manga",
-          //   uploadTime: "2020-19-19 25:30",
-          //   lang: "chinese",
-          //   pages: 100,
-          // }}
-          cardInfo={
-            syncedDB.card_info[2241178]
-          }
-          onImageClick={(...args) => { console.log("onImageClick", args) }}
-          onLongClick={(...args) => { console.log("onLongClick", args) }}
-          onCardClick={(...args) => { console.log("onCardClick", args) }}
-        /> */}
-        {/* <div>
-          {
-            Object.keys(syncedDB.card_info).slice(10000, 10010).map(gid =>
-              <GalleryCard
-                download={syncedDB.download[gid] || { state: 0, success: 0 }}
-                favorite={syncedDB.favorite[gid] || { state: 0 }}
-                // cardInfo={{
-                //   gid: 2241178,
-                //   token: "926d812d1e",
-                //   name: "name",
-                //   rank: 5,
-                //   category: "Manga",
-                //   uploadTime: "2020-19-19 25:30",
-                //   lang: "chinese",
-                //   pages: 100,
-                // }}
-                cardInfo={
-                  syncedDB.card_info[gid]
-                }
-                small_matches={false}
-
-                onImageClick={(...args) => { console.log("onImageClick", args) }}
-                onLongClick={(...args) => { console.log("onLongClick", args) }}
-                onCardClick={(...args) => { console.log("onCardClick", args) }}
-              />
-            )
-          }
-        </div> */}
-
-        {/* <VScrollCardContainer
-          cardInfoList={
-            // downloadList
-            Object.values(syncedDB.card_info).reverse()
-          }
-          setScrollTop={(...args) => { console.log("setScrollTop", args) }}
-          loading={false}
-          onImageClick={(...args) => { console.log("onImageClick", args) }}
-          onLongClick={(...args) => { console.log("onLongClick", args) }}
-          onCardClick={(...args) => { console.log("onCardClick", args) }}
-          onReachEnd={(...args) => { console.log("onReachEnd", args) }}
-        /> */}
-
-        {/*  */}
-
         <HashRouter>
           <Routes>
             <Route path="*" element={<SwitchRouter />} />

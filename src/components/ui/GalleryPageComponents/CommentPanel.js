@@ -1,8 +1,9 @@
 
-import { Button, Grid } from '@mui/material';
+import { Button, Grid, LinearProgress } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { makeStyles } from '@mui/styles';
 import React, { useState } from 'react';
+import { notifyMessage } from '../../utils/PopoverNotifier';
 import timeTools from '../../utils/TimeFormatTools';
 
 
@@ -32,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
  * height自动
  * 外部控制两边留空
  * @param {object} props 
- * @param {object[]} props.comments
+ * @param {object[]} commentData
  * @param {Number} props.spacingPX
  */
 export default function CommentPanel(props) {
@@ -47,12 +48,15 @@ export default function CommentPanel(props) {
             background: theme.palette.button.loadMore.hover,
         },
     }));
-    
+
     const classes = useStyles();
     let comment_init_all_show = false//评论初始化是否全部显示
-    if (props.comments.length <= 4) {
+    const [commentData, setCommentData] = useState(props.comments.data);
+
+
+    if (commentData.length <= 4) {
         let len_limit_reached = false;
-        props.comments.forEach((comment) => {
+        commentData.forEach((comment) => {
             len_limit_reached = len_limit_reached || comment.short.length > 40
         })
         comment_init_all_show = !len_limit_reached//评论小于4条 且每条长度小于40 则直接显示
@@ -60,6 +64,29 @@ export default function CommentPanel(props) {
         comment_init_all_show = false//大于四条始终不全部显示
     }
     const [expanded, setExpanded] = useState(comment_init_all_show)
+
+    const [canLoadMore, setCanLoadMore] = useState(!props.comments.all)
+    const [loading, setLoading] = useState(false)
+    const loadMoreComment = async () => {
+        setCanLoadMore(false)
+        setLoading(true)
+        const response = await fetch(`/comments/all/${props.gid}/${props.token}`)
+        if (response.ok) {
+            const allComments = await response.json()
+            setCommentData(allComments.data)
+        }
+        else {
+            setCanLoadMore(true)
+            const text = await response.text()
+            try {
+                const info = JSON.parse(text)
+                notifyMessage("error", JSON.parse(info.detail))
+            } catch (error) {
+                notifyMessage("error", text)
+            }
+        }
+        setLoading(false)
+    }
 
     return (
         <div style={{ width: "100%", }}>
@@ -73,7 +100,7 @@ export default function CommentPanel(props) {
                 alignItems="left"
             >
                 {
-                    (expanded ? props.comments : props.comments.slice(0, 4)).map((row, index) => {
+                    (expanded ? commentData : commentData.slice(0, 4)).map((row, index) => {
                         return (
                             <div key={index} style={{ width: "100%", }}>
                                 <div name='clickable' style={{ width: "100%", }}>
@@ -93,16 +120,33 @@ export default function CommentPanel(props) {
                     })
                 }
             </Grid>
-            <div >
-                {
-                    expanded ? null :
+            {
+                expanded ?
+                    <div >
+                        {
+                            !canLoadMore ? null :
+                                <BottomButton
+                                    name='clickable'
+                                    onClick={loadMoreComment} >
+                                    {'加载更多'}
+                                </BottomButton>
+                        }{
+                            loading ?
+                                <LinearProgress sx={{ margin: "47px 0px" }} />
+                                : null
+                        }
+                    </div>
+                    :
+                    <div >
                         <BottomButton
                             name='clickable'
                             onClick={() => { setExpanded(true) }} >
                             {'展开'}
                         </BottomButton>
-                }
-            </div>
+                    </div>
+
+            }
+
         </div>
     )
 

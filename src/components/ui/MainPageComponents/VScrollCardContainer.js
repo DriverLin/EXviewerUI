@@ -35,7 +35,7 @@ export default function VScrollCardContainer(props) {
         }
         const gid = props.cardGidList[index]
         const cardInfo = props.cardInfoMap[gid]
-        return <div style={newStyle}>
+        return cardInfo ? <div style={newStyle}>
             <GalleryCard
                 cardInfo={cardInfo}
                 download={syncedDB.download[gid] || { state: 0, success: 0 }}
@@ -45,7 +45,7 @@ export default function VScrollCardContainer(props) {
                 onLongClick={props.onLongClick}
                 onCardClick={props.onCardClick}
             />
-        </div>
+        </div> : null
     }
     const RenderObserver = observer(cellRenderer_inner);
     function cellRenderer(args) {
