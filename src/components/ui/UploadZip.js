@@ -2,13 +2,12 @@
 //如果是gid_token.zip 格式 可自动识别填写 否则提示手动填写gid token
 //可以有预览画面
 
-import { Button, CircularProgress, Grid, Skeleton, Switch, TextField, useMediaQuery } from "@mui/material"
+import { Button, CircularProgress, Grid, Skeleton, Switch, TextField, useMediaQuery, Typography } from "@mui/material"
 import { makeStyles } from '@mui/styles';
 import { useEffect, useMemo, useRef, useState } from "react"
 import JsZip from 'jszip';
 import { notifyMessage } from "../utils/PopoverNotifier";
 import LinearProgress, { LinearProgressProps } from '@mui/material/LinearProgress';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 const extNames = ["jpg", "JPG", "png", "PNG", "gif", "GIF"]
@@ -124,7 +123,13 @@ export default function UploadZip(props) {
         )
         imgs.sort()
 
-        imgs.map(async (imgName, index) => {
+        // imgs.map(async (imgName, index) => {
+        //     const imgBlob = await zip.current.files[imgName].async("blob")
+        //     const url = URL.createObjectURL(imgBlob)
+        //     if (makePreviewsLock.current === false) return//锁被打开 则放弃未完成的
+        //     setPrevBlobUrls((old) => { return { ...old, [index]: url } })
+        // })
+        imgs.forEach(async (imgName, index) => {
             const imgBlob = await zip.current.files[imgName].async("blob")
             const url = URL.createObjectURL(imgBlob)
             if (makePreviewsLock.current === false) return//锁被打开 则放弃未完成的
@@ -212,7 +217,7 @@ export default function UploadZip(props) {
         if (window.location.host.includes("3000")) {
             wsUrl = wsUrl.replace("3000", "7964")
         }
-        const ws = new WebSocket(wsUrl+"uploadZip")
+        const ws = new WebSocket(wsUrl + "uploadZip")
         ws.binaryType = "arraybuffer";
         ws.onopen = () => {
             const reader = new FileReader()
@@ -265,22 +270,22 @@ export default function UploadZip(props) {
                     </label>
                 </Grid>
                 <Grid item xs={6}>
-                    <a>预览</a>
-                    <Switch
+                    <Typography sx={{ color: "text.primary" }} variant="body1">预览<Switch
                         checked={showPreview}
                         onChange={() => { setShowPreview(prev => !prev) }}
                         inputProps={{ 'aria-label': 'controlled' }}
-                    />
+                    /></Typography>
+
                 </Grid>
             </Grid>
         </div>
         {
             fileName === "" ? null :
                 <div className={classes.elemContainer}>
-                    <a>{fileName}</a>
-                    {prevBlobCount === 0 ? <CircularProgress
+                    <Typography sx={{ color: "text.primary" }} variant="body1">{fileName}{prevBlobCount === 0 ? <CircularProgress
                         size={17}
-                    /> : null}
+                    /> : null}</Typography>
+
                 </div>
         }
         {
