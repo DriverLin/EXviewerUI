@@ -1,11 +1,9 @@
 import asyncio
 import json
-from lib2to3.pgen2 import token
 import os
 import ssl
 from os.path import join as path_join
 import threading
-from time import sleep, time
 
 from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.gzip import GZipMiddleware
@@ -97,21 +95,18 @@ class CachingMiddlewareAutoWrite(CachingMiddleware):
 
     def writeWatcherThread(self):
         logger.info("CachingMiddlewareAutoWrite write thread start")
-        while True:
-            if not self.stopSignal.wait(self.ttw):
-                if self._cache_modified_count != self.lastWriteCount:
-                    with self.writeLock:
-                        self.lastWriteCount = self._cache_modified_count
-                        self.flush()
-                    logger.debug(f"write cache to file")
-            else:
-                if self._cache_modified_count != self.lastWriteCount:
-                    with self.writeLock:
-                        self.lastWriteCount = self._cache_modified_count
-                        self.flush()
-                        logger.debug(f"write cache to file")
-                logger.info(f"CachingMiddlewareAutoWrite write thread stopped")
-                break
+        while not self.stopSignal.wait(self.ttw):
+            if self._cache_modified_count != self.lastWriteCount:
+                with self.writeLock:
+                    self.lastWriteCount = self._cache_modified_count
+                    self.flush()
+                logger.debug(f"write cache to file")
+        if self._cache_modified_count != self.lastWriteCount:
+            with self.writeLock:
+                self.lastWriteCount = self._cache_modified_count
+                self.flush()
+                logger.debug(f"write cache to file")
+        logger.info(f"CachingMiddlewareAutoWrite write thread stopped")
 
     def stop(self):
         self.stopSignal.set()
@@ -139,7 +134,6 @@ aioPa = aoiAccessor(
 )
 
 
-# asyncio.get_event_loop().run_until_complete(wsBinderMainLoop())
 
 app = FastAPI()
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -362,6 +356,10 @@ def clearDiskCache():
     text = aioPa.clearDiskCache()
     return {"msg": text}
 
+@app.get("/reUpdateLocalG_data/{count}")
+async def reUpdateLocalG_data(count: int):
+    serverLoop.create_task(aioPa.reUpdateLocalG_data(count))
+    return {"msg": "success"}
 
 @app.get("/")
 def index():
@@ -400,3 +398,5 @@ if __name__ == "__main__":
     serverLoop.run_until_complete(appServer.serve())
     NOSQL_CACHE.stop()
     DB_CACHE_WRITER.join()
+
+

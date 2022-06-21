@@ -293,7 +293,7 @@ class aoiAccessor():
             raise makeTrackableException(
                 e, f"getMainPageGalleryCardInfo({url})")
 
-    async def getComments(self, gid, token , fetchAll=False):
+    async def getComments(self, gid, token, fetchAll=False):
         try:
             if fetchAll:
                 html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?hc=1#comments", cached=True)
@@ -301,7 +301,8 @@ class aoiAccessor():
                 html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?p=0", cached=True)
             return getCommentsFromGalleryPage(html)
         except Exception as e:
-            raise makeTrackableException(e, f"getComments({gid}, {token}, {fetchAll})")
+            raise makeTrackableException(
+                e, f"getComments({gid}, {token}, {fetchAll})")
 
     def parseG_dataToCardInfo(self, g_data):
         return {
@@ -516,17 +517,48 @@ class aoiAccessor():
         os.makedirs(self.cachePath)
         return size
 
-
-    async def addDownloadRecordFromZip(self,gid,token,zipBytes):
+    async def addDownloadRecordFromZip(self, gid, token, zipBytes):
         extNames = ["jpg", "JPG", "png", "PNG", "gif", "GIF"]
         z = ZipFile(BytesIO(zipBytes))
-        files = [file for file in z.filelist if file.filename.split(".")[-1] in extNames ]
-        files.sort(key=lambda x:x.filename)
-        extractDir = path_join(self.cachePath,f"{gid}_{token}_extract")
+        files = [file for file in z.filelist if file.filename.split(
+            ".")[-1] in extNames]
+        files.sort(key=lambda x: x.filename)
+        extractDir = path_join(self.cachePath, f"{gid}_{token}_extract")
         z.extractall(extractDir)
-        for index,file in enumerate(files):
-            cachePath = path_join(self.cachePath, f"{gid}_{token}_{(index+1):08d}.jpg")
-            extractedPath = path_join(extractDir,file.filename)
-            shutil.move(extractedPath,cachePath) if not os.path.exists(cachePath) else None 
+        for index, file in enumerate(files):
+            cachePath = path_join(
+                self.cachePath, f"{gid}_{token}_{(index+1):08d}.jpg")
+            extractedPath = path_join(extractDir, file.filename)
+            shutil.move(extractedPath, cachePath) if not os.path.exists(
+                cachePath) else None
             logger.debug(f"mv {extractedPath} -> {cachePath}")
-        await self.addDownload([[gid,token]])
+        await self.addDownload([[gid, token]])
+
+    async def reUpdateLocalG_data(self, count=0):
+        '''
+        更新本地g_data表与文件夹内的g_data.json
+        count: 更新的数量 从最新的开始向后检查
+        '''
+        download_rec = self.db.download.getDict().values()
+        if count == 0:
+            gidList = sorted(download_rec, key=lambda x: x['index'], reverse=True)
+        else:
+            gidList = sorted(download_rec, key=lambda x: x['index'], reverse=True)[:count]
+        splittedList = [gidList[i:i+25] for i in range(0, len(gidList), 25)]
+        for recList in splittedList:
+            try:
+                res = await self.fetchG_dataOfficial([[rec['gid'], rec['token']] for rec in recList])
+                for g_data in res:
+                    if json.dumps(self.db.g_data[g_data['gid']]) == json.dumps(g_data):
+                        logger.debug(f"g_data of {g_data['gid']} is up to date")
+                    else:
+                        logger.debug(f"g_data of {g_data['gid']} updated")
+                        self.db.g_data[g_data['gid']] = g_data
+                        saveDir = path_join(self.galleryPath,f"{g_data['gid']}_{g_data['token']}")
+                        g_data_json_save_path = path_join(saveDir,"g_data.json")
+                        with open(g_data_json_save_path, "w", encoding="utf-8") as f:
+                            json.dump(g_data, f, ensure_ascii=True, indent=4)
+                await asyncio.sleep(5)
+            except Exception as e:
+                logger.error(f"reUpdateLocalG_data failed {str(e)}")
+                pass

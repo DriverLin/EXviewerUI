@@ -48,7 +48,8 @@ class worker():
                 logger.debug(
                     f"下载中 G_data : \n{json.dumps(self.g_data,indent=4,ensure_ascii=False)}")
                 logger.debug(f"下载中 cover : {self.coverPath}")
-                await self.aioAccessorInstance.updateCardInfo(self.gid, self.token)#更新card_info 因为添加下载的时候出错也无视 这里有g_data 就一定可以更新
+                # 更新card_info 因为添加下载的时候出错也无视 这里有g_data 就一定可以更新
+                await self.aioAccessorInstance.updateCardInfo(self.gid, self.token)
                 self.aioAccessorInstance.db.g_data[self.gid] = self.g_data
                 self.fileCount = int(self.g_data["filecount"])
             except Exception as e:
@@ -81,32 +82,25 @@ class worker():
                 for i in range(self.fileCount):
                     dst = os.path.join(saveDir, f"{(i + 1):08d}.jpg")
                     src = self.imgPathMap[i]
-                    # shutil.copyfile(src, dst) if not os.path.exists(
-                    #     dst) else None
-                    # logger.debug(f"cp {src} -> {dst}")
-                    shutil.move(src, dst) if not os.path.exists(
-                        dst) else None
+                    shutil.move(src, dst) if not os.path.exists(dst) else None
                     logger.debug(f"mv {src} -> {dst}")
-
-
                 g_data_json_save_path = os.path.join(saveDir, "g_data.json")
                 with open(g_data_json_save_path, "w", encoding="utf-8") as f:
                     json.dump(self.g_data, f, ensure_ascii=True, indent=4)
                 logger.debug(f"保存 g_data.json 到 {g_data_json_save_path}")
                 cover_save_path = os.path.join(
                     self.aioAccessorInstance.coverPath, f"{self.gid}_{self.token}.jpg")
-                # shutil.copyfile(self.coverPath, cover_save_path) if not os.path.exists(
-                #     cover_save_path) else None
-                # logger.debug(f"cp {self.coverPath} -> {cover_save_path}")
                 shutil.move(self.coverPath, cover_save_path) if not os.path.exists(
                     cover_save_path) else None
                 logger.debug(f"mv {self.coverPath} -> {cover_save_path}")
-
-
-
+                logger.info(f"{self.gid}_{self.token} 下载完成")
+            else:
+                logger.warning(
+                    f"{self.gid}_{self.token} 下载失败 {success}/{self.fileCount}")
 
     async def downloader(self,):
         queueSem = asyncio.Semaphore(5)
+
         async def downloadFunc(index):
             async with queueSem:
                 if not self.interrupted:
@@ -162,10 +156,10 @@ class downloadManager():
         self.loop = aioAccessorInstance.loop
         self.wrLock = asyncio.Lock()
         self.workingWorker = None
-        self.workerQueue = asyncio.Queue()#loop=self.loop
+        self.workerQueue = asyncio.Queue()  # loop=self.loop
         self.workers: List[worker] = []
-        self.workersCountSem = asyncio.Semaphore(0,)# loop=self.loop
-        self.simulateFunctionCall = asyncio.Queue()#loop=self.loop
+        self.workersCountSem = asyncio.Semaphore(0,)  # loop=self.loop
+        self.simulateFunctionCall = asyncio.Queue()  # loop=self.loop
 
         # 等待信号量
         # 取出第一个worker

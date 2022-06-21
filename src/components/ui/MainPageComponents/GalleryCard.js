@@ -5,8 +5,8 @@ import { styled } from '@mui/material/styles';
 import { makeStyles } from '@mui/styles';
 import React, { useEffect, useMemo, useRef } from 'react';
 import DownloadCircularProgress from './DownloadCircularProgress';
-// import Rating from '@mui/material/Rating';
-import Rating from './Rating';
+import Rating from '@mui/material/Rating';
+// import Rating from './Rating';
 import { observer } from "mobx-react";
 
 const colorMap = {
@@ -213,7 +213,13 @@ function GalleryCard_inner(props) {
                 </div>
                 <div style={{ height: containerHeight - 75 }} className={classes.infos}>
                     <div className={classes.rank}>
-                        <Rating name="read-only" value={props.cardInfo.rank} precision={0.5} max={5} readOnly />
+                        <Rating
+                            value={Number(props.cardInfo.rank)}
+                            precision={0.5}
+                            max={5}
+                            readOnly
+                            size={props.small_matches ? "medium" : "small"}
+                        />
                     </div>
                     <div style={{ backgroundColor: colorMap[props.cardInfo.category], }} className={classes.category}>
                         <a style={{ color: "#ffffff" }}  >{props.cardInfo.category.toUpperCase()}</a>

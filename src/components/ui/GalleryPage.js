@@ -51,16 +51,16 @@ const getComment = async (gid, token) => {
         if (response.ok) {
             return await response.json()
         } else {
-            return []
+            return { data: [], all: true }
         }
     } else {
-        return []
+        return { data: [], all: true }
     }
 }
 
 const request_data = async (gid, token) => {
     const comment_async = getComment(gid, token)
-    const g_data_response = await fetch(`/Gallery/${gid}_${token}/g_data.json?nocache=true`)
+    const g_data_response = fetch(`/Gallery/${gid}_${token}/g_data.json?nocache=true`)
     if (g_data_response.ok) {
         return [await g_data_response.json(), await comment_async, null]
     } else {
@@ -128,7 +128,7 @@ function GalleryPage_inner(props) {
                             success: 0
                         }
                     }
-                    favorite={syncedDB.favorite[props.gid] || {state:0}}
+                    favorite={syncedDB.favorite[props.gid] || { state: 0 }}
                     requestDownload={async () => { downloadGallery(props.gid, props.token) }}
                     requestDelete={async () => { deleteGallery(props.gid, props.token) }}
 
@@ -245,7 +245,7 @@ function GalleryPageUI(props) {
             color: "button.readAndDownload.text",
         }}
         name='clickable'
-        onClick={ () => props.openRead(props.g_data.gid,props.g_data.token)}
+        onClick={() => props.openRead(props.g_data.gid, props.g_data.token)}
         variant="contained" >
         {"阅读"}
     </Button>
