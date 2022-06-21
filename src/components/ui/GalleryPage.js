@@ -60,7 +60,7 @@ const getComment = async (gid, token) => {
 
 const request_data = async (gid, token) => {
     const comment_async = getComment(gid, token)
-    const g_data_response = fetch(`/Gallery/${gid}_${token}/g_data.json?nocache=true`)
+    const g_data_response = await fetch(`/Gallery/${gid}_${token}/g_data.json?nocache=true`)
     if (g_data_response.ok) {
         return [await g_data_response.json(), await comment_async, null]
     } else {
