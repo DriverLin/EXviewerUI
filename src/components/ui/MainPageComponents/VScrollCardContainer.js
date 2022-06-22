@@ -3,7 +3,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Collection } from 'react-virtualized';
 import 'react-virtualized/styles.css';
-import syncedDB from '../../utils/mobxSyncedState';
+import syncedDB, { DOWNLOAD_STATE, FAVORITE_STATE } from '../../utils/mobxSyncedState';
 import GalleryCard from "./GalleryCard";
 import { observer } from "mobx-react";
 import { toJS } from 'mobx';
@@ -38,8 +38,8 @@ export default function VScrollCardContainer(props) {
         return cardInfo ? <div style={newStyle}>
             <GalleryCard
                 cardInfo={cardInfo}
-                download={syncedDB.download[gid] || { state: 0, success: 0 }}
-                favorite={syncedDB.favorite[gid] || { state: 0 }}
+                download={syncedDB.download[gid] || { state: DOWNLOAD_STATE.NOT_DOWNLOADED, success: 0 }}
+                favorite={syncedDB.favorite[gid] || { state: FAVORITE_STATE.NOT_FAVORITED }}
                 small_matches={small_matches}
                 onImageClick={props.onImageClick}
                 onLongClick={props.onLongClick}

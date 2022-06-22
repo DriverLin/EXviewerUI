@@ -36,6 +36,11 @@ class DOWNLOAD_STATE():
     FINISHED: int = 3  # not success ,success is unknown
 
 
+class FAVORITE_STATE():
+    NOT_FAVORITED: int = 0
+    FETCHING: int = 1
+    FAVORITED: int = 2
+
 
 class DBObject(dict):
     def __init__(self, key: int, obj: object, father) -> None:
@@ -150,7 +155,7 @@ class EHDBM():
 class wsDBMBinder():
     def __init__(self, tab: Table, loop: asyncio.AbstractEventLoop) -> None:
         self.loop = loop
-        self._actionQueue = asyncio.Queue()#loop=self.loop
+        self._actionQueue = asyncio.Queue()  # loop=self.loop
         self._dbm = EHDBM(tab=tab, actionQueue=self._actionQueue,
                           actionHandeler=self.handelAction)
         self._active_connections: List[WebSocket] = []

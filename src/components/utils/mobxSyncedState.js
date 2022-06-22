@@ -49,4 +49,23 @@ class GlobalState {
 
 const syncedDB = new GlobalState();
 
+
+class DOWNLOAD_STATE{
+  static NOT_DOWNLOADED = 0;
+  static IN_QUEUE = 1;
+  static NOW_DOWNLOADING = 2;
+  static FINISHED = 3;
+};
+class FAVORITE_STATE{
+  static NOT_FAVORITED = 0;
+  static FETCHING = 1;
+  static FAVORITED = 2;
+}
+
+
+
 export default syncedDB
+export {
+  DOWNLOAD_STATE,
+  FAVORITE_STATE
+}

@@ -4,6 +4,7 @@ import os
 import ssl
 from os.path import join as path_join
 import threading
+from time import perf_counter
 
 from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.gzip import GZipMiddleware
@@ -97,15 +98,19 @@ class CachingMiddlewareAutoWrite(CachingMiddleware):
         logger.info("CachingMiddlewareAutoWrite write thread start")
         while not self.stopSignal.wait(self.ttw):
             if self._cache_modified_count != self.lastWriteCount:
+                timeUsed = perf_counter()
                 with self.writeLock:
                     self.lastWriteCount = self._cache_modified_count
                     self.flush()
-                logger.debug(f"write cache to file")
+                timeUsed = perf_counter() - timeUsed
+                logger.debug(f"write cache to file use {timeUsed*1000:4f} ms")
         if self._cache_modified_count != self.lastWriteCount:
+            timeUsed = perf_counter()
             with self.writeLock:
                 self.lastWriteCount = self._cache_modified_count
                 self.flush()
-                logger.debug(f"write cache to file")
+            timeUsed = perf_counter() - timeUsed
+            logger.debug(f"write cache to file use {timeUsed*1000:4f} ms")
         logger.info(f"CachingMiddlewareAutoWrite write thread stopped")
 
     def stop(self):
@@ -132,7 +137,6 @@ aioPa = aoiAccessor(
     ),
     loop=serverLoop
 )
-
 
 
 app = FastAPI()
@@ -274,6 +278,7 @@ async def comment(gid: int, token: str):
         raise HTTPException(status_code=500, detail=str(
             makeTrackableException(e, f"请求评论 {gid}/{token} 失败")))
 
+
 @app.get("/comments/all/{gid}/{token}")
 async def comment(gid: int, token: str):
     try:
@@ -356,10 +361,12 @@ def clearDiskCache():
     text = aioPa.clearDiskCache()
     return {"msg": text}
 
+
 @app.get("/reUpdateLocalG_data/{count}")
 async def reUpdateLocalG_data(count: int):
     serverLoop.create_task(aioPa.reUpdateLocalG_data(count))
     return {"msg": "success"}
+
 
 @app.get("/")
 def index():
@@ -370,14 +377,24 @@ def index():
 async def handelUploadZipGallery(ws: WebSocket):
     try:
         await ws.accept()
-        gid,token = (await ws.receive_text()).split("_")
+        gid, token = (await ws.receive_text()).split("_")
         logger.info(f"从浏览器接收画廊中 {gid}_{token}.zip")
         bytes = await ws.receive_bytes()
         logger.info(f"接收bytes{len(bytes)}")
-        await aioPa.addDownloadRecordFromZip(int(gid),token,bytes)
+        await aioPa.addDownloadRecordFromZip(int(gid), token, bytes)
     except WebSocketDisconnect as e:
-        print("ws 断开",e)
+        print("ws 断开", e)
         pass
+
+
+@app.get("/rateGallery/{gid}/{token}/{score}")
+async def rateGallery(gid:int,token:str,score:float):
+    try:
+        return await aioPa.rateGallery(gid,token,score)
+    except Exception as e:
+        printTrackableException(e)
+        raise HTTPException(status_code=500, detail=str(
+            makeTrackableException(e, f"{gid}_{token} 评分失败")))
 
 app.mount("/", StaticFiles(directory=SERVER_FILE), name="static")
 
@@ -390,7 +407,7 @@ if __name__ == "__main__":
         port=PORT,
         log_level="info",
         loop=serverLoop,
-        ws_max_size= 1024*1024*1024*1024
+        ws_max_size=1024*1024*1024*1024
     )
     appServer = Server(serverConfig)
     DB_CACHE_WRITER = threading.Thread(target=NOSQL_CACHE.writeWatcherThread)
@@ -398,5 +415,3 @@ if __name__ == "__main__":
     serverLoop.run_until_complete(appServer.serve())
     NOSQL_CACHE.stop()
     DB_CACHE_WRITER.join()
-
-

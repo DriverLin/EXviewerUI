@@ -4,7 +4,6 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 import { Button, Grid, IconButton, Rating, Typography, useMediaQuery } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import timeTools from '../utils/TimeFormatTools.js';
 import CommentPanel from './GalleryPageComponents/CommentPanel.js';
 import DeleteButton from './GalleryPageComponents/DeleteButton.js';
@@ -15,7 +14,7 @@ import PreviewPanel from './GalleryPageComponents/PreviewPanel.js';
 import TagPanel from "./GalleryPageComponents/TagPanel.js";
 import ZipDownloadButton from './GalleryPageComponents/ZipDownloadButton.js';
 import LoadingAnime from './LoadingAnime';
-import syncedDB from '../utils/mobxSyncedState';
+import syncedDB, { DOWNLOAD_STATE, FAVORITE_STATE } from '../utils/mobxSyncedState';
 import {
     addFavorite,
     removeFavorite,
@@ -25,6 +24,7 @@ import {
 } from '../api/serverApi.js';
 import { getSetting } from '../utils/SettingHooks';
 import { observer } from "mobx-react";
+import EditableRating from './GalleryPageComponents/EditableRating.js';
 
 const transformTags = (g_data) => {
     let tags = {}
@@ -124,11 +124,11 @@ function GalleryPage_inner(props) {
                         syncedDB.download[props.gid]
                         ||
                         {
-                            state: 0,
+                            state: DOWNLOAD_STATE.NOT_DOWNLOADED,
                             success: 0
                         }
                     }
-                    favorite={syncedDB.favorite[props.gid] || { state: 0 }}
+                    favorite={syncedDB.favorite[props.gid] || { state: FAVORITE_STATE.NOT_FAVORITED }}
                     requestDownload={async () => { downloadGallery(props.gid, props.token) }}
                     requestDelete={async () => { deleteGallery(props.gid, props.token) }}
 
@@ -321,20 +321,32 @@ function GalleryPageUI(props) {
                                 justifyContent="space-between"
                                 alignItems="flex-start"
                             >
-                                <Grid item xs={4}>
-                                    <Typography sx={{ color: "text.primary" }} variant="body1" gutterBottom component="div">{props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB</Typography>
+                                <Grid item xs={6}>
+                                    <Typography
+                                        sx={{ color: "text.primary" }}
+                                        variant="body1"
+                                        gutterBottom component="div"
+                                    >
+                                        {props.g_data.filecount} 页  &nbsp;&nbsp;&nbsp;   {"" + Math.round(props.g_data.filesize / 10485.76) / 100} MB
+                                    </Typography>
                                 </Grid>
-                                <Grid item xs={4}>
-                                    <Typography sx={{ color: "text.primary", float: "right" }} variant="body1" gutterBottom component="div">{timeTools.timestamp_to_str(props.g_data.posted, 'yy-MM-dd hh:mm')}</Typography>
+                                <Grid item xs={6}>
+                                    <Typography
+                                        sx={{ color: "text.primary", float: "right" }}
+                                        variant="body1" gutterBottom component="div"
+                                    >
+                                        {timeTools.timestamp_to_str(props.g_data.posted, 'yy-MM-dd hh:mm')}
+                                    </Typography>
                                 </Grid>
                                 <Grid item xs={12} sx={{ textAlign: "center" }}  >
-                                    <Rating
-                                        name="customized-empty"
+                                    <EditableRating
                                         defaultValue={Number(props.g_data.rating)}
-                                        precision={0.1}
+                                        precision={0.5}
                                         emptyIcon={<StarBorderIcon fontSize="inherit" />}
-                                        readOnly={true}
                                         size="medium"
+                                        gid={props.g_data.gid}
+                                        token={props.g_data.token}
+                                        extended={props.g_data.extended}
                                     />
                                 </Grid>
                             </Grid>

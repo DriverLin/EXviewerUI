@@ -8,6 +8,7 @@ import os
 from os.path import join as path_join
 import shutil
 from typing import List
+from unittest import result
 from urllib.parse import parse_qs
 from zipfile import ZipFile
 
@@ -15,9 +16,8 @@ from aiohttp import ClientSession, ClientTimeout
 from async_timeout import timeout
 from cacheout import LRUCache
 from tinydb import Query
-
 from utils.AsyncCacheWarper import AsyncCacheWarper
-from utils.DBM import EHDBM
+from utils.DBM import EHDBM, DOWNLOAD_STATE, FAVORITE_STATE
 from utils.DownloadManager import downloadManager
 from utils.HTMLParser import *
 from utils.tools import checkImg, logger, makeTrackableException
@@ -160,7 +160,7 @@ class aoiAccessor():
             if self.db.favorite[gid] == None:
                 logger.info(f"{gid} 添加本地收藏记录 index={index}")
                 self.db.favorite[gid] = {
-                    'gid': gid, 'state': 2, 'index': index}
+                    'gid': gid, 'state': FAVORITE_STATE.FAVORITED, 'index': index}
                 return
 
             if self.db.favorite[gid]['index'] != index:
@@ -173,7 +173,8 @@ class aoiAccessor():
         data = {"favcat": str(index), "favnote": "", "update": "1"}
         try:
             prev = self.db.favorite[gid]
-            self.db.favorite[gid] = {'gid': gid, 'state': 1, 'index': index}
+            self.db.favorite[gid] = {
+                'gid': gid, 'state': FAVORITE_STATE.FETCHING, 'index': index}
             response = await self.session.post(
                 url=url,
                 headers=self.headers,
@@ -184,7 +185,7 @@ class aoiAccessor():
             await response.text()
             if response.ok:
                 self.db.favorite[gid] = {
-                    'gid': gid, 'state': 2, 'index': index}
+                    'gid': gid, 'state': FAVORITE_STATE.FAVORITED, 'index': index}
             else:
                 self.db.favorite[gid] = prev
                 raise Exception(
@@ -200,7 +201,8 @@ class aoiAccessor():
                 "apply": "Apply Changes",     "update": "1", }
         try:
             prev = self.db.favorite[gid]
-            self.db.favorite[gid] = {'gid': gid, 'state': 1, 'index': 999}
+            self.db.favorite[gid] = {
+                'gid': gid, 'state': FAVORITE_STATE.FETCHING, 'index': 999}
             response = await self.session.post(
                 url=url,
                 headers=self.headers,
@@ -215,11 +217,12 @@ class aoiAccessor():
                 if prev != None:
                     self.db.favorite[gid] = prev
                 raise Exception(
-                    f"rmFavorite({gid},) response.code={response.status_code}")
+                    f"rmFavorite({gid},{token}) response.code={response.status_code}")
         except Exception as e:
             if prev != None:
                 self.db.favorite[gid] = prev
-            raise Exception(makeTrackableException(e, f"rmFavorite({gid}, )"))
+            raise Exception(makeTrackableException(
+                e, f"rmFavorite({gid},{token})"))
 
     async def fetchG_dataOfficial(self, gidList) -> List[object]:  # 只有下载才用得到
         try:
@@ -446,6 +449,8 @@ class aoiAccessor():
         downloadTable = self.db.download.getDict()
         unFinishList = []
         for gid in downloadTable:
+            if downloadTable[gid]['state'] != DOWNLOAD_STATE.FINISHED:
+                continue
             if gid in g_data_table and downloadTable[gid]['success'] == int(g_data_table[gid]['filecount']):
                 continue
             else:
@@ -455,7 +460,6 @@ class aoiAccessor():
         # 数组分割成25个一组
         splittedUnFinishList = [unFinishList[i:i+25]
                                 for i in range(0, len(unFinishList), 25)]
-
         for gidList in splittedUnFinishList:
             for g_data in await self.fetchG_dataOfficial(gidList):
                 g_data_map[(g_data['gid'], g_data['token'])] = g_data
@@ -541,24 +545,60 @@ class aoiAccessor():
         '''
         download_rec = self.db.download.getDict().values()
         if count == 0:
-            gidList = sorted(download_rec, key=lambda x: x['index'], reverse=True)
+            gidList = sorted(
+                download_rec, key=lambda x: x['index'], reverse=True)
         else:
-            gidList = sorted(download_rec, key=lambda x: x['index'], reverse=True)[:count]
+            gidList = sorted(download_rec, key=lambda x: x['index'], reverse=True)[
+                :count]
         splittedList = [gidList[i:i+25] for i in range(0, len(gidList), 25)]
         for recList in splittedList:
             try:
                 res = await self.fetchG_dataOfficial([[rec['gid'], rec['token']] for rec in recList])
                 for g_data in res:
                     if json.dumps(self.db.g_data[g_data['gid']]) == json.dumps(g_data):
-                        logger.debug(f"g_data of {g_data['gid']} is up to date")
+                        logger.debug(
+                            f"g_data of {g_data['gid']} is up to date")
                     else:
                         logger.debug(f"g_data of {g_data['gid']} updated")
                         self.db.g_data[g_data['gid']] = g_data
-                        saveDir = path_join(self.galleryPath,f"{g_data['gid']}_{g_data['token']}")
-                        g_data_json_save_path = path_join(saveDir,"g_data.json")
+                        saveDir = path_join(
+                            self.galleryPath, f"{g_data['gid']}_{g_data['token']}")
+                        g_data_json_save_path = path_join(
+                            saveDir, "g_data.json")
                         with open(g_data_json_save_path, "w", encoding="utf-8") as f:
                             json.dump(g_data, f, ensure_ascii=True, indent=4)
                 await asyncio.sleep(5)
             except Exception as e:
                 logger.error(f"reUpdateLocalG_data failed {str(e)}")
                 pass
+
+    async def rateGallery(self, gid: int, token: str, score: float):
+        json_data = {
+            'method': 'rategallery',
+            'apiuid': 3245653,
+            'apikey': '94ba22ab762645b63cbb',
+            'gid': gid,
+            'token': token,
+            'rating': int(score*2),
+        }
+        try:
+            response = await self.session.post(
+                url='https://exhentai.org/api.php',
+                headers=self.headers,
+                json=json_data,
+                proxy=self.proxy,
+                timeout=ClientTimeout(total=8),
+            )
+            if response.ok:
+                result = json.loads(await response.text())
+                return {
+                    "averageRating": result["rating_avg"],
+                    "ratingCount": result["rating_cnt"],
+                    "userRankColor": CLASS_RATING_COLOR_MAP[result["rating_cls"]],
+                    "userRankValue": result["rating_usr"]
+                }
+            else:
+                raise Exception(
+                    f"rateGallery({gid},{token}) response.code={response.status_code}")
+        except Exception as e:
+            raise makeTrackableException(e, f"rateGallery({gid},{token})")

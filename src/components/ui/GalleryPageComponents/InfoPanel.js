@@ -3,6 +3,7 @@ import { Rating, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 import timeTools from '../../utils/TimeFormatTools';
+import EditableRating from './EditableRating';
 
 
 const HeadDiv = styled("div")(({ theme }) => ({
@@ -70,12 +71,14 @@ export default function InfoPanel(props) {
                     margin: "10px 0px 0px 0px",
                     display: "inline-flex"
                 }}>
-                    <Rating
-                        value={Number(props.g_data.rating)}
-                        precision={0.1}
+                    <EditableRating
+                        defaultValue={Number(props.g_data.rating)}
+                        precision={0.5}
                         emptyIcon={<StarBorderIcon fontSize="inherit" />}
-                        readOnly
                         size="medium"
+                        gid={props.g_data.gid}
+                        token={props.g_data.token}
+                        extended={props.g_data.extended}
                     />
                 </div>}
         </div>

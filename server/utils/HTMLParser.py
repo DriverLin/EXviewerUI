@@ -35,9 +35,7 @@ def parseMainPage(html: str) -> List[object]:
             'div[@class="gl5t"]/div/div[contains(@class,"ir")]/@style')[0]
 
         rankText.replace("background-position:0px -21px;opacity:1", "")
-
         rankValue = re.findall("-?[0-9]+px -?[0-9]+px", rankText)[0]
-
         rank_a, rank_b = re.findall("-?[0-9]+px", rankText)
         rank_a = int(rank_a[:-2])
         rank_b = int(rank_b[:-2])
@@ -87,7 +85,16 @@ def parseMainPage(html: str) -> List[object]:
     return infos
 
 
+CLASS_RATING_COLOR_MAP = {
+    "ir":"",
+    "ir irg":"#009688",
+    "ir irr":"#d90051",
+    "ir irb":"#0288D1"
+}
+
 # @printPerformance
+
+
 def getG_dataFromGalleryPage(html: str) -> object:
     xml = etree.HTML(html)
     urlSplit = xml.xpath("//td[@class='ptds']/a/@href")[0].split("/")
@@ -120,7 +127,25 @@ def getG_dataFromGalleryPage(html: str) -> object:
         * {"KB": 1024, "MB": 1048576, "GB": 1073741824}[fileSizeUnit]
     )
     expunged = Visible.text != "Yes"
-    rating = xml.xpath('//td[@id="rating_label"]/text()')[0].split(" ")[1]
+
+    ratingText = xml.xpath('//td[@id="rating_label"]/text()')[0]
+    if ratingText == "Not Yet Rated":
+        rating = '0'
+    else:
+        rating = ratingText.split(" ")[1]
+
+    ratingStarClass = xml.xpath('//div[@id="rating_image"]/@class')[0]
+    userRankColor = CLASS_RATING_COLOR_MAP[ratingStarClass]
+    if ratingStarClass == "ir":
+        userRankValue = -1#用户没有评分
+    else:
+        ratingStarStyle = xml.xpath('//div[@id="rating_image"]/@style')[0]
+        apx_bpx = re.findall("-?[0-9]+px -?[0-9]+px", ratingStarStyle)[0]
+        rank_a, rank_b = re.findall("-?[0-9]+px", apx_bpx)
+        rank_a = int(rank_a[:-2])
+        rank_b = int(rank_b[:-2])
+        userRankValue = (5 - int(rank_a / -16)) * 2
+        userRankValue = (userRankValue-1 if rank_b == -21 else userRankValue) / 2  # -21半星
     torrentcount = xml.xpath('//*[@id="gd5"]/p[3]/a/text()')[0][18:-1]
     torrents = []
     tags = []
@@ -154,7 +179,9 @@ def getG_dataFromGalleryPage(html: str) -> object:
         "torrents": torrents,
         "tags": tags,
         "extended": {
-            "favoriteIndex": favoriteState,  # -1:未收藏 0-9:收藏夹编号
+            "favoriteIndex": favoriteState,  # int: -1:未收藏 0-9:收藏夹编号
+            "userRankValue": userRankValue,  # int: -1 未评分 0-5 用户评分
+            "userRankColor": userRankColor
         },
     }
     return g_data
@@ -208,6 +235,8 @@ def getCommentsFromGalleryPage(html: str) -> List[object]:
     }
 
 # @printPerformance
+
+
 def getInfoFromViewingPage(html):
     skipHathKey = re.findall(r"onclick=\"return nl\('([^\)]+)'\)", html)
     if len(skipHathKey) != 0:
