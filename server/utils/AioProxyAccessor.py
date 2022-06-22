@@ -573,10 +573,13 @@ class aoiAccessor():
                 pass
 
     async def rateGallery(self, gid: int, token: str, score: float):
+        html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?p=0", cached=True)
+        apiUid = re.findall(r"var apiuid = ([^;]+);", html)[0]
+        apiKey = re.findall(r"var apikey = \"([^;]+)\";", html)[0]
         json_data = {
             'method': 'rategallery',
-            'apiuid': 3245653,
-            'apikey': '94ba22ab762645b63cbb',
+            'apiuid': apiUid,
+            'apikey': apiKey,
             'gid': gid,
             'token': token,
             'rating': int(score*2),
@@ -598,7 +601,6 @@ class aoiAccessor():
                     "userRankValue": result["rating_usr"]
                 }
             else:
-                raise Exception(
-                    f"rateGallery({gid},{token}) response.code={response.status_code}")
+                raise Exception(f"rateGallery({gid},{token}) response.code={response.status_code}")
         except Exception as e:
             raise makeTrackableException(e, f"rateGallery({gid},{token})")

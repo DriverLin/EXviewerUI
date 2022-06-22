@@ -86,10 +86,10 @@ def parseMainPage(html: str) -> List[object]:
 
 
 CLASS_RATING_COLOR_MAP = {
-    "ir":"",
-    "ir irg":"#009688",
-    "ir irr":"#d90051",
-    "ir irb":"#0288D1"
+    "ir": "",
+    "ir irg": "#009688",
+    "ir irr": "#d90051",
+    "ir irb": "#0288D1"
 }
 
 # @printPerformance
@@ -137,7 +137,7 @@ def getG_dataFromGalleryPage(html: str) -> object:
     ratingStarClass = xml.xpath('//div[@id="rating_image"]/@class')[0]
     userRankColor = CLASS_RATING_COLOR_MAP[ratingStarClass]
     if ratingStarClass == "ir":
-        userRankValue = -1#用户没有评分
+        userRankValue = -1  # 用户没有评分
     else:
         ratingStarStyle = xml.xpath('//div[@id="rating_image"]/@style')[0]
         apx_bpx = re.findall("-?[0-9]+px -?[0-9]+px", ratingStarStyle)[0]
@@ -145,7 +145,8 @@ def getG_dataFromGalleryPage(html: str) -> object:
         rank_a = int(rank_a[:-2])
         rank_b = int(rank_b[:-2])
         userRankValue = (5 - int(rank_a / -16)) * 2
-        userRankValue = (userRankValue-1 if rank_b == -21 else userRankValue) / 2  # -21半星
+        userRankValue = (userRankValue-1 if rank_b == -
+                         21 else userRankValue) / 2  # -21半星
     torrentcount = xml.xpath('//*[@id="gd5"]/p[3]/a/text()')[0][18:-1]
     torrents = []
     tags = []
@@ -181,7 +182,7 @@ def getG_dataFromGalleryPage(html: str) -> object:
         "extended": {
             "favoriteIndex": favoriteState,  # int: -1:未收藏 0-9:收藏夹编号
             "userRankValue": userRankValue,  # int: -1 未评分 0-5 用户评分
-            "userRankColor": userRankColor
+            "userRankColor": userRankColor,
         },
     }
     return g_data
