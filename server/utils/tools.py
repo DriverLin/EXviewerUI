@@ -169,3 +169,6 @@ def checkImg(img):
     else:
         logger.warning("checkImg: unknown arg type", type(img))
         return False
+
+def getUTCOffset():
+    return time.strftime("%z")[:-2]

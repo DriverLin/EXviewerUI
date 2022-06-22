@@ -14,10 +14,10 @@ from tinydb import TinyDB
 from tinydb.middlewares import CachingMiddleware
 from tinydb.storages import JSONStorage
 from uvicorn import Config, Server
-
+from utils.HTMLParser import setParserUtcOffset
 from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor
 from utils.DBM import wsDBMBinder
-from utils.tools import logger, makeTrackableException, printTrackableException
+from utils.tools import logger, makeTrackableException, printTrackableException, getUTCOffset
 
 serverLoop = asyncio.get_event_loop()
 
@@ -73,6 +73,8 @@ FAVORITE_DISABLED = getConfig("EH_FAVORITE_DISABLED", 'false')
 DOWNLOAD_DISABLED = getConfig("EH_DOWNLOAD_DISABLED", 'false')
 EH_POST_COMMENT_DISABLED = getConfig("EH_POST_COMMENT_DISABLED", 'false')
 PORT = int(getConfig("PORT", 7964))
+UTC_OFFSET = int(getConfig("UTC_OFFSET", getUTCOffset())) * 3600
+setParserUtcOffset(UTC_OFFSET)
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36",
@@ -388,9 +390,9 @@ async def handelUploadZipGallery(ws: WebSocket):
 
 
 @app.get("/rateGallery/{gid}/{token}/{score}")
-async def rateGallery(gid:int,token:str,score:float):
+async def rateGallery(gid: int, token: str, score: float):
     try:
-        return await aioPa.rateGallery(gid,token,score)
+        return await aioPa.rateGallery(gid, token, score)
     except Exception as e:
         printTrackableException(e)
         raise HTTPException(status_code=500, detail=str(
@@ -400,7 +402,6 @@ app.mount("/", StaticFiles(directory=SERVER_FILE), name="static")
 
 
 if __name__ == "__main__":
-
     serverConfig = Config(
         app=app,
         host="0.0.0.0",

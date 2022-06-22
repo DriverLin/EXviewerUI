@@ -6,6 +6,12 @@ from lxml import etree
 
 from utils.tools import printPerformance, timestamp_to_str
 
+
+def setParserUtcOffset(num):
+    global UTC_OFFSET
+    UTC_OFFSET = num
+
+
 COLOR_FAVORITE_MAP = {
     '000': 0,
     'f00': 1,
@@ -49,15 +55,16 @@ def parseMainPage(html: str) -> List[object]:
             [category, pagesText] = c_u_p_s
             uploadText = elem.xpath(
                 "div[@class='gl5t']/div/div/s/text()")[0]  # 已删除的画廊
-        timestamp = int(
+        utcTimestamp = int(
             time.mktime(
                 time.strptime(
                     uploadText,
                     "%Y-%m-%d %H:%M",
                 )
             )
-        )+8*60*60
-        uploadTime = timestamp_to_str("%Y-%m-%d %H:%M",  timestamp)
+        )
+        uploadTime = timestamp_to_str(
+            "%Y-%m-%d %H:%M",  utcTimestamp + UTC_OFFSET)
 
         favoriteStyle = elem.xpath("div[@class='gl5t']/div/div[2]/@style")
         if len(favoriteStyle) == 1:
@@ -118,8 +125,8 @@ def getG_dataFromGalleryPage(html: str) -> object:
     [Posted, parent, Visible, lang, FileSize, Length, favoriteTimes] = xml.xpath(
         '//div[@id="gdd"]//td[@class="gdt2"]')
 
-    posted = int(time.mktime(time.strptime(
-        Posted.text, "%Y-%m-%d %H:%M")))+8*60*60
+    utcTime = int(time.mktime(time.strptime(Posted.text, "%Y-%m-%d %H:%M")))
+    posted = utcTime+UTC_OFFSET
     filecount = Length.text.split(" ")[0]
     fileSizeText, fileSizeUnit = FileSize.text.split(" ")
     filesize = int(

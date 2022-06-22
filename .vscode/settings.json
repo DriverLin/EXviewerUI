@@ -7,6 +7,7 @@
         "EHDB",
         "Exviewer",
         "Gdata",
-        "rategallery"
+        "rategallery",
+        "lxml"
     ]
 }
