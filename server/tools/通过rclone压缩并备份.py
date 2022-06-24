@@ -6,7 +6,7 @@ import zipfile
 
 
 ZIP_TMP_DIR = r"D:\\"
-REMOTE_PATH = "onedrive:/EHBackups/Gallery"
+REMOTE_PATH = "onedrive:/EHBackups"
 DB_PATH = "D:/EHDownloads/api/NosqlDB.json"
 GALLERY_PATH = r"D:\EHDownloads\Gallery"
 

@@ -19,7 +19,9 @@ from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor
 from utils.DBM import wsDBMBinder
 from utils.tools import logger, makeTrackableException, printTrackableException, getUTCOffset
 
-serverLoop = asyncio.get_event_loop()
+# serverLoop = asyncio.get_event_loop()
+serverLoop = asyncio.new_event_loop()
+asyncio.set_event_loop(serverLoop)
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
