@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { useSetting } from '../../utils/SettingHooks';
 import SwipeVerticalIcon from '@mui/icons-material/SwipeVertical';
-
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
     return <Grow direction="up" ref={ref} {...props} />;
@@ -108,11 +108,13 @@ export default function ViewSettingPanel(props) {
                         <ListItemText primary="竖向滚动" />
                         <Switch
                             edge="end"
-                            onChange={() => setReadVertical(!readVertical)}
-                            checked={readVertical}
-                            inputProps={{
-                                'aria-labelledby': 'switch-list-label-wifi',
+                            onChange={() => {
+                                if(readVertical === false){
+                                    setHorizontalView(false)
+                                }
+                                setReadVertical(!readVertical)
                             }}
+                            checked={readVertical}
                         />
                     </ListItem>
                     {
@@ -126,9 +128,6 @@ export default function ViewSettingPanel(props) {
                                     edge="end"
                                     onChange={() => setHorizontalView(!horizontalView)}
                                     checked={horizontalView}
-                                    inputProps={{
-                                        'aria-labelledby': 'switch-list-label-wifi',
-                                    }}
                                 />
                             </ListItem>
                             {horizontalView ? <ListItem>
@@ -140,27 +139,22 @@ export default function ViewSettingPanel(props) {
                                     edge="end"
                                     onChange={() => setSwitchPagination(!switchPagination)}
                                     checked={switchPagination}
-                                    inputProps={{
-                                        'aria-labelledby': 'switch-list-label-wifi',
-                                    }}
                                 />
                             </ListItem> : null}
-                            <ListItem>
-                                <ListItemIcon>
-                                    <MenuBookIcon color='primary' />
-                                </ListItemIcon>
-                                <ListItemText primary="切换方向" />
-                                <Switch
-                                    edge="end"
-                                    onChange={() => setSwitchDirection(!switchDirection)}
-                                    checked={switchDirection}
-                                    inputProps={{
-                                        'aria-labelledby': 'switch-list-label-wifi',
-                                    }}
-                                />
-                            </ListItem>
                         </div> : null
                     }
+                    <ListItem  >
+                        <ListItemIcon>
+                            <MenuBookIcon color='primary' />
+                        </ListItemIcon>
+                        <ListItemText primary="阅读方向" />
+                        <IconButton  onClick={() => setSwitchDirection(!switchDirection)}  >
+                            <ArrowBackIcon color='primary'  sx={{
+                                transition: ".3s",
+                                transform:   switchDirection ?  "" :"rotateZ(180deg)"
+                            }} />
+                        </IconButton>
+                    </ListItem>
                     <ListItem>
                         <Button sx={{ width: "100%" }} variant="contained" startIcon={<RestartAltIcon />}
                             onClick={() => {

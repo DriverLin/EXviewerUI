@@ -12,7 +12,8 @@ export function useSetting(key, defaultValue) {
 }
 
 export function useSettingBind(key, defaultValue) { 
-    return useSetting(key, defaultValue)[0]
+    const [state,setState] = useSetting(key, defaultValue)
+    return state
 }
 export function getSetting(key, defaultValue) {
     const warperKey = `user_settings[${key}]`

@@ -2,7 +2,7 @@ import { IconButton } from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Grid } from 'react-virtualized';
 import { useRefState } from '../utils/MyHooks';
-import { useSettingBind } from '../utils/SettingHooks';
+import { getSetting, useSettingBind } from '../utils/SettingHooks';
 import MultiPageSwiper from './ViewPageComponents/MultiPageSwiper';
 import RevSlider from './ViewPageComponents/RevSlider';
 import ViewSettingPanel from './ViewPageComponents/ViewSettingPanel';
@@ -102,9 +102,11 @@ function ViewPageUI(props) {
         if (pageNumRef.current === value) {
             return
         }
-        _setPageNum(value);
-        localStorage.setItem(`/viewing/${gid}/${token}/`, value);
-        if (value === pageCount) {
+        const ensureMin = value < 1 ? 1 : value
+        const ensureMax = ensureMin > pageCount ? pageCount : ensureMin
+        _setPageNum(ensureMax);
+        localStorage.setItem(`/viewing/${gid}/${token}/`, ensureMax);
+        if (ensureMax === pageCount) {
             localStorage.removeItem(`/viewing/${gid}/${token}/`);
         }
     }
@@ -136,15 +138,15 @@ function ViewPageUI(props) {
     const handelTap = (event) => {
         const jmpNum = horizontalView ? 2 : 1
         const direction = switchDirection ? -1 : 1
-        if (event.pageX / document.body.clientWidth > 0.7) {
+        if (event.clientX / document.body.clientWidth > 0.7) {
             setPageNum(pageNum + direction * jmpNum)
-        } else if (event.pageX / document.body.clientWidth < 0.3) {
+        } else if (event.clientX / document.body.clientWidth < 0.3) {
             setPageNum(pageNum - direction * jmpNum)
         } else {
-            if (event.pageY / document.body.clientHeight < 0.3) {
+            if (event.clientY / document.body.clientHeight < 0.3) {
                 setSettingPanelOpen(settingPanelOpen => !settingPanelOpen)
             }
-            else if (event.pageY / document.body.clientHeight > 0.7) {
+            else if (event.clientY / document.body.clientHeight > 0.7) {
                 setSliderOpen(sliderOpen => !sliderOpen)
             }
         }
@@ -166,13 +168,12 @@ function ViewPageUI(props) {
 
 
     const onKeyUP = (e) => {
-        const jmpNum = horizontalView ? 2 : 1
-        const direction = switchDirection ? -1 : 1
+        const jmpNum = getSetting("横屏模式") ? 2 : 1
+        const direction = getSetting("阅读方向") ? -1 : 1
         if (e.key === "ArrowLeft") {
-            setPageNum(pageNumRef.current + direction * jmpNum)
-
-        } else if (e.key === "ArrowRight") {
             setPageNum(pageNumRef.current - direction * jmpNum)
+        } else if (e.key === "ArrowRight") {
+            setPageNum(pageNumRef.current + direction * jmpNum)
         }
     }
 
@@ -190,11 +191,15 @@ function ViewPageUI(props) {
                 onClose={onViewSettingPanelClose}
                 onOpen={onViewSettingPanelOpen}
             />
-            <div style={{ height: '100vh', width: '100vw', }} onClick={handelTap}>
+            <div style={{ height: '100vh', width: '100vw' }} onClick={handelTap}>
                 {
-                    readVertical ? <VerticalScrollViewer
-                        urls={urls}
-                    /> :
+                    readVertical ?
+                        <VerticalScrollViewer
+                            urls={urls}
+                            value={pageNum}
+                            setValue={setPageNum}
+                        />
+                        :
                         <MultiPageSwiper
                             key={refreshKey}//切换横屏模式  就重新渲染 避免了页数切换的BUG
                             value={pageNum}

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from random import randint
 import ssl
 from os.path import join as path_join
 import threading
@@ -19,7 +20,6 @@ from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor
 from utils.DBM import wsDBMBinder
 from utils.tools import logger, makeTrackableException, printTrackableException, getUTCOffset
 
-# serverLoop = asyncio.get_event_loop()
 serverLoop = asyncio.new_event_loop()
 asyncio.set_event_loop(serverLoop)
 
@@ -33,6 +33,7 @@ if not os.path.exists(CONFIG_PATH):
         "EH_DOWNLOAD_PATH": "",
         "EH_CACHE_PATH": "",
         "EH_COOKIE": "",
+        "UTC_OFFSET": "+08",
         "PORT": 7964
     }, indent=4))
 CONFIG = json.load(open(CONFIG_PATH))
@@ -238,12 +239,17 @@ async def continueDownload():
 
 @app.get("/Gallery/{gid_token}/{filename}")
 async def getGalleryFile(gid_token: str, filename: str, nocache=None):
+
     gid, token = gid_token.split("_")
     gid = int(gid)
     try:
         if filename == "g_data.json":
             return await aioPa.get_G_data(gid, token, cached=(nocache == None))
         else:
+            # await asyncio.sleep(0.5)
+            # if randint(0, 10) > 5:
+            #     raise HTTPException(status_code=404, detail=str(
+            #         makeTrackableException('', f"random error")))
             index = int(filename.split(".")[0])
             return FileResponse(
                 await aioPa.getGalleryImage(gid, token, index),

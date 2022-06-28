@@ -1,33 +1,27 @@
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 import CircularProgress from '@mui/material/CircularProgress';
 import Grid from '@mui/material/Grid';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-function SkeImg(props) {
-    const [state, setState] = useState('loading')//loading error finished
-    const loadImg = (e) => {
-        if (e) {
-            e.stopPropagation();
+function ImageLoader(props) {
+    const [state, setState] = useState('loading')
+    const refImg = useRef()
+    const onLoad = () => {
+        setState("finished")
+    }
+    const onError = () => {
+        setState("error")
+    }
+    const reLoad = () => {
+        if(refImg.current){
+            setState("loading")
+            refImg.current.src = props.src
         }
-        setState('loading')
-        let img = new Image()
-        img.onload = () => {
-            setState('finished')
-            img = null
-        }
-        img.onerror = () => {
-            setState('error')
-        }
-        img.src = props.src
     }
 
-    useEffect(() => {
-        loadImg()
-    }, [props.src])
-
-    const elemMap = {
-        'loading':
-            <div style={{
+    return <div>
+        {
+            state === 'loading' && <div style={{
                 height: "auto",
                 width: props.maxWidth,
                 display: "flex",
@@ -35,9 +29,10 @@ function SkeImg(props) {
                 alignItems: "center",
             }} >
                 <CircularProgress />
-            </div>,
-        'error':
-            <div style={{
+            </div>
+        }
+        {
+            state === 'error' && <div style={{
                 height: "100%",
                 width: props.maxWidth,
                 display: "flex",
@@ -52,15 +47,22 @@ function SkeImg(props) {
                     justifyContent: "center",
                     alignItems: "center",
                 }}
-                    onClick={loadImg}
+                    onClick={reLoad}
                 >
                     <BrokenImageIcon />
                 </div>
-            </div>,
-        'finished':
-            <img src={props.src} style={{ maxHeight: "100vh", maxWidth: props.maxWidth }} />
-    }
-    return elemMap[state]
+            </div>
+        }
+        {
+            <img
+                ref={refImg}
+                onLoad={onLoad}
+                onError={onError}
+                src={props.src}
+                style={{ maxHeight: state === "finished" ? "100vh" : 0, maxWidth: props.maxWidth }}
+            />
+        }
+    </div>
 }
 
 export default function MultiImageShow(props) {
@@ -92,7 +94,7 @@ export default function MultiImageShow(props) {
             {
                 mapSrc.map((src, index) => {
                     return (
-                        <SkeImg
+                        <ImageLoader
                             key={index}
                             src={src}
                             maxWidth={maxWidth}

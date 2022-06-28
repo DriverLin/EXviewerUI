@@ -18,7 +18,7 @@ const DelayLoadImage = ({ src }) => {
             style={{
                 width: "100%",
                 height: "0",
-                paddingBottom: "139%",
+                paddingBottom: "141%",
                 overflow: "hidden",
                 borderRadius: 5,
             }}
@@ -38,7 +38,7 @@ const DelayLoadImage = ({ src }) => {
             style={{
                 width: "100%",
                 height: "0",
-                paddingBottom: "139%",
+                paddingBottom: "141%",
                 overflow: "hidden",
                 borderRadius: 5
             }} />

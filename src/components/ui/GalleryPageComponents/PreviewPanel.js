@@ -25,7 +25,7 @@ function PreviewLoadingImg(props) {
                 style={{
                     width: "100%",
                     height: "0",
-                    paddingBottom: "139%",
+                    paddingBottom: "141%",
                     overflow: "hidden",
                     borderRadius: 5
                 }} />
@@ -48,7 +48,7 @@ function PreviewLoadingImg(props) {
                 style={{
                     width: "100%",
                     height: "0",
-                    paddingBottom: "139%",
+                    paddingBottom: "141%",
                     overflow: "hidden",
                     borderRadius: 5,
                 }}

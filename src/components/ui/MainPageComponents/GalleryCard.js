@@ -191,14 +191,14 @@ function GalleryCard_inner(props) {
             <div
                 style={{
                     height: containerHeight,
-                    width: containerHeight / 1.39,
+                    width: containerHeight / 1.41,
                 }}
                 className={classes.imgContainer}
                 onClick={() => {
                     props.onImageClick(props.cardInfo.gid, props.cardInfo.token)
                 }}
             >
-                <img style={{ width: containerHeight / 1.39, }} className={classes.imgContainer_img} src={`/cover/${props.cardInfo.gid}_${props.cardInfo.token}.jpg`} alt={`cover of ${props.cardInfo.name}`} />
+                <img style={{ width: containerHeight / 1.41, }} className={classes.imgContainer_img} src={`/cover/${props.cardInfo.gid}_${props.cardInfo.token}.jpg`} alt={`cover of ${props.cardInfo.name}`} />
             </div>
             <div
                 className={classes.infoContainer}
