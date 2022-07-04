@@ -7,13 +7,14 @@ function ImageLoader(props) {
     const [state, setState] = useState('loading')
     const refImg = useRef()
     const onLoad = () => {
-        setState("finished")
+        setState("finish")
     }
     const onError = () => {
+        // console.log("onError", e)
         setState("error")
     }
     const reLoad = () => {
-        if(refImg.current){
+        if (refImg.current) {
             setState("loading")
             refImg.current.src = props.src
         }
@@ -59,7 +60,7 @@ function ImageLoader(props) {
                 onLoad={onLoad}
                 onError={onError}
                 src={props.src}
-                style={{ maxHeight: state === "finished" ? "100vh" : 0, maxWidth: props.maxWidth }}
+                style={{ maxHeight: "100vh", maxWidth: props.maxWidth, display: state === "finish" ? "" : "none" }}
             />
         }
     </div>

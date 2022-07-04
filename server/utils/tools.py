@@ -37,7 +37,7 @@ def makeTrackableException(e, appendE):
         exceptions = json.loads(str(e))
         exceptions.append(str(appendE))
         return Exception(json.dumps(exceptions))
-    except Exception as jsonError:
+    except Exception :
         return Exception(json.dumps([str(e), str(appendE)]))
 
 

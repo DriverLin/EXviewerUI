@@ -27,6 +27,7 @@ pip install -r requirements.txt
     "EH_DOWNLOAD_PATH": "",
     "EH_CACHE_PATH": "",
     "EH_COOKIE": "ipb_member_id=***; ipb_pass_hash=***; igneous=***; sl=dm_1; sk=***; s=***",
+    "UTC_OFFSET": "+08",
     "PORT": 7964
 }
 ```

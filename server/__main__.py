@@ -258,6 +258,8 @@ async def getGalleryFile(gid_token: str, filename: str, nocache=None):
                     "Cache-Control": "max-age=31536000",
                 },
             )
+    except HTTPException as e:
+        raise e
     except Exception as e:
         printTrackableException(e)
         raise HTTPException(status_code=404, detail=str(

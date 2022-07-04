@@ -456,8 +456,8 @@ class aoiAccessor():
         downloadTable = self.db.download.getDict()
         unFinishList = []
         for gid in downloadTable:
-            # if downloadTable[gid]['state'] != DOWNLOAD_STATE.FINISHED:
-            #     continue
+            if downloadTable[gid]['state'] != DOWNLOAD_STATE.FINISHED:
+                continue
             if gid in g_data_table and downloadTable[gid]['success'] == int(g_data_table[gid]['filecount']):
                 continue
             else:

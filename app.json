@@ -18,6 +18,10 @@
         "EH_POST_COMMENT_DISABLED": {
             "description": "禁用发表评论功能",
             "value": "true"
+        },
+        "UTC_OFFSET":{
+            "description": "UTC时间偏移量",
+            "value": "+8"
         }
     },
     "website": "https://github.com/DriverLin/EXviewerUI",

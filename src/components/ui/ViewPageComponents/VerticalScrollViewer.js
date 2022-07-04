@@ -38,7 +38,7 @@ function ImageLoader(props) {
             src={props.src}
             onLoad={onLoad}
             onError={onError}
-            style={{ width: "100vw", height: state === "finish" ? "auto" : "0px", verticalAlign: "middle" }}
+            style={{ width: "100vw", height: "auto", verticalAlign: "middle", display: state === "finish" ? "" : "none" }}
         />
         {
             state !== "finish" && <div style={{
@@ -112,19 +112,19 @@ export default function VerticalScrollViewer(props) {//resize建议直接重渲�
         if (lastStart.current === calcRes) return
         lastStart.current = calcRes
         setData(old => { return { ...old, current: calcRes } })
-        if(props.value !== calcRes){
+        if (props.value !== calcRes) {
             props.setValue(calcRes)
         }
     })
 
     useEffect(() => {
-        if (lastStart.current === props.value){
+        if (lastStart.current === props.value) {
             return
         }
         lastStart.current = props.value
-        const index = props.value -1
-        const targetImgTop = imgTop[index ] || calcTop(index, imgCache)
-        document.scrollingElement.scrollTop = targetImgTop +1
+        const index = props.value - 1
+        const targetImgTop = imgTop[index] || calcTop(index, imgCache)
+        document.scrollingElement.scrollTop = targetImgTop + 1
         const calcRes = calcStart(document.scrollingElement.clientHeight, document.scrollingElement.scrollTop, imgCache)
         setData(old => { return { ...old, current: calcRes } })
     }, [props.value])
@@ -136,8 +136,8 @@ export default function VerticalScrollViewer(props) {//resize建议直接重渲�
     }
 
     const totalH = useMemo(() => {
-        return imgTop[props.urls.length-1] || calcTop(props.urls.length-1, imgCache)
-    }, [imgCache,imgTop])
+        return imgTop[props.urls.length - 1] || calcTop(props.urls.length - 1, imgCache)
+    }, [imgCache, imgTop])
 
     return <div style={{ width: "100vw", height: totalH }} >
         {

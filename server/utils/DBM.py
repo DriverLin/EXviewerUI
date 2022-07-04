@@ -193,7 +193,7 @@ class wsDBMBinder():
                 msg = await ws.receive_text()
                 self._handel_message(msg, ws)
         except Exception as e:
-            logger.info(f"{e} {ws} ws disconnect")
+            logger.info(f"{e} {ws.client.host}:{ws.client.port} disconnect")
             self._active_connections.remove(ws)
 
     async def _broadcast(self, msg):
