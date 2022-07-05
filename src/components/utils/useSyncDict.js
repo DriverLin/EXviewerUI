@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState ,useReducer } from "react"
+import { useEffect, useRef, useState } from "react"
 import ReconnectingWebSocket from "reconnecting-websocket"
 
 const INIT = 0
@@ -63,7 +63,7 @@ export function useWsHandeler(wsUrl, onEvent) {
                 ws.current.close()
             }
         }
-    }, [])
+    })
     return null
 }
 
@@ -138,6 +138,6 @@ export default function useSyncDict(wsUrl) {
                 ws.current.close()
             }
         }
-    }, [])
+    })
     return data
 }

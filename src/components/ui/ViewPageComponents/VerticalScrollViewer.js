@@ -10,7 +10,7 @@ function ImageLoader(props) {
 
     useEffect(() => {
         if (props.cache.current[props.index] === undefined && state === "finish") {
-            props.onLoad(props.index, { width: refImg.current.width, height: refImg.current.height })
+            props.onLoad(props.index, refImg.current.naturalHeight / refImg.current.naturalWidth)
         }
     }, [state])
 
@@ -68,22 +68,24 @@ function ImageLoader(props) {
 
 const calcTop = (index, imgCache) => {//计算图片显示位置offsetHeight
     let h = 0
-    imgCache.current.forEach((info, i) => {
+    imgCache.current.forEach((aspectRatio, i) => {
         if (i < index) {
-            h += info?.height || document.body.clientWidth * 1.41
+            h += aspectRatio ? aspectRatio * document.body.clientWidth : document.body.clientWidth * 1.41
         }
     });
     return h
 }
 
 
-const calcStart = (pageH, scrollTop, imgCache) => {//根据滚动 计算当前显示的图片
+const calcStart = (scrollTop, imgCache) => {//根据滚动 计算当前显示的图片
     for (let i = 0; i < imgCache.current.length; i++) {
         const itemTop = calcTop(i, imgCache)
         if (itemTop >= scrollTop) {
             return i
         }
+
     }
+    return imgCache.current.length
 }
 
 export default function VerticalScrollViewer(props) {//resize建议直接重渲染  别费那个劲了
@@ -95,19 +97,17 @@ export default function VerticalScrollViewer(props) {//resize建议直接重渲�
         _setImgTop(v)
     }
 
-    const [data, setData] = useState(props.value)
+    const [pageIndex, setPageIndex] = useState(props.value)
 
-    const start = Math.max(data - 3, 0)
-    const end = Math.min(data + 5, props.urls.length)
-
+    const start = Math.max(pageIndex - 3, 0)
+    const end = Math.min(pageIndex + 5, props.urls.length)
 
     const lastStart = useRef(-1)
     useEventListener('scroll', (e) => {
-        const calcRes = calcStart(document.scrollingElement.clientHeight, document.scrollingElement.scrollTop, imgCache)
+        const calcRes = calcStart(document.scrollingElement.scrollTop, imgCache)
         if (lastStart.current === calcRes) return
         lastStart.current = calcRes
-        // setData(old => { return { ...old, current: calcRes } })
-        setData(calcRes)
+        setPageIndex(calcRes)
         if (props.value !== calcRes) {
             props.setValue(calcRes)
         }
@@ -121,22 +121,35 @@ export default function VerticalScrollViewer(props) {//resize建议直接重渲�
         const index = props.value - 1
         const targetImgTop = imgTop[index] || calcTop(index, imgCache)
         document.scrollingElement.scrollTop = targetImgTop + 1
-        const calcRes = calcStart(document.scrollingElement.clientHeight, document.scrollingElement.scrollTop, imgCache)
-        // setData(old => { return { ...old, current: calcRes } })
-        setData(calcRes)
+        const calcRes = calcStart(document.scrollingElement.scrollTop, imgCache)
+        setPageIndex(calcRes)
     }, [props.value])
 
-    const setImageSize = (index, info) => {//每当有图片加载完成 重新计算所有图片的高度 *保证start图片的相对位置不变
-        imgCache.current[index] = info
+    const setImageSize = (index, aspectRatio) => {//每当有图片加载完成 重新计算所有图片的高度 *保证start图片的相对位置不变
+        imgCache.current[index] = aspectRatio
         const tops = props.urls.map((_, index) => calcTop(index, imgCache))
         setImgTop(tops)
+        const offset = document.body.clientWidth * aspectRatio - document.body.clientWidth * 1.41
+        // console.log(index, aspectRatio, "->", offset)
+        // document.scrollingElement.scrollBy(0, offset)
     }
 
     const totalH = useMemo(() => {//全部图片撑开的页面高度  使滚动条有正确的位置
         return imgTop[props.urls.length - 1] || calcTop(props.urls.length - 1, imgCache)
     }, [imgCache.current, imgTop])
 
+    useEventListener("resize", (e) => {
+        const tops = props.urls.map((_, index) => calcTop(index, imgCache))
+        setImgTop(tops)
+        const calcRes = calcStart(document.scrollingElement.scrollTop, imgCache)
+        if (lastStart.current === calcRes) return
+        lastStart.current = calcRes
+        setPageIndex(calcRes)
+    })
+
+
     return <div style={{ width: "100vw", height: totalH }} >
+
         {
             props.urls.slice(start, end).map((url, offsetIndex) => {
                 const index = start + offsetIndex

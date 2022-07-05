@@ -179,10 +179,7 @@ function ViewPageUI(props) {
     }
     useEventListener("keyup", onKeyUP)
 
-    const [scrollingElementWidth, setScrollingElementWidth] = useState(document.scrollingElement.clientWidth)
-    useEventListener("resize", (e) => {
-        setScrollingElementWidth(document.scrollingElement.clientWidth)
-    })
+    
 
 
     return (
@@ -196,7 +193,6 @@ function ViewPageUI(props) {
                 {
                     readVertical ?
                         <VerticalScrollViewer
-                            key={scrollingElementWidth}
                             urls={urls}
                             value={pageNum}
                             setValue={setPageNum}
