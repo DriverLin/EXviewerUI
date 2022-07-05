@@ -2,6 +2,7 @@ import BrokenImageIcon from '@mui/icons-material/BrokenImage';
 import { Button, Grid } from '@mui/material';
 import Skeleton from '@mui/material/Skeleton';
 import { styled } from '@mui/material/styles';
+import { useEventListener } from 'ahooks';
 import React, { useEffect, useRef, useState } from 'react';
 
 
@@ -92,13 +93,7 @@ export default function PreviewPanel(props) {
         }
         lastE.current = end
     }
-    useEffect(() => {
-        window.addEventListener('scroll', handelScroll, true)
-        return () => {
-            window.removeEventListener('scroll', handelScroll, true)
-        }
-    }, [])
-
+    useEventListener('scroll', handelScroll, true)
 
     const BottomButton = styled(Button)(({ theme }) => ({
         marginTop: props.spacingPX + "px",

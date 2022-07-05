@@ -7,6 +7,7 @@ import syncedDB, { DOWNLOAD_STATE, FAVORITE_STATE } from '../../utils/mobxSynced
 import GalleryCard from "./GalleryCard";
 import { observer } from "mobx-react";
 import { toJS } from 'mobx';
+import { useEventListener } from 'ahooks';
 
 const openCurrentTab = (url) => {
     window.location.href = "/#" + url
@@ -132,12 +133,10 @@ export default function VScrollCardContainer(props) {
         setDocumentHeight(document.body.clientHeight)
     }
 
-    useEffect(() => {
-        window.addEventListener("resize", resizeWindow);
-        return () => {
-            window.removeEventListener("resize", resizeWindow);
-        }
-    }, [])
+    useEventListener('resize', resizeWindow)
+
+
+
 
     const resizeKey = useMemo(() => (small_matches ? 1 : 0) + (break_matches ? 2 : 1) - 1, [small_matches, break_matches])
 

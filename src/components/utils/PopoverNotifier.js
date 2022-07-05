@@ -1,5 +1,6 @@
 import MuiAlert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
+import { useEventListener } from 'ahooks';
 import React, { useEffect, useState } from 'react';
 
 const Alert = React.forwardRef(function Alert(props, ref) {
@@ -27,12 +28,8 @@ export default function PopoverNotifier(props) {
         setNotifyMessage(msg)
     }
     
-    useEffect(() => {
-        window.addEventListener('PopoverNotifierMessage', msgHandler);
-        return () => {
-            window.removeEventListener('PopoverNotifierMessage', msgHandler);
-        }
-    }, []);
+
+    useEventListener('PopoverNotifierMessage', msgHandler);
 
     return (
         notifyMessage === null ? null :

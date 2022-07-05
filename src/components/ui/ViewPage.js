@@ -9,6 +9,7 @@ import ViewSettingPanel from './ViewPageComponents/ViewSettingPanel';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import LoadingAnime from './LoadingAnime';
 import VerticalScrollViewer from './ViewPageComponents/VerticalScrollViewer';
+import { useEventListener } from 'ahooks';
 
 const fix8 = (num) => (Array(8).join(0) + num).slice(-8)
 
@@ -176,13 +177,13 @@ function ViewPageUI(props) {
             setPageNum(pageNumRef.current + direction * jmpNum)
         }
     }
+    useEventListener("keyup", onKeyUP)
 
-    useEffect(() => {
-        window.addEventListener("keyup", onKeyUP)
-        return () => {
-            window.removeEventListener("keyup", onKeyUP)
-        }
-    }, []);
+    const [scrollingElementWidth, setScrollingElementWidth] = useState(document.scrollingElement.clientWidth)
+    useEventListener("resize", (e) => {
+        setScrollingElementWidth(document.scrollingElement.clientWidth)
+    })
+
 
     return (
         <div >
@@ -195,6 +196,7 @@ function ViewPageUI(props) {
                 {
                     readVertical ?
                         <VerticalScrollViewer
+                            key={scrollingElementWidth}
                             urls={urls}
                             value={pageNum}
                             setValue={setPageNum}

@@ -1,13 +1,7 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { AutoSizer, CellMeasurer, CellMeasurerCache, List } from 'react-virtualized';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
 import BrokenImageIcon from '@mui/icons-material/BrokenImage';
-import { style } from '@mui/system';
-import { useEventListener, useVirtualList } from 'ahooks';
-
-
-
-
+import { useEventListener } from 'ahooks';
 
 
 function ImageLoader(props) {
@@ -19,7 +13,6 @@ function ImageLoader(props) {
             props.onLoad(props.index, { width: refImg.current.width, height: refImg.current.height })
         }
     }, [state])
-
 
     const onLoad = () => {
         setState("finish")
@@ -38,7 +31,12 @@ function ImageLoader(props) {
             src={props.src}
             onLoad={onLoad}
             onError={onError}
-            style={{ width: "100vw", height: "auto", verticalAlign: "middle", display: state === "finish" ? "" : "none" }}
+            style={{
+                width: "100vw",
+                height: "auto",
+                verticalAlign: "middle",
+                display: state === "finish" ? "" : "none",
+            }}
         />
         {
             state !== "finish" && <div style={{
@@ -97,13 +95,10 @@ export default function VerticalScrollViewer(props) {//resize建议直接重渲�
         _setImgTop(v)
     }
 
-    const [data, setData] = useState({
-        current: props.value,
-        total: props.urls.length,
-    })
+    const [data, setData] = useState(props.value)
 
-    const start = Math.max(data.current - 3, 0)
-    const end = Math.min(data.current + 5, data.total)
+    const start = Math.max(data - 3, 0)
+    const end = Math.min(data + 5, props.urls.length)
 
 
     const lastStart = useRef(-1)
@@ -111,7 +106,8 @@ export default function VerticalScrollViewer(props) {//resize建议直接重渲�
         const calcRes = calcStart(document.scrollingElement.clientHeight, document.scrollingElement.scrollTop, imgCache)
         if (lastStart.current === calcRes) return
         lastStart.current = calcRes
-        setData(old => { return { ...old, current: calcRes } })
+        // setData(old => { return { ...old, current: calcRes } })
+        setData(calcRes)
         if (props.value !== calcRes) {
             props.setValue(calcRes)
         }
@@ -126,18 +122,19 @@ export default function VerticalScrollViewer(props) {//resize建议直接重渲�
         const targetImgTop = imgTop[index] || calcTop(index, imgCache)
         document.scrollingElement.scrollTop = targetImgTop + 1
         const calcRes = calcStart(document.scrollingElement.clientHeight, document.scrollingElement.scrollTop, imgCache)
-        setData(old => { return { ...old, current: calcRes } })
+        // setData(old => { return { ...old, current: calcRes } })
+        setData(calcRes)
     }, [props.value])
 
-    const setImageSize = (index, info) => {//每当有图片加载完成 重新计算所有图片的高度 并保证start图片的相对位置不变
+    const setImageSize = (index, info) => {//每当有图片加载完成 重新计算所有图片的高度 *保证start图片的相对位置不变
         imgCache.current[index] = info
         const tops = props.urls.map((_, index) => calcTop(index, imgCache))
         setImgTop(tops)
     }
 
-    const totalH = useMemo(() => {
+    const totalH = useMemo(() => {//全部图片撑开的页面高度  使滚动条有正确的位置
         return imgTop[props.urls.length - 1] || calcTop(props.urls.length - 1, imgCache)
-    }, [imgCache, imgTop])
+    }, [imgCache.current, imgTop])
 
     return <div style={{ width: "100vw", height: totalH }} >
         {
