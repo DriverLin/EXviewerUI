@@ -21,7 +21,7 @@ git clone https://github.com/DriverLin/EXviewerUI
 cd EXviewerUI
 pip install -r requirements.txt
 ```
-创建server/config.json并填写cookie
+修改server/config.json，填写cookie
 ```
 {
     "EH_DOWNLOAD_PATH": "",
@@ -35,7 +35,7 @@ pip install -r requirements.txt
 ```
 python server 
 访问 http://IP:PORT 
-并将网站安装到桌面
+将网站作为APP安装到桌面
 ```
 
 ## 部署到Heroku
@@ -45,7 +45,7 @@ python server
 
 ## 环境变量
 
-可使用环境变量来指定相关配置
+使用环境变量来指定相关配置
 
 如果指定了环境变量 则会忽略配置文件中的项
 
