@@ -129,9 +129,13 @@ export default function VerticalScrollViewer(props) {//resize建议直接重渲�
         imgCache.current[index] = aspectRatio
         const tops = props.urls.map((_, index) => calcTop(index, imgCache))
         setImgTop(tops)
-        const offset = document.body.clientWidth * aspectRatio - document.body.clientWidth * 1.41
-        // console.log(index, aspectRatio, "->", offset)
-        // document.scrollingElement.scrollBy(0, offset)
+        // if (index <= pageIndex) {
+        //     const offset = document.body.clientWidth * aspectRatio - document.body.clientWidth * 1.41
+        //     document.scrollingElement.scrollBy(0, offset)
+        //     console.log(index, aspectRatio, "->", offset)
+        // }else{   
+        //     console.log(index, aspectRatio,'在下方',0)
+        // }
     }
 
     const totalH = useMemo(() => {//全部图片撑开的页面高度  使滚动条有正确的位置
