@@ -1,6 +1,6 @@
 # EXviewer
 
-E站的(PWA)客户端，于在线浏览，下载以及管理本地画廊。基于React与MaterialUI构建
+E站的PWA客户端，于在线浏览，下载以及管理本地画廊。基于React与MaterialUI构建
 ## 截图
 
 <div style="display: flex;">

@@ -144,8 +144,8 @@ export default function VScrollCardContainer(props) {
                 cellRenderer={cellRenderer}
                 cellSizeAndPositionGetter={cellSizeAndPositionGetter}
                 onScroll={handelVScroll}
-                height={documentHeight}
-                width={documentWidth + 100}
+                height={(documentHeight || document.body.clientHeight)}
+                width={(documentWidth || document.body.clientWidth) + 100}
                 verticalOverscanSize={25}
                 id={uuid.current}
             />
