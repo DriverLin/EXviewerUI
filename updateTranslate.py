@@ -28,7 +28,7 @@ export default function GetTranslate(type,value) {
         return value
     }
 }
-export function getGuess(value) { 
+export function getGuess(value,maxLength) { 
     if (value === "") return []
     const guess = []
     for (let type of Object.keys(preciseQuery)) {
@@ -39,7 +39,7 @@ export function getGuess(value) {
                     origin: name,
                     translated: preciseQuery[type][name]
                 })
-                if (guess.length > 25) {
+                if (guess.length > maxLength) {
                     return guess
                 }
             }
@@ -47,6 +47,7 @@ export function getGuess(value) {
     }
     return guess
 }
+
 
 
 """.replace(

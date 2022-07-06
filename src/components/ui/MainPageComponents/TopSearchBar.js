@@ -115,8 +115,9 @@ export default function TopSearchBar(props) {
 
     const handelAutoComplete = (inputText) => {
         const guessTarget = getWordOfLast(inputText)
+        const maxLength = 25
         if (guessTarget.length > 0) {
-            const guessResult = getGuess(guessTarget)
+            const guessResult = getGuess(guessTarget,maxLength)
             setAutocomplete(true)
             setGuess(guessResult)
         } else {

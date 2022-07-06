@@ -6,17 +6,8 @@ import 'react-virtualized/styles.css';
 import syncedDB, { DOWNLOAD_STATE, FAVORITE_STATE } from '../../utils/mobxSyncedState';
 import GalleryCard from "./GalleryCard";
 import { observer } from "mobx-react";
-import { toJS } from 'mobx';
 import { useEventListener } from 'ahooks';
-
-const openCurrentTab = (url) => {
-    window.location.href = "/#" + url
-}
-
-const openNewTab = (url) => {
-    openCurrentTab(url)
-}
-
+import { v4 as uuidGenerator } from 'uuid';
 
 export default function VScrollCardContainer(props) {
     const break_matches = useMediaQuery('(min-width:840px)');//是否双列展示
@@ -24,9 +15,7 @@ export default function VScrollCardContainer(props) {
     const [documentWidth, setDocumentWidth] = useState(document.body.clientWidth)
     const [documentHeight, setDocumentHeight] = useState(document.body.clientHeight)
 
-
-
-    const cellRenderer_inner = ({ index, style }) => {
+    const RenderObserver = observer(({ index, style }) => {
         const newStyle = {
             ...style,
             width: cardWidth,
@@ -47,8 +36,7 @@ export default function VScrollCardContainer(props) {
                 onCardClick={props.onCardClick}
             />
         </div> : null
-    }
-    const RenderObserver = observer(cellRenderer_inner);
+    });
     function cellRenderer(args) {
         return <div key={args.key}>
             <RenderObserver
@@ -97,22 +85,20 @@ export default function VScrollCardContainer(props) {
         }
     }, [break_matches, small_matches])
 
-
-    function cellSizeAndPositionGetter({ index }) {
+    const cellSizeAndPositionGetter = ({ index }) => {
         return {
             height: cardHeight,
             width: cardWidth,
             x: calLeft(index),
             y: calTop(index),
-        };
+        }
     }
-
 
     const overCardNum = useRef(0)
     const lastE = useRef(0);
 
     const handelVScroll = (e) => {
-        const dis2trigger = 3
+        const dis2trigger = 1
         const end = e.scrollHeight - e.scrollTop - e.clientHeight
         if (lastE.current > dis2trigger && end <= dis2trigger) {
             console.log("触发加载")
@@ -128,25 +114,21 @@ export default function VScrollCardContainer(props) {
         props.setScrollTop(e.scrollTop)
     }
 
-    const resizeWindow = (e) => {
+    const onWindowResize = (e) => {
         setDocumentWidth(document.body.clientWidth)
         setDocumentHeight(document.body.clientHeight)
     }
+    useEventListener('resize', onWindowResize)
 
-    useEventListener('resize', resizeWindow)
+    const resizeKey = useMemo(() => JSON.stringify([small_matches, break_matches]), [small_matches, break_matches])
 
-
-
-
-    const resizeKey = useMemo(() => (small_matches ? 1 : 0) + (break_matches ? 2 : 1) - 1, [small_matches, break_matches])
-
-    const collectionRef = useRef(null)
+    const uuid = useRef(uuidGenerator())
     useEffect(() => {
         const cellHeight = small_matches ? 230 : 170;
         const offsetTop = cellHeight * overCardNum.current / (break_matches ? 2 : 1)
-        document.getElementById("virtual_scroll_collection_container_id_c5124484").scrollTop = offsetTop
-        // console.log("overCardNum.current",overCardNum.current)
-    }, [collectionRef.current, resizeKey])
+        document.getElementById(uuid.current).scrollTop = offsetTop
+        // console.log("scrollTop", offsetTop)
+    }, [resizeKey])
 
     return (
         <div
@@ -158,15 +140,14 @@ export default function VScrollCardContainer(props) {
         >
             <Collection
                 key={resizeKey}
-                ref={collectionRef}
                 cellCount={props.cardGidList.length}
                 cellRenderer={cellRenderer}
                 cellSizeAndPositionGetter={cellSizeAndPositionGetter}
                 onScroll={handelVScroll}
-                height={(documentHeight || document.body.clientHeight)}
-                width={(documentWidth || document.body.clientWidth) + 100}
+                height={documentHeight}
+                width={documentWidth + 100}
                 verticalOverscanSize={25}
-                id={"virtual_scroll_collection_container_id_c5124484"}
+                id={uuid.current}
             />
             {
                 props.loading ?
