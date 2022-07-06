@@ -115,6 +115,11 @@ function App_inner() {
         },
         galleryCard: {
           main: "#212121",
+        },
+        commentCard: {
+          main: "#303030",
+          hover: "#303030",
+          text: "#ffffff"
         }
       },
       text: {
@@ -156,7 +161,6 @@ function App_inner() {
 
         button: {
           tag: {
-
             type: {
               main: "#C2185B",
               hover: "#E91E63"
@@ -187,6 +191,11 @@ function App_inner() {
           },
           galleryCard: {
             main: "#ffffff",
+          },
+          commentCard: {
+            main: "#ECEFF1",
+            hover: "#ECEFF1",
+            text: "#000000"
           }
         },
         text: {
@@ -214,8 +223,8 @@ function App_inner() {
 
   const openNew = (pathname, search) => window.open(`/#${pathname}${search}`, "_blank")
   const openCurrent = (pathname, search) => window.location.href = `/#${pathname}${search}`
- 
- return (
+
+  return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <PopoverNotifier />

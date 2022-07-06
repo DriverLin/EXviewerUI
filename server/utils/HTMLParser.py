@@ -208,17 +208,17 @@ def getCommentsFromGalleryPage(html: str) -> List[object]:
         else:
             score = score[0]
 
-        raw_comment_text = etree.tostring(comment.xpath(
-            'div[@class="c6"]')[0],   method="html").decode('utf-8')
-        comment_text = raw_comment_text.replace(
+        raw_comment_text = etree.tostring(comment.xpath( 'div[@class="c6"]')[0],   method="html").decode('utf-8')
+        comment_html = raw_comment_text.replace(
             "https://exhentai.org/g/", "/#/g/").replace(
             "https://exhentai.org/t/", "https://ehgt.org/t/"
         )
-        comment_short = "".join([x for x in comment.xpath(
-            'div[@class="c6"]/text()')])
-        if len(comment_short) > 40:
-            comment_short = comment_short[:40] + "..."
-
+        comment_text = "".join([x+"\n" for x in comment.xpath(
+            'div[@class="c6"]//text()') if x != "" ] )
+        if len(comment_text) > 40:
+            comment_short = (comment_text[:40] + "...").replace("\n", " ")
+        else:
+            comment_short = comment_text.replace("\n", " ")
         poster_elem = comment.xpath(
             'div[@class="c2"]/div[@class="c3"]/a/text()')
         if len(poster_elem) == 1:
@@ -233,7 +233,8 @@ def getCommentsFromGalleryPage(html: str) -> List[object]:
                 "poster": poster,
                 "post_date": post_date,
                 "score": score,
-                "html": comment_text,
+                "html": comment_html,
+                "text": comment_text,
                 "short": comment_short,
             }
         )
