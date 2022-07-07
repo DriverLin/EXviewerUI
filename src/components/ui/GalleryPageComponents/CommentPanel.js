@@ -24,15 +24,17 @@ const useStyles = makeStyles((theme) => ({
         height: "15px",
         color: theme.palette.text.primary,
         textAlign: "justify",
-        fontSize: "10pt",
+        fontSize: "0.88rem",
         fontWeight: "bold",
-
+        lineHeight: "1.6",
     },
     innerHTML: {
         color: theme.palette.text.primary,
         maxWidth: "100%",
         float: "left",
         textAlign: "left",
+        fontSize: "0.85rem",
+        lineHeight: "1.8",
     },
     menu: {
         "& .MuiList-root": {
