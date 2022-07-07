@@ -15,8 +15,12 @@
             "description": "禁用下载功能",
             "value": "true"
         },
-        "EH_POST_COMMENT_DISABLED": {
-            "description": "禁用发表评论功能",
+        "EH_COMMENT_DISABLED": {
+            "description": "禁用评论功能",
+            "value": "true"
+        },
+        "EH_RATE_DISABLED":{
+            "description": "禁用评分功能",
             "value": "true"
         },
         "UTC_OFFSET":{
