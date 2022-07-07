@@ -75,7 +75,8 @@ logger.info(f"缓存目录 {CACHE_PATH}")
 
 FAVORITE_DISABLED = getConfig("EH_FAVORITE_DISABLED", 'false')
 DOWNLOAD_DISABLED = getConfig("EH_DOWNLOAD_DISABLED", 'false')
-EH_POST_COMMENT_DISABLED = getConfig("EH_POST_COMMENT_DISABLED", 'false')
+EH_COMMENT_DISABLED = getConfig("EH_COMMENT_DISABLED", 'false')
+EH_RATE_DISABLED = getConfig("EH_RATE_DISABLED", 'false')
 PORT = int(getConfig("PORT", 7964))
 UTC_OFFSET = int(getConfig("UTC_OFFSET", getUTCOffset())) * 3600
 setParserUtcOffset(UTC_OFFSET)
@@ -301,19 +302,6 @@ async def comment(gid: int, token: str):
         raise HTTPException(status_code=500, detail=str(
             makeTrackableException(e, f"请求评论 {gid}/{token} 失败")))
 
-# @app.post("/post_comment")
-# async def post_comment(request: Request):
-#     if EH_POST_COMMENT_DISABLED == "true": return
-#     body = await request.json()
-#     gid = body["gid"]
-#     token = body["token"]
-#     comment = body["comment"]
-#     if pa.post_comment(gid, token, comment):
-#         return {"msg": "success"}
-#     else:
-#         return {"msg": "fail"}
-
-
 @app.get("/list/{path}")
 async def listMainGallery(path, request: Request):
     query = str(request.scope["query_string"], encoding="utf-8")
@@ -402,6 +390,9 @@ async def handelUploadZipGallery(ws: WebSocket):
 
 @app.get("/rateGallery/{gid}/{token}/{score}")
 async def rateGallery(gid: int, token: str, score: float):
+    if EH_RATE_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail="EH_RATE_DISABLED,该API已禁用")
     try:
         return await aioPa.rateGallery(gid, token, score)
     except Exception as e:
@@ -411,6 +402,9 @@ async def rateGallery(gid: int, token: str, score: float):
 
 @app.get("/voteComment/{gid}/{token}/{commentId}/{vote}")
 async def voteComment(gid: int, token: str, commentId: int, vote: int):
+    if EH_COMMENT_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail="EH_COMMENT_DISABLED,该API已禁用")
     try:
         return await aioPa.voteComment(gid, token, commentId, vote)
     except Exception as e:
@@ -418,11 +412,11 @@ async def voteComment(gid: int, token: str, commentId: int, vote: int):
         raise HTTPException(status_code=500, detail=str(
             makeTrackableException(e, f"{gid}_{token} 投票失败")))
 
-
-
-
 @app.post("/postComment")
 async def postComment( comment:commentBody):
+    if EH_COMMENT_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail="EH_COMMENT_DISABLED,该API已禁用")
     try:
         return await aioPa.postComment(comment)
     except Exception as e:
