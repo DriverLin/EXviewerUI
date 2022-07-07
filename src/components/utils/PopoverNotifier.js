@@ -7,11 +7,21 @@ const Alert = React.forwardRef(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-export const notifyMessage = (severity, text) => {
-    console.log(severity, text)
+export const notifyMessage = (severity, msg) => {
+    console.log(severity, msg)
+    let showMsg = ''
+    if(Array.isArray(msg)){
+        showMsg = msg.join('\n')
+    }else if (typeof msg === 'object') {
+        showMsg = JSON.stringify(msg)
+    }else if (typeof msg === 'string') {
+        showMsg = msg
+    }else{
+        showMsg = 'unknown msg type'
+    }
     const messageEvent = new Event("PopoverNotifierMessage");
     messageEvent.severity = severity;
-    messageEvent.text = text;
+    messageEvent.text = showMsg;
     window.dispatchEvent(messageEvent);
 }
 

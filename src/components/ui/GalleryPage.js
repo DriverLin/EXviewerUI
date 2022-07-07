@@ -58,11 +58,10 @@ const getComment = async (gid, token) => {
     }
 }
 
-const request_data = async (gid, token) => {
-    const comment_async = getComment(gid, token)
+const request_g_data_json = async (gid, token) => {
     const g_data_response = await fetch(`/Gallery/${gid}_${token}/g_data.json?nocache=true`)
     if (g_data_response.ok) {
-        return [await g_data_response.json(), await comment_async, null]
+        return [await g_data_response.json(), await getComment(gid, token), null]
     } else {
         const text = await g_data_response.text()
         try {
@@ -89,7 +88,7 @@ function GalleryPage_inner(props) {
     const [comments, setComments] = useState([])
     const fetchData = async () => {
         setPageState("init")
-        const [g_data, comments, error] = await request_data(props.gid, props.token)
+        const [g_data, comments, error] = await request_g_data_json(props.gid, props.token)
         console.log(g_data, comments, error)
         if (!error) {
             setG_data(g_data)

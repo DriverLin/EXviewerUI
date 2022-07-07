@@ -7,7 +7,7 @@ import syncedDB, { FAVORITE_STATE } from "../utils/mobxSyncedState"
 //但也可以考虑在这做个warper 调用方便些
 
 const notifyError = (error) => {
-    notifyMessage("error", String(error))
+    notifyMessage("error", error)
 }
 
 const notifySuccess = (msg) => {
@@ -28,6 +28,31 @@ const Get = async (url) => {
         }
     }
 }
+
+const Post = async (url,json) => {
+    const response = await fetch(url, {
+        "method": "POST",
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": JSON.stringify(json),
+    })
+    if (response.ok) {
+        return [await response.json(), null];
+    } else {
+        const text = await response.text()
+        try {
+            const info = JSON.parse(text)
+            return [null, info.detail];
+        } catch (error) {
+            return [null, text];
+        }
+    }
+
+}
+
+
+
 
 const fetchWithoutCallback = async (url) => {
     const [result, error] = await Get(url)
@@ -72,13 +97,38 @@ const continueDownload = async () => {
 }
 
 
-const rateGallery = async (gid,token,score) =>{
-    const [result,error] = await Get(`/rateGallery/${gid}/${token}/${score}`)
+const rateGallery = async (gid, token, score) => {
+    const [result, error] = await Get(`/rateGallery/${gid}/${token}/${score}`)
     if (error) {
         notifyError(error)
     }
-    return [result,error]
-} 
+    return [result, error]
+}
+
+
+// http://localhost:7964/voteComment/2265543/52b25aea73/4740004/1
+const voteComment = async (gid, token, commentId, vote) => {
+    const [result, error] = await Get(`/voteComment/${gid}/${token}/${commentId}/${vote}`)
+    if (error) {
+        notifyError(error)
+    }
+    return [result, error]
+}
+
+const postComment = async (gid, token, content, edit, commentID) => {
+    const [result, error] = await Post("/postComment",{
+        "gid": gid,
+        "token": token,
+        "content": content,
+        "edit": edit,
+        "commentID": commentID
+    })
+    if (error) {
+        notifyError(error)
+    }
+    return [result, error]
+}
+
 
 export {
     addFavorite,
@@ -86,5 +136,7 @@ export {
     downloadGallery,
     deleteGallery,
     continueDownload,
-    rateGallery
+    rateGallery,
+    voteComment,
+    postComment
 }

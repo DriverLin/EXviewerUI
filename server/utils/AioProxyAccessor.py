@@ -16,12 +16,21 @@ from aiohttp import ClientSession, ClientTimeout
 from async_timeout import timeout
 from cacheout import LRUCache
 from fastapi import HTTPException
+from pydantic import BaseModel
 from tinydb import Query
 from utils.AsyncCacheWarper import AsyncCacheWarper
 from utils.DBM import EHDBM, DOWNLOAD_STATE, FAVORITE_STATE
 from utils.DownloadManager import downloadManager
 from utils.HTMLParser import *
 from utils.tools import checkImg, logger, makeTrackableException
+
+
+class commentBody(BaseModel):
+    gid: int
+    token: str
+    content: str
+    edit: bool
+    commentID: int
 
 
 class NOSQL_DBS():
@@ -300,7 +309,7 @@ class aoiAccessor():
     async def getComments(self, gid, token, fetchAll=False):
         try:
             if fetchAll:
-                html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?hc=1#comments", cached=True)
+                html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?hc=1#comments", cached=False)
             else:
                 html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?p=0", cached=True)
             return getCommentsFromGalleryPage(html)
@@ -381,7 +390,7 @@ class aoiAccessor():
         if imgSrc.endswith("/509.gif"):
             raise HTTPException(
                 status_code=509, detail=str(
-                makeTrackableException(f"getGalleryImage({gid}, {token}, {index})", f"已到达限额"))
+                    makeTrackableException(f"getGalleryImage({gid}, {token}, {index})", f"已到达限额"))
             )
         try:
             await self.downloadImg(imgSrc, cachePath)
@@ -580,8 +589,11 @@ class aoiAccessor():
                 pass
 
     async def rateGallery(self, gid: int, token: str, score: float):
+        if score < 0 or score > 5:
+            raise Exception(
+                f"illegal score {score} , should be between 0 and 5")
         html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?p=0", cached=True)
-        apiUid = re.findall(r"var apiuid = ([^;]+);", html)[0]
+        apiUid = int(re.findall(r"var apiuid = ([^;]+);", html)[0])
         apiKey = re.findall(r"var apikey = \"([^;]+)\";", html)[0]
         json_data = {
             'method': 'rategallery',
@@ -608,6 +620,68 @@ class aoiAccessor():
                     "userRankValue": result["rating_usr"]
                 }
             else:
-                raise Exception(f"rateGallery({gid},{token}) response.code={response.status_code}")
+                raise Exception(
+                    f"rateGallery({gid},{token}) response.code={response.status_code}")
         except Exception as e:
             raise makeTrackableException(e, f"rateGallery({gid},{token})")
+
+    async def voteComment(self, gid: int, token: str, commentID: int, vote: int):
+        if vote != 1 and vote != -1:
+            raise Exception(f"illegal vote {vote} , should be 1 or -1")
+        html = await self.getHtml(f"https://exhentai.org/g/{gid}/{token}/?p=0", cached=True)
+        apiUid = int(re.findall(r"var apiuid = ([^;]+);", html)[0])
+        apiKey = re.findall(r"var apikey = \"([^;]+)\";", html)[0]
+        json_data = {
+            'method': 'votecomment',
+            'apiuid': apiUid,
+            'apikey': apiKey,
+            'gid': gid,
+            'token': token,
+            'comment_id': commentID,
+            'comment_vote': vote,
+        }
+        try:
+            response = await self.session.post(
+                url='https://exhentai.org/api.php',
+                headers=self.headers,
+                json=json_data,
+                proxy=self.proxy,
+                timeout=ClientTimeout(total=8),
+            )
+            if response.ok:
+                result = json.loads(await response.text())
+                return {
+                    "commentID": result["comment_id"],
+                    "score": str(result["comment_score"]) if result["comment_score"] <= 0 else f'+{result["comment_score"]}',
+                    "vote": result["comment_vote"],
+                }
+            else:
+                raise Exception(
+                    f"voteComment({gid},{token},{commentID},{vote}) response.code={response.status_code}")
+        except Exception as e:
+            raise makeTrackableException(
+                e, f"voteComment({gid},{token},{commentID},{vote})")
+
+    async def postComment(self, comment: commentBody):
+        if comment.edit:
+            data = {
+                "edit_comment": str(comment.commentID),
+                "commenttext_edit": comment.content,
+            }
+        else:
+            data = {
+                "commenttext_new": comment.content,
+            }
+
+        response = await self.session.post(
+            url=f'https://exhentai.org/g/{comment.gid}/{comment.token}/',
+            headers=self.headers,
+            data=data,
+            proxy=self.proxy,
+            timeout=ClientTimeout(total=8),
+        )
+        if response.ok:
+            html = await response.text()
+            return getCommentsFromGalleryPage(html)
+        else:
+            raise Exception( f"postComment({comment.gid},{comment.token},{comment.content}) response.code={response.status_code}")

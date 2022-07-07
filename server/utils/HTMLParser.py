@@ -199,22 +199,32 @@ def getG_dataFromGalleryPage(html: str) -> object:
 def getCommentsFromGalleryPage(html: str) -> List[object]:
     result = []
     xml = etree.HTML(html)
+    canVote = False  # 默认不可投票 检测到投票按钮则允许
     for comment in xml.xpath('//div[@class="c1"]'):
-        # score = comment.select("div.c5.nosel > span")
+        canEdit = False
+        vote = 0
         score = comment.xpath(
             'div[@class="c2"]/div[@class="c5 nosel"]/span/text()')
-        if len(score) == 0:
-            score = ""
-        else:
-            score = score[0]
-
-        raw_comment_text = etree.tostring(comment.xpath( 'div[@class="c6"]')[0],   method="html").decode('utf-8')
+        score = "" if len(score) == 0 else score[0]
+        c4Nosel = comment.xpath('div[@class="c2"]/div[@class="c4 nosel"]/a')
+        if len(c4Nosel) == 2:
+            canVote = True
+            if c4Nosel[0].xpath('@style')[0] != "":
+                vote = 1
+            if c4Nosel[1].xpath('@style')[0] != "":
+                vote = -1
+        elif len(c4Nosel) == 1 and score != "":
+            canEdit = True
+        commentID = int(comment.xpath('div[@class="c6"]/@id')[0].split("_")[1])
+        raw_comment_text = etree.tostring(comment.xpath(
+            'div[@class="c6"]')[0],   method="html").decode('utf-8')
         comment_html = raw_comment_text.replace(
-            "https://exhentai.org/g/", "/#/g/").replace(
+            "https://exhentai.org/g/", "/#/g/"
+        ).replace(
             "https://exhentai.org/t/", "https://ehgt.org/t/"
         )
         comment_text = "".join([x+"\n" for x in comment.xpath(
-            'div[@class="c6"]//text()') if x != "" ] )
+            'div[@class="c6"]//text()') if x != ""])
         if len(comment_text) > 40:
             comment_short = (comment_text[:40] + "...").replace("\n", " ")
         else:
@@ -228,6 +238,7 @@ def getCommentsFromGalleryPage(html: str) -> List[object]:
 
         post_date = comment.xpath(
             'div[@class="c2"]/div[@class="c3"]/text()')[0].split(" by: ")[0][10:]
+
         result.append(
             {
                 "poster": poster,
@@ -236,11 +247,16 @@ def getCommentsFromGalleryPage(html: str) -> List[object]:
                 "html": comment_html,
                 "text": comment_text,
                 "short": comment_short,
+                "isSelf": canEdit,
+                "isUploader": score == "",
+                "vote":vote,
+                "commentID": commentID,
             }
         )
     return {
         "data": result,
-        "all": len(xml.xpath('//div[@id="chd"]/p')) == 1,
+        "all": len(xml.xpath('//div[@id="chd"]/p/a')) == 1,
+        "canVote": canVote,
     }
 
 # @printPerformance

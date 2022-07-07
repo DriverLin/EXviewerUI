@@ -192,7 +192,7 @@ function MainPage_inner(props) {
                 const text = await response.text()
                 try {
                     const info = JSON.parse(text)
-                    notifyMessage("error", JSON.parse(info.detail))
+                    notifyMessage("error", info.detail)
                 } catch (error) {
                     notifyMessage("error", text)
                 }

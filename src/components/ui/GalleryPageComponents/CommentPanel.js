@@ -1,20 +1,22 @@
 
+import ContentPasteIcon from '@mui/icons-material/ContentPaste';
+import EditIcon from '@mui/icons-material/Edit';
 import SendIcon from '@mui/icons-material/Send';
-import { Button, ButtonBase, Grid, IconButton, InputBase, LinearProgress, TextField } from '@mui/material';
+import ThumbDownAltIcon from '@mui/icons-material/ThumbDownAlt';
+import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
+import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
+import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
+import { Backdrop, Button, ButtonBase, Grid, IconButton, InputBase, LinearProgress, Popover, useMediaQuery } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { makeStyles } from '@mui/styles';
-import React, { useRef, useState } from 'react';
+import { useLongPress } from 'ahooks';
+import copy from 'clipboard-copy';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { postComment, voteComment } from '../../api/serverApi';
 import { notifyMessage } from '../../utils/PopoverNotifier';
 import timeTools from '../../utils/TimeFormatTools';
-import { List, MenuItem, Popover, useMediaQuery } from '@mui/material';
-import Backdrop from '@mui/material/Backdrop';
-import { useMemo } from "react";
-import ContentPasteIcon from '@mui/icons-material/ContentPaste';
-import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
-import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
-import EditIcon from '@mui/icons-material/Edit';
-import { useLongPress } from 'ahooks';
-import copy from 'clipboard-copy'
+
+
 
 const useStyles = makeStyles((theme) => ({
     head: {
@@ -35,14 +37,16 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-const CommentPoster = ({ onPost }) => {
-    const [text, setText] = useState("");
+const CommentPostEditor = ({ inputRef, onPost, editContent, editMode, editID }) => {
+    const [text, setText] = useState(editContent);
+    useEffect(() => {
+        setText(editContent.slice(0, editContent.length - 1))
+    }, [editContent])
     const [disabled, setDisabled] = useState(false);
-    // const [text, setText] = useState("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
     const post = async () => {
         if (text.length > 0) {
             setDisabled(true);
-            const success = await onPost(text);
+            const success = await onPost(text, editMode, editID);
             if (success) {
                 setText("");
             }
@@ -60,6 +64,7 @@ const CommentPoster = ({ onPost }) => {
             }}
         >
             <InputBase
+                inputRef={inputRef}
                 sx={{
                     width: "calc(100% - 52px)",
                 }}
@@ -68,11 +73,15 @@ const CommentPoster = ({ onPost }) => {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 disabled={disabled}
-                disableUnderline={true}
+                inputProps={{ disableUnderline: true }}
 
             />
             <IconButton size="large" onClick={post} sx={{ float: "bottom" }} disabled={disabled}>
-                <SendIcon fontSize="inherit" sx={{ color: disabled ? "button.iconFunction.disabled" : "button.iconFunction.main" }} />
+                {editMode ?
+                    <EditIcon fontSize="inherit" sx={{ color: disabled ? "button.iconFunction.disabled" : "button.iconFunction.main" }} />
+                    :
+                    <SendIcon fontSize="inherit" sx={{ color: disabled ? "button.iconFunction.disabled" : "button.iconFunction.main" }} />
+                }
             </IconButton>
         </div>
         <div style={{ backgroundColor: "#4C4C4C", width: "100%", height: "3px" }} />
@@ -81,11 +90,52 @@ const CommentPoster = ({ onPost }) => {
 
 
 
-const CommentClickMenu = ({ x, y, comment, isUploader, isSelf, canVote, onClose, }) => {//复制 点赞 点踩 删除自己的
+const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) => {//复制 点赞 点踩 删除自己的
     const unFullScreen = useMediaQuery("(min-width:560px)")
+    const [fetching, setFetching] = useState(false);
+    const [vote, setVote] = useState(comment.vote);
+    useEffect(() => {
+        setVote(comment?.vote || 0);
+    }, [comment])
+
     const open = useMemo(() => {
         return x > -1 && y > -1
     }, [x, y])
+
+    const copyComment = async (e) => {
+        await copy(comment.text)
+        notifyMessage("success", "复制成功")
+    }
+    const voteUp = async (e) => {
+        e.stopPropagation()
+        setFetching(true)
+        const [result, err] = await onVote(1)
+        if (!err) {
+            setFetching(false)
+            setVote(result.vote)
+            setTimeout(onClose, 300)
+        }
+    }
+    const voteDown = async (e) => {
+        e.stopPropagation()
+        setFetching(true)
+        const [result, err] = await onVote(-1)
+        if (!err) {
+            setFetching(false)
+            setVote(result.vote)
+            setTimeout(onClose, 300)
+        }
+    }
+    const editComment = async (e) => {
+        e.stopPropagation()
+        onClose()
+        onEdit({
+            editMode: true,
+            editID: comment.commentID,
+            editContent: comment.text
+        })
+    }
+
     return <Backdrop invisible={unFullScreen} open={open} onClick={onClose} sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} >
         <Popover
             open={open}
@@ -103,27 +153,22 @@ const CommentClickMenu = ({ x, y, comment, isUploader, isSelf, canVote, onClose,
                 spacing={"8px"}
             >
                 <Grid item>
-                    <IconButton size="large" onClick={
-                        async () => {
-                            await copy(comment.text)
-                            notifyMessage("success", "复制成功")
-                        }
-                    } >
+                    <IconButton size="large" onClick={copyComment} >
                         <ContentPasteIcon fontSize="inherit" />
                     </IconButton>
                 </Grid>
-                {!isUploader && canVote && <Grid item>
-                    <IconButton size="large">
-                        <ThumbUpOffAltIcon fontSize="inherit" />
+                {<Grid item>
+                    <IconButton size="large" disabled={!canVote || fetching || comment?.isSelf || comment?.isUploader} onClick={voteUp}>
+                        {vote === 1 ? <ThumbUpAltIcon fontSize="inherit" /> : <ThumbUpOffAltIcon fontSize="inherit" />}
                     </IconButton>
                 </Grid>}
-                {!isUploader && canVote && <Grid item>
-                    <IconButton size="large">
-                        <ThumbDownOffAltIcon fontSize="inherit" />
+                {<Grid item>
+                    <IconButton size="large" disabled={!canVote || fetching || comment?.isSelf || comment?.isUploader} onClick={voteDown}>
+                        {vote === -1 ? <ThumbDownAltIcon fontSize="inherit" /> : <ThumbDownOffAltIcon fontSize="inherit" />}
                     </IconButton>
                 </Grid>}
-                {isSelf && <Grid item>
-                    <IconButton size="large">
+                {comment?.isSelf && <Grid item>
+                    <IconButton size="large" onClick={editComment}>
                         <EditIcon fontSize="inherit" />
                     </IconButton>
                 </Grid>}
@@ -142,7 +187,6 @@ const CommentClickMenu = ({ x, y, comment, isUploader, isSelf, canVote, onClose,
  * @param {Number} props.spacingPX
  */
 export default function CommentPanel(props) {
-
     const BottomButton = styled(Button)(({ theme }) => ({
         marginTop: props.spacingPX + "px",
         color: theme.palette.button.loadMore.text,
@@ -153,7 +197,7 @@ export default function CommentPanel(props) {
             background: theme.palette.button.loadMore.hover,
         },
     }));
-    const CommentContainer = styled(Button)(({ theme }) => ({
+    const CommentContainer = styled(ButtonBase)(({ theme }) => ({
         padding: "8px 4px",
         borderRadius: 0,
         textTransform: "none",
@@ -164,26 +208,37 @@ export default function CommentPanel(props) {
         },
     }));
 
-    const CommentRender = ({ row, index, onOpenMenu }) => {
+    const CommentRender = ({ row, index, onOpenMenu, commentSetter }) => {
         const ref = useRef(null);
+        const onVote = async (vote) => {
+            const [result, err] = await voteComment(props.gid, props.token, row.commentID, vote)
+            if (err) {
+                return [result, err]
+            } else {
+                commentSetter(old => old.map((c, i) => i === index ? { ...c, ...result } : c))
+                return [result, err]
+            }
+        }
         const onClick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onOpenMenu({
-                comment: row,
-                isUploader: false,
-                isSelf: false,
-                canVote: false,
-                x: e.clientX,
-                y: e.clientY,
-            })
+            if (!e.target.href) {
+                e.preventDefault();
+                e.stopPropagation();
+                onOpenMenu({
+                    comment: row,
+                    canVote: props.comments.canVote,
+                    x: e.clientX,
+                    y: e.clientY,
+                    onVote: onVote,
+                })
+            }
         }
         useLongPress(onClick, ref, {
             delay: 500,
             preventDefault: true,
             stopPropagation: true,
         })
-        return <div key={index} style={{ width: "100%", }}>
+
+        return (<div style={{ width: "100%", }}>
             <CommentContainer
                 style={{ width: "100%", }}
                 ref={ref}
@@ -203,15 +258,13 @@ export default function CommentPanel(props) {
                 </div>
             </CommentContainer>
             <div style={{ backgroundColor: "#4C4C4C", width: "100%", height: "3px" }} />
-        </div>
+        </div>)
     }
 
 
     const classes = useStyles();
     let comment_init_all_show = false//评论初始化是否全部显示
     const [commentData, setCommentData] = useState(props.comments.data);
-
-
     if (commentData.length <= 4) {
         let len_limit_reached = false;
         commentData.forEach((comment) => {
@@ -232,27 +285,36 @@ export default function CommentPanel(props) {
         if (response.ok) {
             const allComments = await response.json()
             setCommentData(allComments.data)
+            setCanVote(allComments.canVote)
         }
         else {
             setCanLoadMore(true)
             const text = await response.text()
             try {
                 const info = JSON.parse(text)
-                notifyMessage("error", JSON.parse(info.detail))
+                notifyMessage("error", info.detail)
             } catch (error) {
                 notifyMessage("error", text)
             }
         }
         setLoading(false)
     }
+    const [canVote, setCanVote] = useState(props.comments.canVote)
     const [commentClickMenuProps, setCommentClickMenuProps] = useState({
-        comment: null,
-        isUploader: false,
-        isSelf: false,
-        canVote: false,
+        comment: {},
+        canVote: canVote,
+        onVote: async () => { },
         x: -1,
         y: -1,
     })
+
+    const commentPostInputRef = useRef(null)
+    const [editProps, _setEditProps] = useState({ editMode: false, editID: -1, editContent: "" })
+    const setEditProps = (editProps) => {
+        _setEditProps(editProps)
+        // console.log("commentPostInputRef", commentPostInputRef.current)
+        // commentPostInputRef.current && commentPostInputRef.current.focus()
+    }
 
     return (
         <div style={{ width: "100%", }}>
@@ -263,6 +325,7 @@ export default function CommentPanel(props) {
                     x: -1,
                     y: -1,
                 }))}
+                onEdit={setEditProps}
             />
             <Grid
                 sx={{
@@ -274,17 +337,35 @@ export default function CommentPanel(props) {
                 alignItems="left"
             >
                 {
-                    (expanded ? commentData : commentData.slice(0, 4)).map((row, index) => <CommentRender row={row} index={index} onOpenMenu={setCommentClickMenuProps} key={JSON.stringify(row)} />)
+                    (expanded ? commentData : commentData.slice(0, 4)).map((row, index) => (
+                        <CommentRender
+                            key={row.commentID}
+                            row={row}
+                            index={index}
+                            onOpenMenu={setCommentClickMenuProps}
+                            commentSetter={setCommentData}
+                        />
+                    ))
                 }
             </Grid>
             {
                 expanded ?
                     <div >
-                        <CommentPoster
-                            onPost={async (text) => {
-                                const res = await fetch("/list/watched")
-                                return true
+                        <CommentPostEditor
+                            inputRef={commentPostInputRef}
+                            onPost={async (text, editMode, editID) => {
+                                const [result, err] = await postComment(props.gid, props.token, text, editMode, editID)
+                                if (err) {
+                                    return false
+                                } else {
+                                    setCommentData(result.data)
+                                    setCanVote(result.canVote)
+                                    setCanLoadMore(!result.all)
+                                    setEditProps({ editMode: false, editID: -1, editContent: "" })
+                                }
+                                return true //false
                             }}
+                            {...editProps}
                         />
                         {
                             canLoadMore && <BottomButton

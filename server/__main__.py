@@ -10,13 +10,14 @@ from time import perf_counter
 from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from starlette.responses import FileResponse
 from tinydb import TinyDB
 from tinydb.middlewares import CachingMiddleware
 from tinydb.storages import JSONStorage
 from uvicorn import Config, Server
 from utils.HTMLParser import setParserUtcOffset
-from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor
+from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor , commentBody
 from utils.DBM import wsDBMBinder
 from utils.tools import logger, makeTrackableException, printTrackableException, getUTCOffset
 
@@ -407,6 +408,27 @@ async def rateGallery(gid: int, token: str, score: float):
         printTrackableException(e)
         raise HTTPException(status_code=500, detail=str(
             makeTrackableException(e, f"{gid}_{token} 评分失败")))
+
+@app.get("/voteComment/{gid}/{token}/{commentId}/{vote}")
+async def voteComment(gid: int, token: str, commentId: int, vote: int):
+    try:
+        return await aioPa.voteComment(gid, token, commentId, vote)
+    except Exception as e:
+        printTrackableException(e)
+        raise HTTPException(status_code=500, detail=str(
+            makeTrackableException(e, f"{gid}_{token} 投票失败")))
+
+
+
+
+@app.post("/postComment")
+async def postComment( comment:commentBody):
+    try:
+        return await aioPa.postComment(comment)
+    except Exception as e:
+        printTrackableException(e)
+        raise HTTPException(status_code=500, detail=str(
+            makeTrackableException(e, f"{comment.gid}_{comment.token} 评论失败")))
 
 app.mount("/", StaticFiles(directory=SERVER_FILE), name="static")
 

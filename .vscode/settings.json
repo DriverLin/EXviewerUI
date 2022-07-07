@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "ahooks",
         "apikey",
         "apiuid",
         "Autorenew",
@@ -8,7 +9,9 @@
         "Exviewer",
         "Gdata",
         "lxml",
+        "nosel",
         "overscan",
-        "rategallery"
+        "rategallery",
+        "votecomment"
     ]
 }
