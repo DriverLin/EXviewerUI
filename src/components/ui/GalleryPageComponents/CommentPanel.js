@@ -33,7 +33,19 @@ const useStyles = makeStyles((theme) => ({
         maxWidth: "100%",
         float: "left",
         textAlign: "left",
+    },
+    menu: {
+        "& .MuiList-root": {
+            backgroundColor: theme.palette.background.main,
+            padding: 0,
+            borderRadius: 0,
+        },
+        "& .MuiPaper-root": {
+            borderRadius: 5,
+            backgroundColor: theme.palette.background.main,
+        }
     }
+
 }));
 
 
@@ -91,6 +103,7 @@ const CommentPostEditor = ({ inputRef, onPost, editContent, editMode, editID }) 
 
 
 const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) => {//复制 点赞 点踩 删除自己的
+    const classes = useStyles();
     const unFullScreen = useMediaQuery("(min-width:560px)")
     const [fetching, setFetching] = useState(false);
     const [vote, setVote] = useState(comment.vote);
@@ -135,7 +148,12 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
             editContent: comment.text
         })
     }
-
+    const ButtonStyle = {
+        color: "button.iconFunction.main",
+        "&.Mui-disabled": {
+            color: "button.iconFunction.disabled",
+        },
+    }
     return <Backdrop invisible={unFullScreen} open={open} onClick={onClose} sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} >
         <Popover
             open={open}
@@ -143,6 +161,7 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
             anchorReference="anchorPosition"
             anchorPosition={unFullScreen ? { left: x, top: y } : { left: document.body.clientWidth / 2, top: document.body.clientHeight / 2 }}
             transformOrigin={unFullScreen ? undefined : { vertical: 'center', horizontal: 'center', }}
+            className={classes.menu}
         >
             <Grid
                 container
@@ -153,22 +172,22 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
                 spacing={"8px"}
             >
                 <Grid item>
-                    <IconButton size="large" onClick={copyComment} >
+                    <IconButton sx={ButtonStyle} size="large" onClick={copyComment}  >
                         <ContentPasteIcon fontSize="inherit" />
                     </IconButton>
                 </Grid>
                 {<Grid item>
-                    <IconButton size="large" disabled={!canVote || fetching || comment?.isSelf || comment?.isUploader} onClick={voteUp}>
+                    <IconButton sx={ButtonStyle} size="large" disabled={!canVote || fetching || comment?.isSelf || comment?.isUploader} onClick={voteUp}>
                         {vote === 1 ? <ThumbUpAltIcon fontSize="inherit" /> : <ThumbUpOffAltIcon fontSize="inherit" />}
                     </IconButton>
                 </Grid>}
                 {<Grid item>
-                    <IconButton size="large" disabled={!canVote || fetching || comment?.isSelf || comment?.isUploader} onClick={voteDown}>
+                    <IconButton sx={ButtonStyle} size="large" disabled={!canVote || fetching || comment?.isSelf || comment?.isUploader} onClick={voteDown}>
                         {vote === -1 ? <ThumbDownAltIcon fontSize="inherit" /> : <ThumbDownOffAltIcon fontSize="inherit" />}
                     </IconButton>
                 </Grid>}
                 {comment?.isSelf && <Grid item>
-                    <IconButton size="large" onClick={editComment}>
+                    <IconButton sx={ButtonStyle} size="large" onClick={editComment}>
                         <EditIcon fontSize="inherit" />
                     </IconButton>
                 </Grid>}
