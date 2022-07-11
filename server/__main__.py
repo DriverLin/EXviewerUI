@@ -20,7 +20,6 @@ from utils.HTMLParser import setParserUtcOffset
 from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor, commentBody
 from utils.DBM import wsDBMBinder
 from utils.tools import logger, makeTrackableException, printTrackableException, getUTCOffset
-from utils.FakeAioProxyAccessor import FakeAioProxyAccessor
 serverLoop = asyncio.new_event_loop()
 asyncio.set_event_loop(serverLoop)
 
