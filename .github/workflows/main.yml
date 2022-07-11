@@ -25,25 +25,26 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: ls
-        run: pwd ; ls
+      - name: Setup Debug Session
+        uses: csexton/debugger-action@master
 
-      - name: move fake api
-        run: mv ./src/components/api/fakeApi.js .src/components/api/serverApi.js
 
-      # Runs a single command using the runners shell
-      - name: install
-        run: yarn install
+      # - name: ls
+      #   run: pwd ; ls
 
-      - name: build
-        run: yarn build
+      # - name: move fake api
+      #   run: mv ./src/components/api/fakeApi.js .src/components/api/serverApi.js
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
-        
-      # - name: Setup Debug Session
-      #   uses: DriverLin/debugger-action@master
-      
+      # # Runs a single command using the runners shell
+      # - name: install
+      #   run: yarn install
+
+      # - name: build
+      #   run: yarn build
+
+      # - name: Deploy
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./build
+
