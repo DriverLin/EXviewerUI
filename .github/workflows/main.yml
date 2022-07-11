@@ -25,6 +25,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: ls
+        run: pwd ; ls
 
       - name: move fake api
         run: mv ./src/components/api/fakeApi.js .src/components/api/serverApi.js
