@@ -40,7 +40,6 @@ def makeTrackableException(e, appendE):
     except Exception :
         return Exception(json.dumps([str(e), str(appendE)]))
 
-
 printPerformance__log = {}
 printPerformance__lock = threading.Lock()
 

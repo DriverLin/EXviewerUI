@@ -49,7 +49,7 @@ const Post = async (url, json) => {
             const info = JSON.parse(text)
             return [null, JSON.parse(info.detail)];
         } catch (error) {
-            return [null, text];
+            return [null, [text]];
         }
     }
 
@@ -63,7 +63,7 @@ const fetchWithoutCallback = async (url) => {
     if (error) {
         notifyError(error)
     } else {
-        notifySuccess(result.msg)
+        notifySuccess([result.msg])
     }
 }
 
