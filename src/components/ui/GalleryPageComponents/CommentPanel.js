@@ -127,7 +127,7 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
 
     const copyComment = async (e) => {
         await copy(comment.text)
-        notifyMessage("success", "复制成功")
+        notifyMessage("success", ["复制成功"])
     }
     const voteUp = async (e) => {
         e.stopPropagation()

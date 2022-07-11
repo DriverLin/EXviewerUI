@@ -165,7 +165,7 @@ export default function UploadZip(props) {
             zip.current = await (new JsZip()).loadAsync(file)
         } catch (err) {
             console.log(err)
-            notifyMessage("error", "损坏的zip文件")
+            notifyMessage("error", ["损坏的zip文件"])
             return
         }
         const splittedName = file.name.split(".")[0].split("_")
@@ -183,7 +183,7 @@ export default function UploadZip(props) {
 
     const checkG_data = async () => {
         if (galleryUrl.split("/").length !== 7) {
-            notifyMessage("error", "请输入正确的URL\nhttps://exhentai.org/g/[GID]/[TOKEN]/")
+            notifyMessage("error", ["请输入正确的URL\nhttps://exhentai.org/g/[GID]/[TOKEN]/"])
             return
         }
         const gid = galleryUrl.split("/")[4]
@@ -196,12 +196,12 @@ export default function UploadZip(props) {
             setG_data(g_data)
             console.log(JSON.stringify(g_data, null, 4))
             if (Number(g_data.filecount) !== prevBlobCount) {
-                notifyMessage("error", "文件数量不匹配")
+                notifyMessage("error", ["文件数量不匹配"])
                 setCanUpload(false)
                 return
             } else {
                 setCanUpload(true)
-                notifyMessage("success", "文件数量已匹配")
+                notifyMessage("success", ["文件数量已匹配"])
             }
         }
     }
@@ -295,13 +295,6 @@ export default function UploadZip(props) {
                         spacing={borderWidth + "px"}
                         sx={{ width: `calc(100% + ${borderWidth}px)` }}
                     >
-                        {/* <Grid item xs={4} >
-                            <TextField label="GID" variant="standard" value={gid} onChange={(e) => setGid(e.target.value)} />
-                        </Grid>
-                        <Grid item xs={4}>
-                            <TextField label="TOKEN" variant="standard" value={token} onChange={(e) => setToken(e.target.value)} />
-                        </Grid> */}
-
                         <Grid item xs={6} md={8} >
                             <TextField sx={{ width: "100%" }} label="画廊链接" variant="standard" value={galleryUrl} onChange={(e) => setGalleryUrl(e.target.value)} />
                         </Grid>
