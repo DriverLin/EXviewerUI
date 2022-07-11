@@ -81,14 +81,22 @@ const CommentPostEditor = ({ inputRef, onPost, editContent, editMode, editID }) 
                 inputRef={inputRef}
                 sx={{
                     width: "calc(100% - 52px)",
+                    "& .MuiInputBase-input": {
+                        color: "text.primary",
+                        fontSize: "0.85rem",
+                        lineHeight: "1.8",
+                        "&.Mui-disabled": {
+                            color: "text.disabled",
+                            WebkitTextFillColor: "text.disabled",
+                        }
+                    }
                 }}
                 multiline
                 variant="standard"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 disabled={disabled}
-                inputProps={{ disableUnderline: true }}
-
+                inputProps={{ "disableUnderline": true }}
             />
             <IconButton size="large" onClick={post} sx={{ float: "bottom" }} disabled={disabled}>
                 {editMode ?

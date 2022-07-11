@@ -8,20 +8,9 @@ const Alert = React.forwardRef(function Alert(props, ref) {
 });
 
 export const notifyMessage = (severity, msg) => {
-    console.log(severity, msg)
-    let showMsg = ''
-    if(Array.isArray(msg)){
-        showMsg = msg.join('\n')
-    }else if (typeof msg === 'object') {
-        showMsg = JSON.stringify(msg)
-    }else if (typeof msg === 'string') {
-        showMsg = msg
-    }else{
-        showMsg = 'unknown msg type'
-    }
     const messageEvent = new Event("PopoverNotifierMessage");
     messageEvent.severity = severity;
-    messageEvent.text = showMsg;
+    messageEvent.text = msg;
     window.dispatchEvent(messageEvent);
 }
 
@@ -32,12 +21,12 @@ export default function PopoverNotifier(props) {
         setOpen(false);
     };
     const [notifyMessage, setNotifyMessage] = useState(null)
-    
+
     const msgHandler = (msg) => {
         setOpen(true);
         setNotifyMessage(msg)
     }
-    
+
 
     useEventListener('PopoverNotifierMessage', msgHandler);
 
@@ -56,10 +45,7 @@ export default function PopoverNotifier(props) {
                         alignItems: 'left',
                     }}  >
                         {
-                            typeof notifyMessage.text === "string" ?
-                                <a>{notifyMessage.text}</a>
-                                :
-                                notifyMessage.text.map((item, index) => <a key={index}>{item}</a>)
+                            notifyMessage.text.map((item, index) => <a key={item}>{item}</a>)
                         }
                     </div>
                 </Alert>

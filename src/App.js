@@ -125,6 +125,7 @@ function App_inner() {
       text: {
         primary: "#ffffff",
         secondary: "#dddddd",
+        disabled: "#9e9e9e",
       },
       page: {
         background: "#303030",
@@ -201,6 +202,7 @@ function App_inner() {
         text: {
           primary: "#000000",
           secondary: "#757575",
+          disabled: "#9e9e9e",
         },
         page: {
           background: "#ECEFF1",

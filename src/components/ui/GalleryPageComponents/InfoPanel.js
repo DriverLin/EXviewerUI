@@ -2,6 +2,7 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 import { Rating, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
+import getCategoryColor from '../../utils/GetCategoryColor';
 import timeTools from '../../utils/TimeFormatTools';
 import EditableRating from './EditableRating';
 
@@ -25,19 +26,6 @@ const HeadDiv = styled("div")(({ theme }) => ({
  * @param {string[]} props.shows
  */
 export default function InfoPanel(props) {
-    const colorMap = {
-        "Manga": "#FF9700",
-        "Doujinshi": "#F44236",
-        "Non-H": "#9C28B1",
-        "Cosplay": "#9C28B1",
-        "Image Set": "#3F51B5",
-        "Western": "#8BC24A",
-        "Game CG": "#4CB050",
-        "Misc": "#F06292",
-        "Artist CG": "#9C28B1",
-        "Private": "#000000",
-        "": "#00000000"
-    };
     return (
         <div>
             {
@@ -57,7 +45,7 @@ export default function InfoPanel(props) {
                 props.shows.indexOf("category") === -1 ? null :
                     <div style={{
                         margin: "0px 0px 0px 0px",
-                        backgroundColor: colorMap[props.g_data.category],
+                        backgroundColor: getCategoryColor(props.g_data.category),
                         color: "#ffffff",
                         overflow: "auto",
                         width: "fit-content",

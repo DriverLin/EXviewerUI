@@ -2041,7 +2041,8 @@ const preciseQuery = {
         "waccha primagi": "\u7eeb\u955c\u9b54\u6cd5",
         "sonic soldier borgman": "\u8d85\u97f3\u6218\u58eb",
         "brave girl ravens": "Brave Girl Ravens",
-        "tsukuyomi moon phase": "\u6708\u548f"
+        "tsukuyomi moon phase": "\u6708\u548f",
+        "punishing gray raven": "\u6218\u53cc\u5e15\u5f25\u4ec0"
     },
     "character": {
         "alice": "\u7231\u4e3d\u4e1d",
@@ -5593,7 +5594,8 @@ const preciseQuery = {
         "raki": "\u62c9\u57fa",
         "teresa": "\u6cf0\u857e\u838e",
         "samira": "\u838e\u5f25\u62c9",
-        "katarina du couteau": "\u5361\u7279\u7433\u5a1c\u00b7\u675c\u00b7\u514b\u5361\u5965"
+        "katarina du couteau": "\u5361\u7279\u7433\u5a1c\u00b7\u675c\u00b7\u514b\u5361\u5965",
+        "kaltsit": "\u51ef\u5c14\u5e0c"
     },
     "group": {
         "1": "1",
@@ -18001,7 +18003,9 @@ const preciseQuery = {
         "yurushite ochinti kyo": "\u8a31\u3057\u3066\u304a\u3061\u3093\u3061\u6559",
         "seiheki kenkyuujo bravo han": "\u6027\u7656\u7814\u7a76\u6240 \u30d6\u30e9\u30dc\u30fc\u73ed",
         "akatsuki works hibiki": "hibiki works",
-        "icchao murasakiimoren new": "\u3044\u3063\u3061\u3083\u304a\u266a\u7d2b\u828b\u308c\u3093new"
+        "icchao murasakiimoren new": "\u3044\u3063\u3061\u3083\u304a\u266a\u7d2b\u828b\u308c\u3093new",
+        "otokonoko de asobou": "\u7537\u306e\u5b50\u3067\u904a\u307c\u3046",
+        "babaa no mitsuboshi restaurant": "\u30d0\u30d0\u30a2\u306e\u4e09\u30c4\u661f\u30ec\u30b9\u30c8\u30e9\u30f3"
     },
     "artist": {
         "2": "2",
@@ -20806,7 +20810,7 @@ const preciseQuery = {
         "kirekawa": "\u304d\u308c\u304b\u308f",
         "taro oimo": "\u305f\u308d\u304a\u3044\u3082",
         "akimoto dai": "\u3042\u304d\u3082\u3068\u5927",
-        "kumada": "\u304f\u307e\u3060 | \u304f\u307e\u306e\u3068\u304a\u308b",
+        "kumada": "\u304f\u307e\u306e\u3068\u304a\u308b\uff08\u304f\u307e\u3060\uff09",
         "nipi": "nipi",
         "misakana": "\u307f\u3055\u304b\u306a",
         "cru": "Cru",
@@ -30075,7 +30079,9 @@ const preciseQuery = {
         "hanasaka houcha": "\u82b1\u54b2\u65b9\u8336",
         "fallen-leaves": "Fallen\u843d\u53f6",
         "hanayama": "\u306f\u306a\u3084\u307e",
-        "kusoniku yokichi": "\u7cde\u8089\u4e0e\u5409"
+        "kusoniku yokichi": "\u7cde\u8089\u4e0e\u5409",
+        "hatoba akane": "\u6ce2\u6b62\u5834\u831c",
+        "hachi no hachihachi": "\u306f\u3061\u306e\u516b\u516b"
     },
     "cosplayer": {
         "otohara an": "\u4e59\u539f\u3042\u3093",
@@ -31318,5 +31324,6 @@ export function getGuess(value,maxLength) {
     }
     return guess
 }
+
 
 

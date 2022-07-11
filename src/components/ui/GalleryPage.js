@@ -54,6 +54,7 @@ const transformTags = (g_data) => {
 const fetchPageData = async (gid, token) => {
     const [g_data, g_data_error] = await fetchG_Data(gid, token, true)
     if (g_data_error) {
+        // notifyMessage("error", g_data_error)
         return [null, null, g_data_error]
     } else {
         const [comment, comment_error] = await fetchComment(gid, token, false)
@@ -110,9 +111,10 @@ function GalleryPage_inner(props) {
             }}
         >
             {
-                pageState === "init" ? <LoadingAnime /> : null
-            }{
-                pageState === "finish" ? <GalleryPageUI
+                pageState === "init" && <LoadingAnime />
+            }
+            {
+                pageState === "finish" && <GalleryPageUI
                     g_data={g_data}
                     comments={comments}
                     downloadInfo={
@@ -126,20 +128,17 @@ function GalleryPage_inner(props) {
                     favorite={syncedDB.favorite[props.gid] || { state: FAVORITE_STATE.NOT_FAVORITED }}
                     requestDownload={async () => { downloadGallery(props.gid, props.token) }}
                     requestDelete={async () => { deleteGallery(props.gid, props.token) }}
-
                     openRead={props.openRead}
-
                     addFavorite={async () => {
                         const defaultIndex = getSetting("收藏夹", 9)
                         addFavorite(props.gid, props.token, defaultIndex)
                     }}
                     removeFavorite={async () => { removeFavorite(props.gid, props.token) }}
-
                     onTagClick={props.onTagClick}
-
-                /> : null
-            }{
-                pageState === "error" ? <Grid
+                />
+            }
+            {
+                pageState === "error" && <Grid
                     container
                     direction="column"
                     justifyContent="center"
@@ -168,7 +167,7 @@ function GalleryPage_inner(props) {
                     >{
                             errorInfo.map(item => <a key={item}>{item}</a>)
                         }</div>
-                </Grid> : null
+                </Grid>
             }
         </div>
     )

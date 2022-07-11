@@ -11,15 +11,43 @@ const colorMap = {
     "Private": "#000000",
 };
 
+const MaterialColors = [
+    '#F44336',
+    '#E91E63',
+    '#9C27B0',
+    '#673AB7',
+    '#3F51B5',
+    '#2196F3',
+    '#03A9F4',
+    '#00BCD4',
+    '#009688',
+    '#4CAF50',
+    '#8BC34A',
+    '#CDDC39',
+    '#FFEB3B',
+    '#FFC107',
+    '#FF9800',
+    '#FF5722',
+]
 
-const randomColor = () => { 
-    return '#' + Math.floor(Math.random() * 16777215).toString(16);
+const getStringHash = (string) => {
+    let hash = 0;
+    for (let i = 0; i < string.length; i++) {
+        hash = string.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return hash & 0x7FFFFFFF;
+}
+
+
+const randomColor = (str) => {
+    return MaterialColors[  getStringHash(str) % MaterialColors.length ];
 }
 
 const getCategoryColor = (category) => {
     if (category in colorMap) {
         return colorMap[category];
-    }else{
-        return randomColor();
+    } else {
+        return randomColor(category);
     }
 }
+export default getCategoryColor;

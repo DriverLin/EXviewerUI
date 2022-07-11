@@ -6,7 +6,9 @@ import syncedDB, { FAVORITE_STATE } from "../utils/mobxSyncedState"
 //封装了所有与服务器交互的api
 
 const fix8 = (num) => (Array(8).join(0) + num).slice(-8)
-
+const sleep = (ms) => new Promise((resolve) => {
+    setTimeout(resolve, ms)
+})
 
 const notifyError = (error) => {
     notifyMessage("error", error)

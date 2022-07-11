@@ -9,19 +9,9 @@ import Rating from '@mui/material/Rating';
 // import Rating from './Rating';
 import { observer } from "mobx-react";
 import { getCoverUrl } from '../../api/serverApi';
+import getCategoryColor from '../../utils/GetCategoryColor';
 
-const colorMap = {
-    "Manga": "#FF9700",
-    "Doujinshi": "#F44236",
-    "Non-H": "#9C28B1",
-    "Cosplay": "#9C28B1",
-    "Image Set": "#3F51B5",
-    "Western": "#8BC24A",
-    "Game CG": "#4CB050",
-    "Misc": "#D90051",
-    "Artist CG": "#D90051",
-    "PRIVATE": "#000000",
-};
+
 const languageMap = {
     "chinese": "ZH",
 }
@@ -222,7 +212,7 @@ function GalleryCard_inner(props) {
                             size={props.small_matches ? "medium" : "small"}
                         />
                     </div>
-                    <div style={{ backgroundColor: colorMap[props.cardInfo.category], }} className={classes.category}>
+                    <div style={{ backgroundColor: getCategoryColor(props.cardInfo.category)  , }} className={classes.category}>
                         <a style={{ color: "#ffffff" }}  >{props.cardInfo.category.toUpperCase()}</a>
                     </div>
                     <div className={classes.upload_time}>{props.cardInfo.uploadTime}</div>
