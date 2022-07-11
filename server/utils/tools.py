@@ -33,12 +33,16 @@ def printTrackableException(e):
 
 
 def makeTrackableException(e, appendE):
-    try:
-        exceptions = json.loads(str(e))
-        exceptions.append(str(appendE))
-        return Exception(json.dumps(exceptions))
-    except Exception :
-        return Exception(json.dumps([str(e), str(appendE)]))
+    if e:
+        try:
+            exceptions = json.loads(str(e))
+            exceptions.append(str(appendE))
+            return Exception(json.dumps(exceptions))
+        except Exception :
+            return Exception(json.dumps([str(e), str(appendE)]))
+    else:
+        return Exception(json.dumps([str(appendE)]))
+
 
 printPerformance__log = {}
 printPerformance__lock = threading.Lock()

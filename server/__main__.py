@@ -173,7 +173,7 @@ async def websocket_endpoint(websocket: WebSocket):
 async def addFavorite(gid: int, token: str, index: int):
     if FAVORITE_DISABLED == "true":
         raise HTTPException(
-            status_code=403, detail="FAVORITE_DISABLED,该API已禁用")
+            status_code=403, detail=makeTrackableException(None, "FAVORITE_DISABLED,该API已禁用"))
     logger.info(f"添加收藏 {gid}_{token} {index}")
     try:
         await aioPa.addFavorite(gid, token, index)
@@ -188,7 +188,7 @@ async def addFavorite(gid: int, token: str, index: int):
 async def rmFavorite(gid: int, token: str):
     if FAVORITE_DISABLED == "true":
         raise HTTPException(
-            status_code=403, detail="FAVORITE_DISABLED,该API已禁用")
+            status_code=403, detail=makeTrackableException(None, "FAVORITE_DISABLED,该API已禁用"))
     logger.info(f"删除收藏 {gid}_{token}")
     try:
         await aioPa.rmFavorite(gid, token)
@@ -203,7 +203,7 @@ async def rmFavorite(gid: int, token: str):
 async def download(gid: int, token: str):
     if DOWNLOAD_DISABLED == "true":
         raise HTTPException(
-            status_code=403, detail="DOWNLOAD_DISABLED,该API已禁用")
+            status_code=403, detail=makeTrackableException(None, "DOWNLOAD_DISABLED,该API已禁用"))
     logger.info(f"添加下载 {gid}_{token}")
     try:
         await aioPa.addDownload([[gid, token]])
@@ -218,7 +218,7 @@ async def download(gid: int, token: str):
 async def delete(gid: int, token: str):
     if DOWNLOAD_DISABLED == "true":
         raise HTTPException(
-            status_code=403, detail="DOWNLOAD_DISABLED,该API已禁用")
+            status_code=403, detail=makeTrackableException(None, "DOWNLOAD_DISABLED,该API已禁用"))
     logger.info(f"请求删除 {gid}_{token}")
     try:
         await aioPa.deleteDownload([[gid, token]])
@@ -233,7 +233,7 @@ async def delete(gid: int, token: str):
 async def continueDownload():
     if DOWNLOAD_DISABLED == "true":
         raise HTTPException(
-            status_code=403, detail="DOWNLOAD_DISABLED,该API已禁用")
+            status_code=403, detail=makeTrackableException(None, "DOWNLOAD_DISABLED,该API已禁用"))
     reDownloadCount = await aioPa.continueDownload()
     return {"msg": f"已开始{reDownloadCount}项下载"}
 
@@ -377,7 +377,7 @@ async def handelUploadZipGallery(ws: WebSocket):
 async def rateGallery(gid: int, token: str, score: float):
     if EH_RATE_DISABLED == "true":
         raise HTTPException(
-            status_code=403, detail="EH_RATE_DISABLED,该API已禁用")
+            status_code=403, detail=makeTrackableException(None, "EH_RATE_DISABLED,该API已禁用"))
     try:
         return await aioPa.rateGallery(gid, token, score)
     except Exception as e:
@@ -390,7 +390,7 @@ async def rateGallery(gid: int, token: str, score: float):
 async def voteComment(gid: int, token: str, commentId: int, vote: int):
     if EH_COMMENT_DISABLED == "true":
         raise HTTPException(
-            status_code=403, detail="EH_COMMENT_DISABLED,该API已禁用")
+            status_code=403, detail=makeTrackableException(None, "EH_COMMENT_DISABLED,该API已禁用"))
     try:
         return await aioPa.voteComment(gid, token, commentId, vote)
     except Exception as e:
@@ -403,7 +403,7 @@ async def voteComment(gid: int, token: str, commentId: int, vote: int):
 async def postComment(comment: commentBody):
     if EH_COMMENT_DISABLED == "true":
         raise HTTPException(
-            status_code=403, detail="EH_COMMENT_DISABLED,该API已禁用")
+            status_code=403, detail=makeTrackableException(None, "EH_COMMENT_DISABLED,该API已禁用"))
     try:
         return await aioPa.postComment(comment)
     except Exception as e:
