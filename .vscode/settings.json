@@ -11,6 +11,7 @@
         "lxml",
         "nosel",
         "overscan",
+        "pydantic",
         "rategallery",
         "votecomment"
     ]

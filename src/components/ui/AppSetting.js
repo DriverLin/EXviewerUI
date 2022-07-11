@@ -2,6 +2,8 @@
 import { Grid, useMediaQuery, Button, Switch, List, Menu, MenuItem } from "@mui/material";
 import { makeStyles } from '@mui/styles';
 import React, { useEffect, useState } from 'react';
+import { fetchDiskCacheSize, requestClearDiskCache } from "../api/serverApi";
+import { notifyMessage } from "../utils/PopoverNotifier";
 import { useSetting } from "../utils/SettingHooks";
 
 
@@ -224,30 +226,28 @@ function SwitchType(props) {
 
 function ClearDiskCache() {
     const classes = useStyles();
-    const [cacheSize,setCacheSize] = useState(0);
-    
+    const [cacheSize, setCacheSize] = useState(0);
+
     const getDiskCacheSize = async () => {
-        try{
-            const response = await fetch("/getDiskCacheSize");
-            const data = await response.json();
+        const [data, error] = await fetchDiskCacheSize();
+        if (error) {
+            notifyMessage("error", error)
+        } else {
             setCacheSize(data["msg"]);
-        }catch(e){
-            console.log(e);
         }
     }
     const clearDiskCache = async () => {
-        try{
-            const response = await fetch("/clearDiskCache");
-            const data = await response.json();
-            setCacheSize("已清除"+data["msg"]);
-        }catch(e){
-            console.log(e);
+        const [data, error] = await requestClearDiskCache();
+        if (error) {
+            notifyMessage("error", error)
+        } else {
+            setCacheSize("已清除" + data["msg"]);
         }
     }
 
     useEffect(() => {
         getDiskCacheSize()
-    },[])
+    }, [])
 
 
     return <Button
@@ -284,7 +284,7 @@ function ClearDiskCache() {
                             <a>{"清除缓存"}</a>
                         </div>
                     </Grid>
-                    
+
                 </Grid>
             </Grid>
             <Grid item >

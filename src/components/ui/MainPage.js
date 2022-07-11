@@ -27,7 +27,7 @@ import SecondConfirmDialog from '../utils/SecondConfirmDialog';
 import { getSetting, useSettingBind } from '../utils/SettingHooks';
 import syncedDB from '../utils/mobxSyncedState';
 import { observer } from "mobx-react";
-import { addFavorite, continueDownload, deleteGallery, downloadGallery, removeFavorite } from '../api/serverApi';
+import { addFavorite, continueDownload, deleteGallery, downloadGallery, fetchGalleryList, removeFavorite } from '../api/serverApi';
 import { autorun, toJS } from 'mobx';
 import FolderZipIcon from '@mui/icons-material/FolderZip';
 const mergeGallery = (arr1, arr2) => {
@@ -167,19 +167,21 @@ function MainPage_inner(props) {
             lock.current = true
             const prevProps = JSON.stringify(props)
             setLoading(true)
-            const response = await fetch(`${props.apiURL}&page=${pageOffset.current}`)
-            if (response.ok) {
+            const [data, error] = await fetchGalleryList(props.apiURL, pageOffset.current)
+            if (error) {
+                notifyMessage("error", error)
+                lock.current = false
+                setLoading(false)
+                return false
+            } else {
                 if (prevProps !== JSON.stringify(props)) {
                     console.log("props changed, ignore response")
                     return
                 } else {
-                    const data = await response.json()
                     console.log(data)
                     const dataDict = {}
                     const dataGidList = data.map(item => item.gid)
-                    data.forEach(item => {
-                        dataDict[item.gid] = item
-                    })
+                    data.forEach(item => { dataDict[item.gid] = item })
                     setCardInfoMap(prev => { return { ...prev, ...dataDict } })
                     setCardGidList(prev => mergeAndDistinct(prev, dataGidList))
                     pageOffset.current += 1
@@ -187,18 +189,6 @@ function MainPage_inner(props) {
                     setLoading(false)
                     return true
                 }
-
-            } else {
-                const text = await response.text()
-                try {
-                    const info = JSON.parse(text)
-                    notifyMessage("error", info.detail)
-                } catch (error) {
-                    notifyMessage("error", text)
-                }
-                lock.current = false
-                setLoading(false)
-                return false
             }
         }
     }
@@ -224,7 +214,7 @@ function MainPage_inner(props) {
         console.log("useEffect 注册autorun")
         autorun(
             () => {
-                console.log("autorun 触发",typeof syncedDB.keys.download , typeof syncedDB.download , typeof syncedDB.card_info)
+                console.log("autorun 触发", typeof syncedDB.keys.download, typeof syncedDB.download, typeof syncedDB.card_info)
                 if (!props.downloadPage) {
                     console.log("autorun 不是下载页面 退出")
                     return

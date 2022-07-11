@@ -12,7 +12,7 @@ import { makeStyles } from '@mui/styles';
 import { useLongPress } from 'ahooks';
 import copy from 'clipboard-copy';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { postComment, voteComment } from '../../api/serverApi';
+import { fetchComment, postComment, voteComment } from '../../api/serverApi';
 import { notifyMessage } from '../../utils/PopoverNotifier';
 import timeTools from '../../utils/TimeFormatTools';
 
@@ -129,6 +129,8 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
             setFetching(false)
             setVote(result.vote)
             setTimeout(onClose, 300)
+        } else {
+            setFetching(false)
         }
     }
     const voteDown = async (e) => {
@@ -139,6 +141,8 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
             setFetching(false)
             setVote(result.vote)
             setTimeout(onClose, 300)
+        } else {
+            setFetching(false)
         }
     }
     const editComment = async (e) => {
@@ -302,21 +306,14 @@ export default function CommentPanel(props) {
     const loadMoreComment = async () => {
         setCanLoadMore(false)
         setLoading(true)
-        const response = await fetch(`/comments/all/${props.gid}/${props.token}`)
-        if (response.ok) {
-            const allComments = await response.json()
-            setCommentData(allComments.data)
-            setCanVote(allComments.canVote)
+        const [allComments, error] = await fetchComment(props.gid, props.token, true)
+        if (error) {
+            setCanLoadMore(true)
+            notifyMessage("error", error)
         }
         else {
-            setCanLoadMore(true)
-            const text = await response.text()
-            try {
-                const info = JSON.parse(text)
-                notifyMessage("error", info.detail)
-            } catch (error) {
-                notifyMessage("error", text)
-            }
+            setCommentData(allComments.data)
+            setCanVote(allComments.canVote)
         }
         setLoading(false)
     }

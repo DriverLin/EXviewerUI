@@ -6,6 +6,7 @@ import { CircularProgress, IconButton } from '@mui/material';
 import FileSaver from 'file-saver';
 import JsZip from 'jszip';
 import React, { useState } from 'react';
+import { fetchG_Data, getGalleryImgUrl } from '../../api/serverApi';
 import { notifyMessage } from '../../utils/PopoverNotifier';
 
 
@@ -26,20 +27,19 @@ export default function ZipDownloadButton(props) {
 
     const makeZipAsync = async () => {
         var new_zip = new JsZip();
-        const response = await fetch(`/Gallery/${props.gid}_${props.token}/g_data.json`)
-        if (!response.ok) {
+        const [g_data,error] = await fetchG_Data(props.gid, props.token, false)
+        if (error) {
             notifyMessage("error", "Failed to fetch g_data.json")
             setTimeout(() => { setNoError(false) }, 450);
             setTimeout(() => { setState("init") }, 500);
             setTimeout(() => { setInitOpacity(1) }, 600);
             return
         }
-        const g_data = await response.json()
         const galleryName = g_data.title_jpn || g_data.title
         new_zip.file("g_data.json", JSON.stringify(g_data, null, 4))
         let over = 0
         const jobs = Array.from(Array(Number(g_data.filecount)), (v, k) => k + 1).map(async (i) => {
-            const pic = await fetch(`/Gallery/${g_data.gid}_${g_data.token}/${(Array(8).join(0) + i).slice(-8)}.jpg`)
+            const pic = await fetch(getGalleryImgUrl(props.gid, props.token, i))
             if (!pic.ok) {
                 notifyMessage("error", `Failed to fetch ${(Array(8).join(0) + i).slice(-8)}.jpg`)
             } else {

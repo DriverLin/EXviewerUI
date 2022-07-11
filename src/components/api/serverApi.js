@@ -2,9 +2,11 @@ import { getSetting } from "../utils/SettingHooks"
 import { notifyMessage } from "../utils/PopoverNotifier"
 import syncedDB, { FAVORITE_STATE } from "../utils/mobxSyncedState"
 
-//这些API都是会造成数据变化的 即not pure
-//其他都是pure 
-//但也可以考虑在这做个warper 调用方便些
+
+//封装了所有与服务器交互的api
+
+const fix8 = (num) => (Array(8).join(0) + num).slice(-8)
+
 
 const notifyError = (error) => {
     notifyMessage("error", error)
@@ -22,14 +24,14 @@ const Get = async (url) => {
         const text = await response.text()
         try {
             const info = JSON.parse(text)
-            return [null, info.detail];
+            return [null, JSON.parse(info.detail)];
         } catch (error) {
-            return [null, text];
+            return [null, [text]];
         }
     }
 }
 
-const Post = async (url,json) => {
+const Post = async (url, json) => {
     const response = await fetch(url, {
         "method": "POST",
         "headers": {
@@ -43,7 +45,7 @@ const Post = async (url,json) => {
         const text = await response.text()
         try {
             const info = JSON.parse(text)
-            return [null, info.detail];
+            return [null, JSON.parse(info.detail)];
         } catch (error) {
             return [null, text];
         }
@@ -106,7 +108,6 @@ const rateGallery = async (gid, token, score) => {
 }
 
 
-// http://localhost:7964/voteComment/2265543/52b25aea73/4740004/1
 const voteComment = async (gid, token, commentId, vote) => {
     const [result, error] = await Get(`/voteComment/${gid}/${token}/${commentId}/${vote}`)
     if (error) {
@@ -116,7 +117,7 @@ const voteComment = async (gid, token, commentId, vote) => {
 }
 
 const postComment = async (gid, token, content, edit, commentID) => {
-    const [result, error] = await Post("/postComment",{
+    const [result, error] = await Post("/postComment", {
         "gid": gid,
         "token": token,
         "content": content,
@@ -130,13 +131,63 @@ const postComment = async (gid, token, content, edit, commentID) => {
 }
 
 
+const fetchG_Data = async (gid, token, ignoreCache) => {
+    return await Get(`/Gallery/${gid}_${token}/g_data.json${ignoreCache ? "?nocache=true" : ""}`)
+}
+
+const fetchComment = async (gid, token, all) => {
+    return await Get(`/comments/${gid}/${token}${all ? "?fetchAll=true" : ""}`)
+}
+
+const fetchDiskCacheSize = async () => {
+    return await Get(`/getDiskCacheSize`)
+}
+
+const requestClearDiskCache = async () => {
+    return await Get(`/clearDiskCache`)
+}
+
+const fetchGalleryList = async (apiURL, pageIndex) => {
+    return await Get(`${apiURL}&page=${pageIndex}`)
+}
+
+
+const getPreviewImgUrl = (gid, token, index) => {
+    return `/preview/${gid}/${token}/${index}`
+}
+
+const getCoverUrl = (gid, token) => {
+    return `/cover/${gid}_${token}.jpg`
+}
+
+const getGalleryImgUrl = (gid, token, index) => {
+    return `/Gallery/${gid}_${token}/${fix8(index)}.jpg`
+}
+
 export {
     addFavorite,
     removeFavorite,
+
     downloadGallery,
     deleteGallery,
     continueDownload,
+
     rateGallery,
+
     voteComment,
-    postComment
+    postComment,
+
+
+    fetchG_Data,
+    fetchComment,
+
+    fetchDiskCacheSize,
+    requestClearDiskCache,
+
+    fetchGalleryList,
+
+    getPreviewImgUrl,
+    getCoverUrl,
+    getGalleryImgUrl,
+
 }

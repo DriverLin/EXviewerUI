@@ -20,11 +20,15 @@ import {
     removeFavorite,
     downloadGallery,
     deleteGallery,
-    continueDownload
+    continueDownload,
+    getCoverUrl,
+    fetchG_Data,
+    fetchComment
 } from '../api/serverApi.js';
 import { getSetting } from '../utils/SettingHooks';
 import { observer } from "mobx-react";
 import EditableRating from './GalleryPageComponents/EditableRating.js';
+import { notifyMessage } from '../utils/PopoverNotifier.js';
 
 const transformTags = (g_data) => {
     let tags = {}
@@ -45,31 +49,23 @@ const transformTags = (g_data) => {
     return tags
 }
 
-const getComment = async (gid, token) => {
-    if (window.serverSideConfigure.type === "full" && localStorage.getItem("offline_mode") !== "true") {
-        const response = await fetch(`/comments/${gid}/${token}`)
-        if (response.ok) {
-            return await response.json()
-        } else {
-            return { data: [], all: true }
-        }
-    } else {
-        return { data: [], all: true }
-    }
-}
 
-const request_g_data_json = async (gid, token) => {
-    const g_data_response = await fetch(`/Gallery/${gid}_${token}/g_data.json?nocache=true`)
-    if (g_data_response.ok) {
-        return [await g_data_response.json(), await getComment(gid, token), null]
+
+const fetchPageData = async (gid, token) => {
+    const [g_data, g_data_error] = await fetchG_Data(gid, token, true)
+    if (g_data_error) {
+        return [null, null, g_data_error]
     } else {
-        const text = await g_data_response.text()
-        try {
-            const info = JSON.parse(text)
-            const detail = JSON.parse(info.detail)
-            return [null, null, detail]
-        } catch (error) {
-            return [null, null, [text]]
+        const [comment, comment_error] = await fetchComment(gid, token, false)
+        if (comment_error) {
+            notifyMessage("error", comment_error)
+            return [g_data, {
+                "data": [],
+                "all": true,
+                "canVote": false,
+            }, null]
+        } else {
+            return [g_data, comment, null]
         }
     }
 }
@@ -88,7 +84,7 @@ function GalleryPage_inner(props) {
     const [comments, setComments] = useState([])
     const fetchData = async () => {
         setPageState("init")
-        const [g_data, comments, error] = await request_g_data_json(props.gid, props.token)
+        const [g_data, comments, error] = await fetchPageData(props.gid, props.token)
         console.log(g_data, comments, error)
         if (!error) {
             setG_data(g_data)
@@ -279,7 +275,7 @@ function GalleryPageUI(props) {
                     >
                         <Grid item xs={4}>
                             <div style={{ width: "100%", borderRadius: 5, overflow: "hidden", height: 0, paddingBottom: "141%", }}>
-                                <img style={{ width: "100%", borderRadius: 5 }} alt="cover" src={`/cover/${props.g_data.gid}_${props.g_data.token}.jpg`} />
+                                <img style={{ width: "100%", borderRadius: 5 }} alt="cover" src={getCoverUrl(props.g_data.gid, props.g_data.token)} />
                             </div>
                         </Grid>
 

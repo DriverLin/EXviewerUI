@@ -8,6 +8,7 @@ import DownloadCircularProgress from './DownloadCircularProgress';
 import Rating from '@mui/material/Rating';
 // import Rating from './Rating';
 import { observer } from "mobx-react";
+import { getCoverUrl } from '../../api/serverApi';
 
 const colorMap = {
     "Manga": "#FF9700",
@@ -198,7 +199,7 @@ function GalleryCard_inner(props) {
                     props.onImageClick(props.cardInfo.gid, props.cardInfo.token)
                 }}
             >
-                <img style={{ width: containerHeight / 1.41, }} className={classes.imgContainer_img} src={`/cover/${props.cardInfo.gid}_${props.cardInfo.token}.jpg`} alt={`cover of ${props.cardInfo.name}`} />
+                <img style={{ width: containerHeight / 1.41, }} className={classes.imgContainer_img} src={getCoverUrl(props.cardInfo.gid, props.cardInfo.token)} alt={`cover of ${props.cardInfo.name}`} />
             </div>
             <div
                 className={classes.infoContainer}
@@ -239,25 +240,19 @@ function GalleryCard_inner(props) {
                         :
                         <div className={classes.details}>
                             {
-                                downloadIconShow ?
-                                    <div className={classes.d_icon}>
-                                        <DownloadIcon fontSize={props.small_matches ? "medium" : "small"} />
-                                    </div>
-                                    : null
+                                downloadIconShow && <div className={classes.d_icon}>
+                                    <DownloadIcon fontSize={props.small_matches ? "medium" : "small"} />
+                                </div>
                             }
                             {
-                                favoriteIconShow ?
-                                    <div className={classes.d_icon}>
-                                        <FavoriteIcon fontSize={props.small_matches ? "medium" : "small"} />
-                                    </div>
-                                    : null
+                                favoriteIconShow && <div className={classes.d_icon}>
+                                    <FavoriteIcon fontSize={props.small_matches ? "medium" : "small"} />
+                                </div>
                             }
                             {
-                                fetchingFavoriteIconShow ?
-                                    <div className={classes.d_icon}>
-                                        <FavoriteIcon sx={{ color: "button.iconFunction.disabled" }} fontSize={props.small_matches ? "medium" : "small"} />
-                                    </div>
-                                    : null
+                                fetchingFavoriteIconShow && <div className={classes.d_icon}>
+                                    <FavoriteIcon sx={{ color: "button.iconFunction.disabled" }} fontSize={props.small_matches ? "medium" : "small"} />
+                                </div>
                             }
                             <div className={classes.d_icon}>{cardText}</div>
                         </div>

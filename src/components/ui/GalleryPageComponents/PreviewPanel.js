@@ -4,6 +4,7 @@ import Skeleton from '@mui/material/Skeleton';
 import { styled } from '@mui/material/styles';
 import { useEventListener } from 'ahooks';
 import React, { useEffect, useRef, useState } from 'react';
+import { getPreviewImgUrl } from '../../api/serverApi';
 
 
 function PreviewLoadingImg(props) {
@@ -132,11 +133,11 @@ export default function PreviewPanel(props) {
                                     onClick={
                                         () => {
                                             localStorage.setItem(`/viewing/${props.gid}/${props.token}/`, index + 1)
-                                            props.openRead(props.gid,props.token)
+                                            props.openRead(props.gid, props.token)
                                         }
                                     }
                                 >
-                                    <PreviewLoadingImg src={`/preview/${props.gid}/${props.token}/${index + 1}`} />
+                                    <PreviewLoadingImg src={getPreviewImgUrl(props.gid, props.token, index + 1)} />
                                 </Grid>
                             )
                         })

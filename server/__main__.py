@@ -17,10 +17,10 @@ from tinydb.middlewares import CachingMiddleware
 from tinydb.storages import JSONStorage
 from uvicorn import Config, Server
 from utils.HTMLParser import setParserUtcOffset
-from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor , commentBody
+from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor, commentBody
 from utils.DBM import wsDBMBinder
 from utils.tools import logger, makeTrackableException, printTrackableException, getUTCOffset
-
+from utils.FakeAioProxyAccessor import FakeAioProxyAccessor
 serverLoop = asyncio.new_event_loop()
 asyncio.set_event_loop(serverLoop)
 
@@ -241,17 +241,12 @@ async def continueDownload():
 
 @app.get("/Gallery/{gid_token}/{filename}")
 async def getGalleryFile(gid_token: str, filename: str, nocache=None):
-
     gid, token = gid_token.split("_")
     gid = int(gid)
     try:
         if filename == "g_data.json":
             return await aioPa.get_G_data(gid, token, cached=(nocache == None))
         else:
-            # await asyncio.sleep(0.5)
-            # if randint(0, 10) > 5:
-            #     raise HTTPException(status_code=404, detail=str(
-            #         makeTrackableException('', f"random error")))
             index = int(filename.split(".")[0])
             return FileResponse(
                 await aioPa.getGalleryImage(gid, token, index),
@@ -284,23 +279,14 @@ async def getfile(gid: int, token: str, index: int):
 
 
 @app.get("/comments/{gid}/{token}")
-async def comment(gid: int, token: str):
+async def comments(gid: int, token: str, fetchAll=None):
     try:
-        return await aioPa.getComments(gid, token, False)
+        return await aioPa.getComments(gid, token, fetchAll != None)
     except Exception as e:
         printTrackableException(e)
         raise HTTPException(status_code=500, detail=str(
             makeTrackableException(e, f"请求评论 {gid}/{token} 失败")))
 
-
-@app.get("/comments/all/{gid}/{token}")
-async def comment(gid: int, token: str):
-    try:
-        return await aioPa.getComments(gid, token, True)
-    except Exception as e:
-        printTrackableException(e)
-        raise HTTPException(status_code=500, detail=str(
-            makeTrackableException(e, f"请求评论 {gid}/{token} 失败")))
 
 @app.get("/list/{path}")
 async def listMainGallery(path, request: Request):
@@ -400,6 +386,7 @@ async def rateGallery(gid: int, token: str, score: float):
         raise HTTPException(status_code=500, detail=str(
             makeTrackableException(e, f"{gid}_{token} 评分失败")))
 
+
 @app.get("/voteComment/{gid}/{token}/{commentId}/{vote}")
 async def voteComment(gid: int, token: str, commentId: int, vote: int):
     if EH_COMMENT_DISABLED == "true":
@@ -412,8 +399,9 @@ async def voteComment(gid: int, token: str, commentId: int, vote: int):
         raise HTTPException(status_code=500, detail=str(
             makeTrackableException(e, f"{gid}_{token} 投票失败")))
 
+
 @app.post("/postComment")
-async def postComment( comment:commentBody):
+async def postComment(comment: commentBody):
     if EH_COMMENT_DISABLED == "true":
         raise HTTPException(
             status_code=403, detail="EH_COMMENT_DISABLED,该API已禁用")

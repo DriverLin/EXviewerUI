@@ -10,6 +10,7 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import LoadingAnime from './LoadingAnime';
 import VerticalScrollViewer from './ViewPageComponents/VerticalScrollViewer';
 import { useEventListener } from 'ahooks';
+import { fetchG_Data, getGalleryImgUrl } from '../api/serverApi';
 
 const fix8 = (num) => (Array(8).join(0) + num).slice(-8)
 
@@ -21,21 +22,14 @@ export default function ViewPage(props) {
     const [title, setTitle] = useState("")
 
     const fetchData = async () => {
-        const g_data_response = await fetch(`/Gallery/${props.gid}_${props.token}/g_data.json`)
-        if (g_data_response.ok) {
-            const g_data = await g_data_response.json()
+        const [g_data, error] = await fetchG_Data(props.gid, props.token, false)
+        if(error){
+            setErrorInfo(error)
+            setPageState("error")
+        }else{
             setPages(Number(g_data.filecount))
             setTitle(g_data.title_jpn || g_data.title)
             setPageState("finish")
-        } else {
-            const text = await g_data_response.text()
-            try {
-                const info = JSON.parse(text)
-                setErrorInfo(info.detail)
-            } catch (error) {
-                setErrorInfo([text])
-            }
-            setPageState("error")
         }
     }
     useEffect(() => {
@@ -97,7 +91,7 @@ function ViewPageUI(props) {
     const gid = props.gid
     const token = props.token
     const pageCount = props.pages
-    const urls = Array(props.pages).fill().map((_, i) => `/Gallery/${gid}_${token}/${fix8(i + 1)}.jpg`)
+    const urls = Array(props.pages).fill().map((_, i) => getGalleryImgUrl(gid, token, i + 1))
     const [pageNumRef, pageNum, _setPageNum] = useRefState(Number(localStorage.getItem(`/viewing/${gid}/${token}/`)) || 1)
     const setPageNum = (value) => {
         if (pageNumRef.current === value) {
@@ -179,7 +173,7 @@ function ViewPageUI(props) {
     }
     useEventListener("keyup", onKeyUP)
 
-    
+
 
 
     return (

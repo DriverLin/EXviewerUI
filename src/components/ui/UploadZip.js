@@ -9,6 +9,7 @@ import JsZip from 'jszip';
 import { notifyMessage } from "../utils/PopoverNotifier";
 import LinearProgress, { LinearProgressProps } from '@mui/material/LinearProgress';
 import Box from '@mui/material/Box';
+import { fetchG_Data } from "../api/serverApi";
 
 const extNames = ["jpg", "JPG", "png", "PNG", "gif", "GIF"]
 
@@ -185,27 +186,22 @@ export default function UploadZip(props) {
             notifyMessage("error", "请输入正确的URL\nhttps://exhentai.org/g/[GID]/[TOKEN]/")
             return
         }
-        // const g_data_response = await fetch(`/G_dataOfficial/${galleryUrl.split("/")[4]}/${galleryUrl.split("/")[5]}`)
-        const g_data_response = await fetch(`/Gallery/${galleryUrl.split("/")[4]}_${galleryUrl.split("/")[5]}/g_data.json`)
-        if (g_data_response.ok) {
-            const g_data_result = await g_data_response.json()
-            setG_data(g_data_result)
-            console.log(JSON.stringify(g_data_result, null, 4))
-            if (Number(g_data_result.filecount) !== prevBlobCount) {
+        const gid = galleryUrl.split("/")[4]
+        const token = galleryUrl.split("/")[5]
+        const [g_data,error] = await fetchG_Data(gid, token,false)
+        if(error){
+            notifyMessage("error",error)
+            return
+        }else{
+            setG_data(g_data)
+            console.log(JSON.stringify(g_data, null, 4))
+            if (Number(g_data.filecount) !== prevBlobCount) {
                 notifyMessage("error", "文件数量不匹配")
                 setCanUpload(false)
                 return
             } else {
                 setCanUpload(true)
                 notifyMessage("success", "文件数量已匹配")
-            }
-        } else {
-            const text = await g_data_response.text()
-            try {
-                const info = JSON.parse(text)
-                notifyMessage("error", info.detail)
-            } catch (error) {
-                notifyMessage("error", text)
             }
         }
     }
