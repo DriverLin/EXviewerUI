@@ -112,7 +112,7 @@ const fetchGalleryList = async (apiURL, pageIndex) => {
 }
 
 const getRandomImg = (index) => {
-    return `/samples/${index % 7}.jpg`
+    return `./samples/${index % 7}.jpg`
 }
 
 const getPreviewImgUrl = (gid, token, index) => {

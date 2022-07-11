@@ -30,28 +30,7 @@ import { observer } from "mobx-react";
 import { addFavorite, continueDownload, deleteGallery, downloadGallery, fetchGalleryList, removeFavorite } from '../api/serverApi';
 import { autorun, toJS } from 'mobx';
 import FolderZipIcon from '@mui/icons-material/FolderZip';
-const mergeGallery = (arr1, arr2) => {
-    const result = []
-    const set = new Set()
-    for (let arr of [arr1, arr2]) {
-        for (let item of arr) {
-            if (!set.has(item.gid)) {
-                set.add(item.gid)
-                result.push(item)
-            }
-        }
-    }
-    return result
-}
 
-
-const openCurrent = (url) => {
-    window.location.href = "/#" + url
-}
-
-const openNewTab = (url) => {
-    window.open("/#" + url, "_blank")
-}
 
 const removeAndInsert = (oldState, newState) => {
     const oldSet = new Set(oldState)

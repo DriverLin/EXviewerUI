@@ -68,15 +68,15 @@ const fetchWithoutCallback = async (url) => {
 }
 
 const addFavorite = async (gid, token, index) => {
-    fetchWithoutCallback(`/addFavorite/${gid}/${token}/${index}`)
+    fetchWithoutCallback(`./addFavorite/${gid}/${token}/${index}`)
 }
 
 const removeFavorite = async (gid, token) => {
-    fetchWithoutCallback(`/rmFavorite/${gid}/${token}`)
+    fetchWithoutCallback(`./rmFavorite/${gid}/${token}`)
 }
 
 const downloadGallery = async (gid, token) => {
-    fetchWithoutCallback(`/download/${gid}/${token}`)
+    fetchWithoutCallback(`./download/${gid}/${token}`)
     if (getSetting("下载时添加收藏", false)) {
         if (syncedDB.favorite[gid] && syncedDB.favorite[gid]["state"] === FAVORITE_STATE.FAVORITED) {
             return//已收藏 则返回
@@ -88,7 +88,7 @@ const downloadGallery = async (gid, token) => {
 }
 
 const deleteGallery = async (gid, token) => {
-    fetchWithoutCallback(`/delete/${gid}/${token}`)
+    fetchWithoutCallback(`./delete/${gid}/${token}`)
     if (getSetting("删除时移除收藏", false)) {
         if (syncedDB.favorite[gid] && syncedDB.favorite[gid]["state"] != FAVORITE_STATE.NOT_FAVORITED) {
             removeFavorite(gid, token)//已收藏 才能删除
@@ -97,12 +97,12 @@ const deleteGallery = async (gid, token) => {
 }
 
 const continueDownload = async () => {
-    fetchWithoutCallback(`/continueDownload`)
+    fetchWithoutCallback(`./continueDownload`)
 }
 
 
 const rateGallery = async (gid, token, score) => {
-    const [result, error] = await Get(`/rateGallery/${gid}/${token}/${score}`)
+    const [result, error] = await Get(`./rateGallery/${gid}/${token}/${score}`)
     if (error) {
         notifyError(error)
     }
@@ -111,7 +111,7 @@ const rateGallery = async (gid, token, score) => {
 
 
 const voteComment = async (gid, token, commentId, vote) => {
-    const [result, error] = await Get(`/voteComment/${gid}/${token}/${commentId}/${vote}`)
+    const [result, error] = await Get(`./voteComment/${gid}/${token}/${commentId}/${vote}`)
     if (error) {
         notifyError(error)
     }
@@ -119,7 +119,7 @@ const voteComment = async (gid, token, commentId, vote) => {
 }
 
 const postComment = async (gid, token, content, edit, commentID) => {
-    const [result, error] = await Post("/postComment", {
+    const [result, error] = await Post("./postComment", {
         "gid": gid,
         "token": token,
         "content": content,
@@ -134,19 +134,19 @@ const postComment = async (gid, token, content, edit, commentID) => {
 
 
 const fetchG_Data = async (gid, token, ignoreCache) => {
-    return await Get(`/Gallery/${gid}_${token}/g_data.json${ignoreCache ? "?nocache=true" : ""}`)
+    return await Get(`./Gallery/${gid}_${token}/g_data.json${ignoreCache ? "?nocache=true" : ""}`)
 }
 
 const fetchComment = async (gid, token, all) => {
-    return await Get(`/comments/${gid}/${token}${all ? "?fetchAll=true" : ""}`)
+    return await Get(`./comments/${gid}/${token}${all ? "?fetchAll=true" : ""}`)
 }
 
 const fetchDiskCacheSize = async () => {
-    return await Get(`/getDiskCacheSize`)
+    return await Get(`./getDiskCacheSize`)
 }
 
 const requestClearDiskCache = async () => {
-    return await Get(`/clearDiskCache`)
+    return await Get(`./clearDiskCache`)
 }
 
 const fetchGalleryList = async (apiURL, pageIndex) => {
@@ -155,15 +155,15 @@ const fetchGalleryList = async (apiURL, pageIndex) => {
 
 
 const getPreviewImgUrl = (gid, token, index) => {
-    return `/preview/${gid}/${token}/${index}`
+    return `./preview/${gid}/${token}/${index}`
 }
 
 const getCoverUrl = (gid, token) => {
-    return `/cover/${gid}_${token}.jpg`
+    return `./cover/${gid}_${token}.jpg`
 }
 
 const getGalleryImgUrl = (gid, token, index) => {
-    return `/Gallery/${gid}_${token}/${fix8(index)}.jpg`
+    return `./Gallery/${gid}_${token}/${fix8(index)}.jpg`
 }
 
 export {

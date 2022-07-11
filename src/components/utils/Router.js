@@ -1,5 +1,6 @@
 import { Slide } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { useLocation } from "react-router";
 import AppSetting from "../ui/AppSetting";
 import GalleryPage from "../ui/GalleryPage";
@@ -34,6 +35,7 @@ const replaceLast = (arr, item) => {
  */
 export function SwitchRouter(props) {
     const location = useLocation()
+    const navigate = useNavigate()
     const history = useRef([])//存放历史location序列化字符串
     const [elements, setElements] = useState([]);//history与elems一定是全映射的
 
@@ -67,7 +69,7 @@ export function SwitchRouter(props) {
             return
         } else {
             history.current.push(target)
-            window.location.href = `/#${target}`
+            navigate(target)
             console.log("新的路由", target)
             return
         }
@@ -109,17 +111,17 @@ export function SwitchRouter(props) {
         console.log("apiURL", pathname, search)
 
         const f_search_url = search.slice(0, 1) === "?" ?
-            `/list/${search}${getSetting("搜索本地画廊", false) ? "&search_and_merge_local=true" : ""}`
+            `./list/${search}${getSetting("搜索本地画廊", false) ? "&search_and_merge_local=true" : ""}`
             :
-            `/list/?${search}${getSetting("搜索本地画廊", false) ? "&search_and_merge_local=true" : ""}`
+            `./list/?${search}${getSetting("搜索本地画廊", false) ? "&search_and_merge_local=true" : ""}`
 
         const urlMap = {
-            "/": "/list/?1=1",
+            "/": "./list/?1=1",
             "/search": f_search_url,
-            "/watched": "/list/watched?1=1",
-            "/popular": "/list/popular?1=1",
-            "/favorites": "/list/favorites.php?1=1",
-            "/downloaded": "/api/data"
+            "/watched": "./list/watched?1=1",
+            "/popular": "./list/popular?1=1",
+            "/favorites": "./list/favorites.php?1=1",
+            "/downloaded": "./api/data"
         }
         return urlMap[pathname]
     }
