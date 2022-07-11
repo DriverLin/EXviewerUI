@@ -25,12 +25,13 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+
+      - name: move fake api
+        run: mv ./src/components/api/fakeApi.js .src/components/api/serverApi.js
+
       # Runs a single command using the runners shell
       - name: install
         run: yarn install
-
-      - name: move fake api
-        run: mv src\components\api\fakeApi.js src\components\api\serverApi.js
 
       - name: build
         run: yarn build
