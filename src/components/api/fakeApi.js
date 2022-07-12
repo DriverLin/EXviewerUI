@@ -83,6 +83,9 @@ const postComment = async (gid, token, content, edit, commentID) => {
 
 
 const fetchG_Data = async (gid, token, ignoreCache) => {
+    if(ignoreCache){
+        await sleep(1000)
+    }
     if(jsonData["g_data"][gid]){
         return [jsonData["g_data"][gid], null]
     }else{

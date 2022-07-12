@@ -46,6 +46,14 @@ const useStyles = makeStyles((theme) => ({
             borderRadius: 5,
             backgroundColor: theme.palette.background.main,
         }
+    },
+    menuButton:{
+        "&.MuiIconButton-colorInherit": {
+            color: theme.palette.button.iconFunction.main,
+            "&.Mui-disabled": {
+                color: theme.palette.button.iconFunction.disabled,
+            },
+        },
     }
 
 }));
@@ -129,10 +137,11 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
         await copy(comment.text)
         notifyMessage("success", ["复制成功"])
     }
-    const voteUp = async (e) => {
+
+    const voteFunctionFactory = (value) => async (e) => {
         e.stopPropagation()
         setFetching(true)
-        const [result, err] = await onVote(1)
+        const [result, err] = await onVote(value)
         if (!err) {
             setFetching(false)
             setVote(result.vote)
@@ -141,18 +150,8 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
             setFetching(false)
         }
     }
-    const voteDown = async (e) => {
-        e.stopPropagation()
-        setFetching(true)
-        const [result, err] = await onVote(-1)
-        if (!err) {
-            setFetching(false)
-            setVote(result.vote)
-            setTimeout(onClose, 300)
-        } else {
-            setFetching(false)
-        }
-    }
+    const voteUp = voteFunctionFactory(1)
+    const voteDown = voteFunctionFactory(-1)
     const editComment = async (e) => {
         e.stopPropagation()
         onClose()
@@ -162,12 +161,7 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
             editContent: comment.text
         })
     }
-    const ButtonStyle = {
-        color: "button.iconFunction.main",
-        "&.Mui-disabled": {
-            color: "button.iconFunction.disabled",
-        },
-    }
+
     return <Backdrop invisible={unFullScreen} open={open} onClick={onClose} sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} >
         <Popover
             open={open}
@@ -186,22 +180,22 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
                 spacing={"8px"}
             >
                 <Grid item>
-                    <IconButton sx={ButtonStyle} size="large" onClick={copyComment}  >
+                    <IconButton color="inherit" className={classes.menuButton} size="large" onClick={copyComment}  >
                         <ContentPasteIcon fontSize="inherit" />
                     </IconButton>
                 </Grid>
                 {<Grid item>
-                    <IconButton sx={ButtonStyle} size="large" disabled={!canVote || fetching || comment?.isSelf || comment?.isUploader} onClick={voteUp}>
+                    <IconButton  color="inherit" className={classes.menuButton} size="large" disabled={!canVote || fetching || comment?.isSelf || comment?.isUploader} onClick={voteUp}>
                         {vote === 1 ? <ThumbUpAltIcon fontSize="inherit" /> : <ThumbUpOffAltIcon fontSize="inherit" />}
                     </IconButton>
                 </Grid>}
                 {<Grid item>
-                    <IconButton sx={ButtonStyle} size="large" disabled={!canVote || fetching || comment?.isSelf || comment?.isUploader} onClick={voteDown}>
+                    <IconButton  color="inherit" className={classes.menuButton} size="large" disabled={!canVote || fetching || comment?.isSelf || comment?.isUploader} onClick={voteDown}>
                         {vote === -1 ? <ThumbDownAltIcon fontSize="inherit" /> : <ThumbDownOffAltIcon fontSize="inherit" />}
                     </IconButton>
                 </Grid>}
                 {comment?.isSelf && <Grid item>
-                    <IconButton sx={ButtonStyle} size="large" onClick={editComment}>
+                    <IconButton   color="inherit" className={classes.menuButton} size="large" onClick={editComment}>
                         <EditIcon fontSize="inherit" />
                     </IconButton>
                 </Grid>}
@@ -213,15 +207,16 @@ const CommentClickMenu = ({ x, y, comment, canVote, onClose, onVote, onEdit }) =
 /**
  * 评论面板
  * width = 100%
- * height自动
+ * height自动撑开
  * 外部控制两边留空
- * @param {object} props 
- * @param {object[]} commentData
- * @param {Number} props.spacingPX
+ * @param {Number} gid
+ * @param {String} token
+ * @param {Number} spacingPX
+ * @param {object[]} comments
  */
-export default function CommentPanel(props) {
+export default function CommentPanel({spacingPX,gid,token,comments}) {
     const BottomButton = styled(Button)(({ theme }) => ({
-        marginTop: props.spacingPX + "px",
+        marginTop: spacingPX + "px",
         color: theme.palette.button.loadMore.text,
         backgroundColor: theme.palette.button.loadMore.main,
         width: "100%",
@@ -244,13 +239,11 @@ export default function CommentPanel(props) {
     const CommentRender = ({ row, index, onOpenMenu, commentSetter }) => {
         const ref = useRef(null);
         const onVote = async (vote) => {
-            const [result, err] = await voteComment(props.gid, props.token, row.commentID, vote)
-            if (err) {
-                return [result, err]
-            } else {
+            const [result, error] = await voteComment(gid, token, row.commentID, vote)
+            if (!error) {
                 commentSetter(old => old.map((c, i) => i === index ? { ...c, ...result } : c))
-                return [result, err]
             }
+            return [result, error]
         }
         const onClick = (e) => {
             if (!e.target.href) {
@@ -258,15 +251,15 @@ export default function CommentPanel(props) {
                 e.stopPropagation();
                 onOpenMenu({
                     comment: row,
-                    canVote: props.comments.canVote,
+                    canVote: comments.canVote,
                     x: e.clientX,
                     y: e.clientY,
                     onVote: onVote,
                 })
             }
         }
-        useLongPress(onClick, ref, {
-            delay: 500,
+        useLongPress(onClick, ref, {//ipad上无法触发长按 ？
+            delay: 300,
             preventDefault: true,
             stopPropagation: true,
         })
@@ -297,7 +290,7 @@ export default function CommentPanel(props) {
 
     const classes = useStyles();
     let comment_init_all_show = false//评论初始化是否全部显示
-    const [commentData, setCommentData] = useState(props.comments.data);
+    const [commentData, setCommentData] = useState(comments.data);
     if (commentData.length <= 4) {
         let len_limit_reached = false;
         commentData.forEach((comment) => {
@@ -309,12 +302,12 @@ export default function CommentPanel(props) {
     }
     const [expanded, setExpanded] = useState(comment_init_all_show)
 
-    const [canLoadMore, setCanLoadMore] = useState(!props.comments.all)
+    const [canLoadMore, setCanLoadMore] = useState(!comments.all)
     const [loading, setLoading] = useState(false)
     const loadMoreComment = async () => {
         setCanLoadMore(false)
         setLoading(true)
-        const [allComments, error] = await fetchComment(props.gid, props.token, true)
+        const [allComments, error] = await fetchComment(gid, token, true)
         if (error) {
             setCanLoadMore(true)
             notifyMessage("error", error)
@@ -325,7 +318,7 @@ export default function CommentPanel(props) {
         }
         setLoading(false)
     }
-    const [canVote, setCanVote] = useState(props.comments.canVote)
+    const [canVote, setCanVote] = useState(comments.canVote)
     const [commentClickMenuProps, setCommentClickMenuProps] = useState({
         comment: {},
         canVote: canVote,
@@ -380,7 +373,7 @@ export default function CommentPanel(props) {
                         <CommentPostEditor
                             inputRef={commentPostInputRef}
                             onPost={async (text, editMode, editID) => {
-                                const [result, err] = await postComment(props.gid, props.token, text, editMode, editID)
+                                const [result, err] = await postComment(gid, token, text, editMode, editID)
                                 if (err) {
                                     return false
                                 } else {

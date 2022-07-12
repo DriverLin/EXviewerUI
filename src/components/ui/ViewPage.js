@@ -1,5 +1,5 @@
 import { IconButton } from '@mui/material';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState , useRef } from 'react';
 import { Grid } from 'react-virtualized';
 import { useRefState } from '../utils/MyHooks';
 import { getSetting, useSettingBind } from '../utils/SettingHooks';
@@ -9,7 +9,7 @@ import ViewSettingPanel from './ViewPageComponents/ViewSettingPanel';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import LoadingAnime from './LoadingAnime';
 import VerticalScrollViewer from './ViewPageComponents/VerticalScrollViewer';
-import { useEventListener } from 'ahooks';
+import { useEventListener, useFullscreen } from 'ahooks';
 import { fetchG_Data, getGalleryImgUrl } from '../api/serverApi';
 
 const fix8 = (num) => (Array(8).join(0) + num).slice(-8)
@@ -23,10 +23,10 @@ export default function ViewPage(props) {
 
     const fetchData = async () => {
         const [g_data, error] = await fetchG_Data(props.gid, props.token, false)
-        if(error){
+        if (error) {
             setErrorInfo(error)
             setPageState("error")
-        }else{
+        } else {
             setPages(Number(g_data.filecount))
             setTitle(g_data.title_jpn || g_data.title)
             setPageState("finish")
@@ -174,10 +174,18 @@ function ViewPageUI(props) {
     useEventListener("keyup", onKeyUP)
 
 
-
-
+    // const containerRef = useRef(null)
+    // const [
+    //     isFullscreen,
+    //     {
+    //         enterFullscreen,
+    //         exitFullscreen,
+    //         toggleFullscreen,
+    //         isEnabled,
+    //     }] = useFullscreen(containerRef, {});
+    //ref={containerRef} onClick={enterFullscreen}
     return (
-        <div >
+        <div   >
             <ViewSettingPanel
                 open={settingPanelOpen}
                 onClose={onViewSettingPanelClose}
