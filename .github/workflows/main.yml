@@ -35,6 +35,7 @@ jobs:
         run: yarn install
 
       - name: build
+        continue-on-error: true
         run: yarn build
 
       - name: Deploy
