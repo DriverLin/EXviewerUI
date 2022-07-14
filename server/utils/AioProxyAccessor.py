@@ -141,25 +141,25 @@ class aoiAccessor():
                 proxy=self.proxy,
                 timeout=ClientTimeout(total=8)
             )
-            return await resp.read()
+            bytes = await resp.read()
+            if checkImg(bytes):
+                return bytes
+            else:
+                raise Exception(f"checkImg({url}) failed")
         except Exception as e:
             raise makeTrackableException(e, f"download({url}) -> bytes failed")
 
     async def downloadImg(self, url, filePath):
-        bytes = None
         try:
             bytes = await self.downloadImgBytes(url)
+            with open(filePath, "wb") as f:
+                f.write(bytes)
         except Exception as e:
             raise makeTrackableException(
                 e, f"downloadImgBytes({url}, {filePath})")
-        if checkImg(bytes):
-            with open(filePath, "wb") as f:
-                f.write(bytes)
-        else:
-            raise Exception(f"checkImg({filePath})")  # 可能是服务器端图片错误
 
     # @printPerformance
-    def updateLocalFavorite(self, gid: int, index: int):
+    def updateLocalFavorite(self, gid: int, index: int):#-1 未收藏 0-9 对应收藏夹
         # logger.info(f"self.db.favorite[{gid}]({type(gid)}) = {self.db.favorite[gid]}")
         if index == -1:
             if self.db.favorite[gid] != None:
@@ -169,14 +169,10 @@ class aoiAccessor():
         else:
             if self.db.favorite[gid] == None:
                 logger.info(f"{gid} 添加本地收藏记录 index={index}")
-                self.db.favorite[gid] = {
-                    'gid': gid, 'state': FAVORITE_STATE.FAVORITED, 'index': index}
-                return
-
-            if self.db.favorite[gid]['index'] != index:
+                self.db.favorite[gid] = {  'gid': gid, 'state': FAVORITE_STATE.FAVORITED, 'index': index}
+            elif self.db.favorite[gid]['index'] != index:
                 logger.info(f"{gid} 更新本地收藏记录 index={index}")
                 self.db.favorite[gid]['index'] = index
-                return
 
     async def addFavorite(self, gid, token, index) -> None:
         url = f'https://exhentai.org/gallerypopups.php?gid={gid}&t={token}&act=addfav'
@@ -194,8 +190,7 @@ class aoiAccessor():
             )
             await response.text()
             if response.ok:
-                self.db.favorite[gid] = {
-                    'gid': gid, 'state': FAVORITE_STATE.FAVORITED, 'index': index}
+                self.db.favorite[gid] = {'gid': gid, 'state': FAVORITE_STATE.FAVORITED, 'index': index}
             else:
                 self.db.favorite[gid] = prev
                 raise Exception(
