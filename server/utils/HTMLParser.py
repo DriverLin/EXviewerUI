@@ -1,9 +1,8 @@
 import re
 import time
-from typing import List
+from typing import List, Any
 
 from lxml import etree
-
 from utils.tools import printPerformance, timestamp_to_str
 
 
@@ -25,71 +24,234 @@ COLOR_FAVORITE_MAP = {
     'e8e': 9,
 }
 
-# @printPerformance
+
+class CardInfoType:
+    FROM_G_DATA: str = 'from_g_data'
+    THUMBNAIL: str = 'thumbnail'
+    EXTENDED: str = 'extended'
+    COMPACT: str = 'compact'
+    MINIMAL_PLUS: str = 'minimal+'
+    MINIMAL: str = 'minimal'
+
+
+class MainPageParser():
+    @staticmethod
+    def getRankFromStyle(rankStyleText: str):
+        a, b, op = re.findall(
+            r'background-position:(-?\d+)px (-?\d+)px;opacity:(.+)', rankStyleText)[0]
+        a_val = (5 - (int(a)/-16))*2
+        return a_val/2 if b == '-21' else (a_val - 1)/2
+
+    @staticmethod
+    def formatUploadTime(uploadText):
+        utcTimestamp = int(time.mktime(
+            time.strptime(uploadText,  "%Y-%m-%d %H:%M", )))
+        return timestamp_to_str("%Y-%m-%d %H:%M",  utcTimestamp + UTC_OFFSET)
+
+    @staticmethod
+    def getFavoriteIndex(favoriteStyle):
+        return COLOR_FAVORITE_MAP[favoriteStyle[0][14:17]] if len(favoriteStyle) == 1 else -1
+
+    @staticmethod
+    def minimal(root: Any) -> List[dict]:
+        infos = []
+        for elem in root.xpath('//table[@class="itg gltm"]/tr[position()>1]'):
+            href = elem.xpath('./td[@class="gl3m glname"]/a/@href')[0]
+            gid = int(href.split("/")[-3])
+            token = href.split("/")[-2]
+            imgElem = elem.xpath(
+                './td[@class="gl2m"]/div[@class="glthumb"]/div/img')[0]
+            src = imgElem.xpath('./@src')
+            data_src = imgElem.xpath('./@data-src')
+            rankStyleText = elem.xpath(
+                './td[@class="gl4m"]/div[contains(@class,"ir")]/@style')[0]
+            uploadText = elem.xpath('./td[@class="gl2m"]/div[3]/text()')
+            if len(uploadText) == 0:
+                uploadText = elem.xpath('./td[@class="gl2m"]/div[3]/s/text()')[0]
+            else:
+                uploadText = uploadText[0]
+            infos.append(
+                {
+                    "type": CardInfoType.MINIMAL,
+                    "gid": gid,
+                    "token": token,
+                    "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
+                    "rawSrc": data_src[0] if len(data_src) != 0 else src[0],
+                    "name": elem.xpath('./td[@class="gl3m glname"]/a/div[@class="glink"]/text()')[0],
+                    "rank": str(MainPageParser.getRankFromStyle(rankStyleText)),
+                    "category": elem.xpath('td[@class="gl1m glcat"]/div/text()')[0],
+                    "uploadTime": MainPageParser.formatUploadTime(uploadText),
+                    "lang": "",
+                    "pages": int(elem.xpath('./td[@class="gl2m"]/div[@class="glthumb"]/div/div[2]/div/text()')[0].split(" ")[0]),
+                    'favoriteIndex': MainPageParser.getFavoriteIndex(elem.xpath('./td[@class="gl2m"]/div[3]/@style')),
+                    "tags": []
+                }
+            )
+        return infos
+
+    @staticmethod
+    def minimalPlus(root: Any) -> List[dict]:
+        infos = []
+        for elem in root.xpath('//table[@class="itg gltm"]/tr[position()>1]'):
+            href = elem.xpath('./td[@class="gl3m glname"]/a/@href')[0]
+            gid = int(href.split("/")[-3])
+            token = href.split("/")[-2]
+            imgElem = elem.xpath(
+                './td[@class="gl2m"]/div[@class="glthumb"]/div/img')[0]
+            src = imgElem.xpath('./@src')
+            data_src = imgElem.xpath('./@data-src')
+            rankStyleText = elem.xpath(
+                './td[@class="gl4m"]/div[contains(@class,"ir")]/@style')[0]
+            uploadText = elem.xpath('./td[@class="gl2m"]/div[3]/text()')
+            if len(uploadText) == 0:
+                uploadText = elem.xpath('./td[@class="gl2m"]/div[3]/s/text()')[0]
+            else:
+                uploadText = uploadText[0]
+            lang = elem.xpath('./td[@class="gl3m glname"]/a/div[@class="gltm"]/div[@class="gt"]/text()')
+            if len(lang) == 0:
+                lang = ""
+            else:
+                lang = lang[0]
+            infos.append(
+                {
+                    "type": CardInfoType.MINIMAL_PLUS,
+                    "gid": gid,
+                    "token": token,
+                    "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
+                    "rawSrc": data_src[0] if len(data_src) != 0 else src[0],
+                    "name": elem.xpath('./td[@class="gl3m glname"]/a/div[@class="glink"]/text()')[0],
+                    "rank": str(MainPageParser.getRankFromStyle(rankStyleText)),
+                    "category": elem.xpath('td[@class="gl1m glcat"]/div/text()')[0],
+                    "uploadTime": MainPageParser.formatUploadTime(uploadText),
+                    "lang": lang,
+                    "pages": int(elem.xpath('./td[@class="gl2m"]/div[@class="glthumb"]/div/div[2]/div/text()')[0].split(" ")[0]),
+                    'favoriteIndex': MainPageParser.getFavoriteIndex(elem.xpath('./td[@class="gl2m"]/div[3]/@style')),
+                    "tags": []
+                }
+            )
+        return infos
+
+    @staticmethod
+    def compact(root: Any) -> List[dict]:
+        infos = []
+        for elem in root.xpath('//table[@class="itg gltc"]/tr[position()>1]'):
+            href = elem.xpath('./td[@class="gl3c glname"]/a/@href')[0]
+            gid = int(href.split("/")[-3])
+            token = href.split("/")[-2]
+            imgElem = elem.xpath('./td[@class="gl2c"]/div[@class="glthumb"]/div/img')[0]
+            src = imgElem.xpath('./@src')
+            data_src = imgElem.xpath('./@data-src')
+            rankStyleText = elem.xpath( './td[@class="gl2c"]/div[3]/div[contains(@class,"ir")]/@style')[0]
+            uploadText = elem.xpath('./td[@class="gl2c"]/div[3]/div[1]/text()')
+            if len(uploadText) == 0:
+                uploadText = elem.xpath('./td[@class="gl2c"]/div[3]/div[1]/s/text()')[0]
+            else:
+                uploadText = uploadText[0]
+            tags = elem.xpath('./td[@class="gl3c glname"]/a/div/div[@class="gt"]/@title')
+            infos.append(
+                {
+                    "type": CardInfoType.COMPACT,
+                    "gid": gid,
+                    "token": token,
+                    "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
+                    "rawSrc": data_src[0] if len(data_src) != 0 else src[0],
+                    "name": elem.xpath('./td[@class="gl3c glname"]/a/div[@class="glink"]/text()')[0],
+                    "rank": str(MainPageParser.getRankFromStyle(rankStyleText)),
+                    "category": elem.xpath('td[@class="gl1c glcat"]/div/text()')[0],
+                    "uploadTime": MainPageParser.formatUploadTime(uploadText),
+                    "lang": "chinese" if "language:chinese" in tags else "",
+                    "pages": int(elem.xpath('./td[@class="gl2c"]/div[@class="glthumb"]/div[2]/div[2]/div[2]/text()')[0].split(" ")[0]),
+                    'favoriteIndex': MainPageParser.getFavoriteIndex(elem.xpath('./td[@class="gl2c"]/div[3]/div[1]/@style')),
+                    "tags": tags
+                }
+            )
+        return infos
+
+
+    @staticmethod
+    def extended(root: Any) -> List[dict]:
+        infos = []
+        for elem in root.xpath('//table[@class="itg glte"]/tr'):
+            href = elem.xpath('./td[@class="gl2e"]/div/a/@href')[0]
+            gid = int(href.split("/")[-3])
+            token = href.split("/")[-2]
+            rankStyleText = elem.xpath('.//div[@class="gl3e"]/div[contains(@class,"ir")]/@style')[0]
+            category=elem.xpath('.//div[@class="gl3e"]/div[1]/text()')[0]
+            pagesText= elem.xpath('.//div[@class="gl3e"]/div[5]/text()')[0]
+            uploadText = elem.xpath('.//div[@class="gl3e"]/div[2]/text()')
+            if len(uploadText) == 0:
+                uploadText = elem.xpath('.//div[@class="gl3e"]/div[2]/s/text()')
+            else:
+                uploadText = uploadText[0]
+            tags = elem.xpath('.//div[@class="gt"]/@title')
+            infos.append(
+                {
+                    "type": CardInfoType.EXTENDED,
+                    "gid": gid,
+                    "token": token,
+                    "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
+                    "rawSrc": elem.xpath(".//img/@src")[0],
+                    "name": elem.xpath('.//div[@class="glink"]/text()')[0],
+                    "rank": str(MainPageParser.getRankFromStyle(rankStyleText)),
+                    "category": category,
+                    "uploadTime": MainPageParser.formatUploadTime(uploadText),
+                    "lang": "chinese" if "language:chinese" in tags else "",
+                    "pages": int(pagesText.split(" ")[0]),
+                    'favoriteIndex': MainPageParser.getFavoriteIndex(elem.xpath(".//div[@class='gl3e']/div[2]/@style")),
+                    "tags": tags
+                }
+            )
+        return infos        
+  
+    @staticmethod
+    def thumbnail(root: Any) -> List[dict]:
+        infos = []
+        for elem in root.xpath("//div[@class='gl1t']"):
+            href = elem.xpath(".//a/@href")[0]
+            gid = int(href.split("/")[-3])
+            token = href.split("/")[-2]
+            rankStyleText = elem.xpath('div[@class="gl5t"]/div/div[contains(@class,"ir")]/@style')[0]
+            c_u_p_s = elem.xpath("div[@class='gl5t']/div/div/text()")
+            if len(c_u_p_s) == 3:
+                [category, uploadText, pagesText] = c_u_p_s  # 正常
+            else:
+                [category, pagesText] = c_u_p_s
+                uploadText = elem.xpath(  "div[@class='gl5t']/div/div/s/text()")[0]  # 已删除的画廊
+            lang = elem.xpath("div[@class='gl6t']/div/text()")
+            lang = lang[0] if len(lang) == 1 else ""
+            infos.append(
+                {
+                    "type": CardInfoType.THUMBNAIL,
+                    "gid": gid,
+                    "token": token,
+                    "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
+                    "rawSrc": elem.xpath("div[@class='gl3t']/a/img/@src")[0],
+                    "name": elem.xpath('.//div[contains(@class,"glink")]/text()')[0],
+                    "rank": str(MainPageParser.getRankFromStyle(rankStyleText)),
+                    "category": category,
+                    "uploadTime": MainPageParser.formatUploadTime(uploadText),
+                    "lang": lang,
+                    "pages": int(pagesText.split(" ")[0]),
+                    'favoriteIndex': MainPageParser.getFavoriteIndex(elem.xpath("div[@class='gl5t']/div/div[2]/@style")),
+                    "tags": []
+                }
+            )
+        return infos
 
 
 def parseMainPage(html: str) -> List[object]:
-    infos = []
-    for elem in etree.HTML(html).xpath("//div[@class='gl1t']"):
-        href = elem.xpath(".//a/@href")[0]
-        gid = int(href.split("/")[-3])
-        token = href.split("/")[-2]
-        rawSrc = elem.xpath("div[@class='gl3t']/a/img/@src")[0]
-        name = elem.xpath('.//*[contains(@class,"glink")]/text()')[0]
-
-        rankText = elem.xpath(
-            'div[@class="gl5t"]/div/div[contains(@class,"ir")]/@style')[0]
-
-        rankText.replace("background-position:0px -21px;opacity:1", "")
-        rankValue = re.findall("-?[0-9]+px -?[0-9]+px", rankText)[0]
-        rank_a, rank_b = re.findall("-?[0-9]+px", rankText)
-        rank_a = int(rank_a[:-2])
-        rank_b = int(rank_b[:-2])
-        rankValue = (5 - int(rank_a / -16)) * 2
-        rankValue = (rankValue-1 if rank_b == -21 else rankValue) / 2  # -21半星
-
-        c_u_p_s = elem.xpath("div[@class='gl5t']/div/div/text()")
-        if len(c_u_p_s) == 3:
-            [category, uploadText, pagesText] = c_u_p_s  # 正常
-        else:
-            [category, pagesText] = c_u_p_s
-            uploadText = elem.xpath(
-                "div[@class='gl5t']/div/div/s/text()")[0]  # 已删除的画廊
-        utcTimestamp = int(
-            time.mktime(
-                time.strptime(
-                    uploadText,
-                    "%Y-%m-%d %H:%M",
-                )
-            )
-        )
-        uploadTime = timestamp_to_str(
-            "%Y-%m-%d %H:%M",  utcTimestamp + UTC_OFFSET)
-
-        favoriteStyle = elem.xpath("div[@class='gl5t']/div/div[2]/@style")
-        if len(favoriteStyle) == 1:
-            favoriteIndex = COLOR_FAVORITE_MAP[favoriteStyle[0][14:17]]
-        else:
-            favoriteIndex = -1
-        lang = elem.xpath("div[@class='gl6t']/div/text()")
-        lang = lang[0] if len(lang) == 1 else ""
-        pages = int(pagesText.split(" ")[0])
-        infos.append(
-            {
-                "gid": gid,
-                "token": token,
-                "imgSrc": "/cover/{}_{}.jpg".format(gid, token),
-                "rawSrc": rawSrc,
-                "name": name,
-                "rank": str(rankValue),
-                "category": category,
-                "uploadTime": uploadTime,
-                "lang": lang,
-                "pages": pages,
-                'favoriteIndex': favoriteIndex
-            }
-        )
-    return infos
+    xml = etree.HTML(html)
+    select = xml.xpath( '//*[@id="dms"]/div/select/option[@selected="selected"]/@value')[0]
+    if select == "t":  # Thumbnail
+        return MainPageParser.thumbnail(xml)
+    if select == "e":  # Extended
+        return MainPageParser.extended(xml)
+    if select == "l":  # Compact
+        return MainPageParser.compact(xml)
+    if select == "p":  # Minimal+
+        return MainPageParser.minimalPlus(xml)
+    if select == "m":  # Minimal
+        return MainPageParser.minimal(xml)
 
 
 CLASS_RATING_COLOR_MAP = {
@@ -249,7 +411,7 @@ def getCommentsFromGalleryPage(html: str) -> List[object]:
                 "short": comment_short,
                 "isSelf": canEdit,
                 "isUploader": score == "",
-                "vote":vote,
+                "vote": vote,
                 "commentID": commentID,
             }
         )

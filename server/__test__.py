@@ -1,95 +1,130 @@
 import asyncio
-from asyncore import loop
 import json
 import os
+from random import randint
 import ssl
 from os.path import join as path_join
+import threading
+from time import perf_counter
 
-from fastapi import FastAPI, HTTPException, Request, Response, WebSocket
+from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from starlette.responses import FileResponse
 from tinydb import TinyDB
 from tinydb.middlewares import CachingMiddleware
 from tinydb.storages import JSONStorage
 from uvicorn import Config, Server
-
-from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor
+from utils.HTMLParser import parseMainPage, setParserUtcOffset
+from utils.AioProxyAccessor import NOSQL_DBS, aoiAccessor, commentBody
 from utils.DBM import wsDBMBinder
-from utils.tools import logger, makeTrackableException, printTrackableException
-
+from utils.tools import logger, makeTrackableException, printTrackableException, getUTCOffset
 serverLoop = asyncio.new_event_loop()
+asyncio.set_event_loop(serverLoop)
 
 ssl._create_default_https_context = ssl._create_unverified_context
+
 ROOT_PATH = os.path.split(os.path.realpath(__file__))[0]
-SERVER_FILE = path_join(ROOT_PATH, r"static_file")
+SERVER_FILE = path_join(os.path.abspath(path_join(ROOT_PATH, r"..")), "build")
 CONFIG_PATH = path_join(ROOT_PATH, r"config.json")
 if not os.path.exists(CONFIG_PATH):
-    logger.error("配置文件不存在")
-    exit(1)
+    open(CONFIG_PATH, "w").write(json.dumps({
+        "EH_DOWNLOAD_PATH": "",
+        "EH_CACHE_PATH": "",
+        "EH_COOKIE": "",
+        "UTC_OFFSET": "+08",
+        "PORT": 7964
+    }, indent=4))
 CONFIG = json.load(open(CONFIG_PATH))
 
-cookie = os.environ.get("EHCOOKIE", "")
-if cookie == "":
-    cookie = CONFIG["cookie"]
-    logger.info("使用配置文件中的cookie")
-else:
-    logger.info("使用环境变量中的cookie")
-if cookie == "":
-    logger.error("cookie未设置")
+
+def getConfig(key, default=None):  # 先检查环境变量 然后检查配置文件 如果default不空则返回default 否则报错
+    if os.environ.get(key) != None:
+        logger.info(f"config[{key}] from env", )
+        return os.environ.get(key)
+    if key in CONFIG and CONFIG[key] != "":
+        logger.info(f"config[{key}] from config.json", )
+        return CONFIG[key]
+    if default != None:
+        logger.info(f"config[{key}] using default : {default}")
+        return default
+    logger.error(f"config [{key}] not found !")
     exit(1)
 
-DOWNLOAD_PATH = os.environ.get("EH_DOWNLOAD_PATH", "")
-if DOWNLOAD_PATH == "":
-    DOWNLOAD_PATH = CONFIG["DOWNLOAD_PATH"]
-    logger.info("使用配置文件指定的下载路径")
-else:
-    logger.info("使用环境变量指定的下载路径")
-if DOWNLOAD_PATH == "":
-    logger.error("下载目录不存在")
-    exit(1)
 
-GALLERY_PATH = path_join(DOWNLOAD_PATH, r"Gallarys")
+COOKIE = getConfig("EH_COOKIE", None)
+DOWNLOAD_PATH = getConfig(
+    "EH_DOWNLOAD_PATH", path_join(ROOT_PATH, r"download"))
+CACHE_PATH = getConfig("EH_CACHE_PATH", path_join(ROOT_PATH, r"cache"))
+
+GALLERY_PATH = path_join(DOWNLOAD_PATH, r"Gallery")
 COVER_PATH = path_join(DOWNLOAD_PATH, r"cover")
 DB_PATH = path_join(DOWNLOAD_PATH, path_join("api", "NosqlDB.json"))
-
-CACHE_PATH = os.environ.get("EH_CACHE_PATH", "")
-if CACHE_PATH == "":
-    CACHE_PATH = path_join(ROOT_PATH, r"cache")
-    logger.info("使用默认缓存路径")
-else:
-    logger.info("使用环境变量指定的缓存路径")
 
 for pathName in [os.path.split(DB_PATH)[0], CACHE_PATH, GALLERY_PATH, COVER_PATH]:
     if not os.path.exists(pathName):
         os.makedirs(pathName)
         logger.info(f"创建了目录 {pathName}")
 
-if not os.path.exists(DB_PATH):
-    logger.info("数据库文件不存在")
-
-
-logger.info(f"根目录 {ROOT_PATH}")
-logger.info(f"下载目录 {DOWNLOAD_PATH}")
-logger.info(f"静态文件目录 {SERVER_FILE}")
-logger.info(f"缓存目录 {CACHE_PATH}")
-logger.info(f"数据库文件 {DB_PATH}")
 logger.info(f"画廊下载目录 {GALLERY_PATH}")
-logger.info(f"封面存放目录 {COVER_PATH}")
+logger.info(f"封面下载目录 {COVER_PATH}")
+logger.info(f"数据库文件 {DB_PATH}")
+logger.info(f"缓存目录 {CACHE_PATH}")
 
-
-# 如果config存在，优先使用config提供的cookie
-# 否则使用环境变量
-# 如果都不存在，则报错
-# logger.info(f"using cookie {cookie}")
+FAVORITE_DISABLED = getConfig("EH_FAVORITE_DISABLED", 'false')
+DOWNLOAD_DISABLED = getConfig("EH_DOWNLOAD_DISABLED", 'false')
+EH_COMMENT_DISABLED = getConfig("EH_COMMENT_DISABLED", 'false')
+EH_RATE_DISABLED = getConfig("EH_RATE_DISABLED", 'false')
+PORT = int(getConfig("PORT", 7964))
+UTC_OFFSET = int(getConfig("UTC_OFFSET", getUTCOffset())) * 3600
+setParserUtcOffset(UTC_OFFSET)
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36",
-    "Cookie": cookie,
+    "Cookie": COOKIE,
 }
 
 
-NOSQL_DB = TinyDB(DB_PATH, storage=CachingMiddleware(JSONStorage))
+class CachingMiddlewareAutoWrite(CachingMiddleware):
+    def __init__(self, storage_cls, ttw=30):
+        super().__init__(storage_cls)
+        self.ttw = ttw
+        self.lastWriteCount = 0
+        self.running = True
+        self.writeLock = threading.Lock()
+        self.stopSignal = threading.Event()
+
+    def write(self, data):
+        with self.writeLock:
+            self.cache = data
+            self._cache_modified_count += 1
+
+    def writeWatcherThread(self):
+        logger.info("CachingMiddlewareAutoWrite write thread start")
+        while not self.stopSignal.wait(self.ttw):
+            if self._cache_modified_count != self.lastWriteCount:
+                timeUsed = perf_counter()
+                with self.writeLock:
+                    self.lastWriteCount = self._cache_modified_count
+                    self.flush()
+                timeUsed = perf_counter() - timeUsed
+                logger.debug(f"write cache to file use {timeUsed*1000:4f} ms")
+        if self._cache_modified_count != self.lastWriteCount:
+            timeUsed = perf_counter()
+            with self.writeLock:
+                self.lastWriteCount = self._cache_modified_count
+                self.flush()
+            timeUsed = perf_counter() - timeUsed
+            logger.debug(f"write cache to file use {timeUsed*1000:4f} ms")
+        logger.info(f"CachingMiddlewareAutoWrite write thread stopped")
+
+    def stop(self):
+        self.stopSignal.set()
+
+
+NOSQL_CACHE = CachingMiddlewareAutoWrite(JSONStorage)
+NOSQL_DB = TinyDB(DB_PATH, storage=NOSQL_CACHE)
 g_data_wsBinder = wsDBMBinder(NOSQL_DB.table('g_data'), serverLoop)
 download_wsBinder = wsDBMBinder(NOSQL_DB.table('download'), serverLoop)
 favorite_wsBinder = wsDBMBinder(NOSQL_DB.table('favorite'), serverLoop)
@@ -110,12 +145,8 @@ aioPa = aoiAccessor(
 )
 
 
-# asyncio.get_event_loop().run_until_complete(wsBinderMainLoop())
-
-app = FastAPI(async_request_limit=1000)
+app = FastAPI()
 app.add_middleware(GZipMiddleware, minimum_size=1000)
-
-isPublicENV = os.environ.get("PUBLIC_ENV", None) == "true"
 
 
 @app.websocket("/g_data")
@@ -139,12 +170,13 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 @app.get("/addFavorite/{gid}/{token}/{index}")
-def addFavorite(gid: int, token: str, index: int):
-    if isPublicENV:
-        raise HTTPException(status_code=403, detail="PUBLIC_ENV,该API已禁用")
+async def addFavorite(gid: int, token: str, index: int):
+    if FAVORITE_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail=makeTrackableException(None, "FAVORITE_DISABLED,该API已禁用"))
     logger.info(f"添加收藏 {gid}_{token} {index}")
     try:
-        aioPa.addFavorite(gid, token, index)
+        await aioPa.addFavorite(gid, token, index)
         return {"msg": f"{gid}_{token}已添加到收藏夹{index}"}
     except Exception as e:
         printTrackableException(e)
@@ -153,12 +185,13 @@ def addFavorite(gid: int, token: str, index: int):
 
 
 @app.get("/rmFavorite/{gid}/{token}")
-def rmFavorite(gid: int, token: str):
-    if isPublicENV:
-        raise HTTPException(status_code=403, detail="PUBLIC_ENV,该API已禁用")
+async def rmFavorite(gid: int, token: str):
+    if FAVORITE_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail=makeTrackableException(None, "FAVORITE_DISABLED,该API已禁用"))
     logger.info(f"删除收藏 {gid}_{token}")
     try:
-        aioPa.rmFavorite(gid, token)
+        await aioPa.rmFavorite(gid, token)
         return {"msg": f"{gid}_{token}已移除收藏"}
     except Exception as e:
         printTrackableException(e)
@@ -168,6 +201,9 @@ def rmFavorite(gid: int, token: str):
 
 @app.get("/download/{gid}/{token}")
 async def download(gid: int, token: str):
+    if DOWNLOAD_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail=makeTrackableException(None, "DOWNLOAD_DISABLED,该API已禁用"))
     logger.info(f"添加下载 {gid}_{token}")
     try:
         await aioPa.addDownload([[gid, token]])
@@ -180,6 +216,9 @@ async def download(gid: int, token: str):
 
 @app.get("/delete/{gid}/{token}")
 async def delete(gid: int, token: str):
+    if DOWNLOAD_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail=makeTrackableException(None, "DOWNLOAD_DISABLED,该API已禁用"))
     logger.info(f"请求删除 {gid}_{token}")
     try:
         await aioPa.deleteDownload([[gid, token]])
@@ -192,7 +231,11 @@ async def delete(gid: int, token: str):
 
 @app.get("/continueDownload")
 async def continueDownload():
-    return await aioPa.continueDownload()
+    if DOWNLOAD_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail=makeTrackableException(None, "DOWNLOAD_DISABLED,该API已禁用"))
+    reDownloadCount = await aioPa.continueDownload()
+    return {"msg": f"已开始{reDownloadCount}项下载"}
 
 
 @app.get("/Gallery/{gid_token}/{filename}")
@@ -211,6 +254,8 @@ async def getGalleryFile(gid_token: str, filename: str, nocache=None):
                     "Cache-Control": "max-age=31536000",
                 },
             )
+    except HTTPException as e:
+        raise e
     except Exception as e:
         printTrackableException(e)
         raise HTTPException(status_code=404, detail=str(
@@ -233,25 +278,13 @@ async def getfile(gid: int, token: str, index: int):
 
 
 @app.get("/comments/{gid}/{token}")
-async def comment(gid: int, token: str):
+async def comments(gid: int, token: str, fetchAll=None):
     try:
-        return await aioPa.getComments(gid, token)
+        return await aioPa.getComments(gid, token, fetchAll != None)
     except Exception as e:
         printTrackableException(e)
         raise HTTPException(status_code=500, detail=str(
             makeTrackableException(e, f"请求评论 {gid}/{token} 失败")))
-
-
-# @app.post("/post_comment")
-# async def post_comment(request: Request):
-#     body = await request.json()
-#     gid = body["gid"]
-#     token = body["token"]
-#     comment = body["comment"]
-#     if pa.post_comment(gid, token, comment):
-#         return {"msg": "success"}
-#     else:
-#         return {"msg": "fail"}
 
 
 @app.get("/list/{path}")
@@ -274,7 +307,12 @@ async def listMainGalleryNoPath(request: Request):
         extendResult = []
         if "f_search" in query and "page=0" in query and "search_and_merge_local=true" in query:
             extendResult = aioPa.localSearch(query)
-        result = extendResult + await aioPa.getMainPageGalleryCardInfo(f"https://exhentai.org/{url}")
+        result = []
+        gidList = set()
+        for item in (extendResult + await aioPa.getMainPageGalleryCardInfo(f"https://exhentai.org/{url}")):
+            if item["gid"] not in gidList:
+                result.append(item)
+                gidList.add(item["gid"])
         return result
     except Exception as e:
         trackE = makeTrackableException(e, f"请求列表 {url} 失败")
@@ -298,17 +336,101 @@ async def asyncCover(filename: str):
             makeTrackableException(e, f"请求封面 {filename} 失败")))
 
 
+@app.get("/getDiskCacheSize")
+def getDiskCacheSize():
+    text = aioPa.getDiskCacheSize()
+    return {"msg": text}
+
+
+@app.get("/clearDiskCache")
+def clearDiskCache():
+    text = aioPa.clearDiskCache()
+    return {"msg": text}
+
+
+@app.get("/reUpdateLocalG_data/{count}")
+async def reUpdateLocalG_data(count: int):
+    serverLoop.create_task(aioPa.reUpdateLocalG_data(count))
+    return {"msg": "success"}
+
+
 @app.get("/")
 def index():
     return FileResponse(path_join(SERVER_FILE, "index.html"))
 
 
+@app.websocket("/uploadZip")
+async def handelUploadZipGallery(ws: WebSocket):
+    try:
+        await ws.accept()
+        gid, token = (await ws.receive_text()).split("_")
+        logger.info(f"从浏览器接收画廊中 {gid}_{token}.zip")
+        bytes = await ws.receive_bytes()
+        logger.info(f"接收bytes{len(bytes)}")
+        await aioPa.addDownloadRecordFromZip(int(gid), token, bytes)
+    except WebSocketDisconnect as e:
+        print("ws 断开", e)
+        pass
+
+
+@app.get("/rateGallery/{gid}/{token}/{score}")
+async def rateGallery(gid: int, token: str, score: float):
+    if EH_RATE_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail=makeTrackableException(None, "EH_RATE_DISABLED,该API已禁用"))
+    try:
+        return await aioPa.rateGallery(gid, token, score)
+    except Exception as e:
+        printTrackableException(e)
+        raise HTTPException(status_code=500, detail=str(
+            makeTrackableException(e, f"{gid}_{token} 评分失败")))
+
+
+@app.get("/voteComment/{gid}/{token}/{commentId}/{vote}")
+async def voteComment(gid: int, token: str, commentId: int, vote: int):
+    if EH_COMMENT_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail=makeTrackableException(None, "EH_COMMENT_DISABLED,该API已禁用"))
+    try:
+        return await aioPa.voteComment(gid, token, commentId, vote)
+    except Exception as e:
+        printTrackableException(e)
+        raise HTTPException(status_code=500, detail=str(
+            makeTrackableException(e, f"{gid}_{token} 投票失败")))
+
+
+@app.post("/postComment")
+async def postComment(comment: commentBody):
+    if EH_COMMENT_DISABLED == "true":
+        raise HTTPException(
+            status_code=403, detail=makeTrackableException(None, "EH_COMMENT_DISABLED,该API已禁用"))
+    try:
+        return await aioPa.postComment(comment)
+    except Exception as e:
+        printTrackableException(e)
+        raise HTTPException(status_code=500, detail=str(
+            makeTrackableException(e, f"{comment.gid}_{comment.token} 评论失败")))
+
 app.mount("/", StaticFiles(directory=SERVER_FILE), name="static")
 
 
 
-async def main():
-    html = await aioPa.getHtml("https://exhentai.org/g/2236270/4229742c30/")
-    open(r"p:\aa.html", "w", encoding="utf-8").write(html)
 
-serverLoop.run_until_complete(main())
+
+async def test():
+    with open("P:/test.html", "r",encoding="UTF-8") as f:
+        html = f.read()
+        start = perf_counter()
+        for _ in range(100):
+            res = parseMainPage(html)
+        end = perf_counter()
+        
+        print(json.dumps(res, indent=4,ensure_ascii=False),"\n time use",end-start)
+
+if __name__ == "__main__":
+    
+    DB_CACHE_WRITER = threading.Thread(target=NOSQL_CACHE.writeWatcherThread)
+    DB_CACHE_WRITER.start()
+    serverLoop.run_until_complete(test())
+    NOSQL_CACHE.stop()
+    DB_CACHE_WRITER.join()

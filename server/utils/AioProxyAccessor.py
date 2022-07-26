@@ -72,18 +72,19 @@ class aoiAccessor():
         self.loop.create_task(self.inlineSetOnInit())
 
     async def inlineSetOnInit(self):
-        try:
-            await self.getHtml("https://exhentai.org/?inline_set=ts_l", cached=False)
-        except Exception as e:
-            logger.error(f"set / to Thumbnail failed: {e}")
-
+        # try:
+        #     await self.getHtml("https://exhentai.org/?inline_set=ts_l", cached=False)
+        # except Exception as e:
+        #     logger.error(f"set / to Thumbnail failed: {e}")
+        ## 现在已经可以处理所有主页的情况了
+        
         try:
             await self.getHtml("https://exhentai.org/?inline_set=dm_t", cached=False)
         except Exception as e:
             logger.error(f"set /g/ to large failed: {e}")
 
     def __del__(self):
-        self.session.close()
+        self.loop.run_until_complete(self.session.close())
 
     def getUrlTTL(self, url):
         if '.org/g/' in url:
@@ -159,7 +160,7 @@ class aoiAccessor():
                 e, f"downloadImgBytes({url}, {filePath})")
 
     # @printPerformance
-    def updateLocalFavorite(self, gid: int, index: int):#-1 未收藏 0-9 对应收藏夹
+    def updateLocalFavorite(self, gid: int, index: int):  # -1 未收藏 0-9 对应收藏夹
         # logger.info(f"self.db.favorite[{gid}]({type(gid)}) = {self.db.favorite[gid]}")
         if index == -1:
             if self.db.favorite[gid] != None:
@@ -169,7 +170,8 @@ class aoiAccessor():
         else:
             if self.db.favorite[gid] == None:
                 logger.info(f"{gid} 添加本地收藏记录 index={index}")
-                self.db.favorite[gid] = {  'gid': gid, 'state': FAVORITE_STATE.FAVORITED, 'index': index}
+                self.db.favorite[gid] = {
+                    'gid': gid, 'state': FAVORITE_STATE.FAVORITED, 'index': index}
             elif self.db.favorite[gid]['index'] != index:
                 logger.info(f"{gid} 更新本地收藏记录 index={index}")
                 self.db.favorite[gid]['index'] = index
@@ -190,7 +192,8 @@ class aoiAccessor():
             )
             await response.text()
             if response.ok:
-                self.db.favorite[gid] = {'gid': gid, 'state': FAVORITE_STATE.FAVORITED, 'index': index}
+                self.db.favorite[gid] = {
+                    'gid': gid, 'state': FAVORITE_STATE.FAVORITED, 'index': index}
             else:
                 self.db.favorite[gid] = prev
                 raise Exception(
@@ -314,6 +317,7 @@ class aoiAccessor():
 
     def parseG_dataToCardInfo(self, g_data):
         return {
+            "type": CardInfoType.FROM_G_DATA,
             "gid": g_data['gid'],
             "token": g_data['token'],
             "imgSrc": "/cover/{}_{}.jpg".format(g_data['gid'], g_data['token']),
@@ -326,6 +330,7 @@ class aoiAccessor():
             "pages": g_data["filecount"],
             # 用于刷新本地状态 前端用不到 因为前端靠全局状态判断favorite和download
             "favoriteIndex": self.db.favorite[g_data['gid']]['index'] if self.db.favorite[g_data['gid']] else -1,
+            "tags": g_data["tags"],
         }
 
     @printPerformance
@@ -679,4 +684,5 @@ class aoiAccessor():
             html = await response.text()
             return getCommentsFromGalleryPage(html)
         else:
-            raise Exception( f"postComment({comment.gid},{comment.token},{comment.content}) response.code={response.status_code}")
+            raise Exception(
+                f"postComment({comment.gid},{comment.token},{comment.content}) response.code={response.status_code}")

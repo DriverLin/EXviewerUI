@@ -11,6 +11,7 @@ import LoadingAnime from './LoadingAnime';
 import VerticalScrollViewer from './ViewPageComponents/VerticalScrollViewer';
 import { useEventListener, useFullscreen } from 'ahooks';
 import { fetchG_Data, getGalleryImgUrl } from '../api/serverApi';
+import CustomSwiper from './ViewPageComponents/CustomSwiper';
 
 const fix8 = (num) => (Array(8).join(0) + num).slice(-8)
 
@@ -209,6 +210,7 @@ function ViewPageUI(props) {
                             pagination={switchPagination}
                             urls={urls}
                         />
+                        // <CustomSwiper/>
                 }
             </div>
             <RevSlider
