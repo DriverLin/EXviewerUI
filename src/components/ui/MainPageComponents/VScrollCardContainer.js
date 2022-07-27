@@ -127,7 +127,6 @@ export default function VScrollCardContainer(props) {
         const cellHeight = small_matches ? 230 : 170;
         const offsetTop = cellHeight * overCardNum.current / (break_matches ? 2 : 1)
         document.getElementById(uuid.current).scrollTop = offsetTop
-        // console.log("scrollTop", offsetTop)
     }, [resizeKey])
 
     return (

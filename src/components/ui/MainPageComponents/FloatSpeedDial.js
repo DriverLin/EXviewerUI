@@ -2,15 +2,20 @@ import SpeedDial from '@mui/material/SpeedDial';
 import SpeedDialAction from '@mui/material/SpeedDialAction';
 import SpeedDialIcon from '@mui/material/SpeedDialIcon';
 import React, { useEffect, useRef, useState } from 'react';
-
+import { useVisualViewport } from '../../utils/MyHooks';
+import SearchIcon from '@mui/icons-material/Search';
+import Fab from '@mui/material/Fab';
+import Zoom from '@mui/material/Zoom';
 
 export default function FloatSpeedDial(props) {
     const [open, setOpen] = useState(false);
-    // const [hidden, setHidden] = useState(false)
 
-
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
+    const handleOpen = () => {
+        setOpen(true)
+    };
+    const handleClose = () => {
+        setOpen(false)
+    };
 
     useEffect(() => {
         if (props.hidden) {
@@ -18,19 +23,25 @@ export default function FloatSpeedDial(props) {
         }
     }, [props.hidden])
 
-    return (
+    const viewPort = useVisualViewport()
+    useEffect(() => {
+        console.log(viewPort)
+    }, [viewPort])
+
+
+    return <>
         <SpeedDial
             direction="up"
             ariaLabel="SpeedDial controlled open example"
             icon={<SpeedDialIcon />}
             onClose={handleClose}
             onOpen={handleOpen}
-            hidden={props.hidden}
+            hidden={props.hidden || props.searchFocus}
             open={open}
             sx={{
-                position: 'absolute',
-                bottom: "1rem",
-                right: "1rem",
+                position: 'fixed',
+                top: viewPort.height - (72 + 56 * props.actions.length) - 16,
+                right: 16,
                 "& .MuiSpeedDial-fab": {
                     backgroundColor: "background.main",
                     color: "text.secondary",
@@ -62,6 +73,29 @@ export default function FloatSpeedDial(props) {
                 />
             ))}
         </SpeedDial>
-    )
+
+        <Zoom
+            in={props.searchFocus}
+            unmountOnExit
+        >
+            <Fab
+                onClick={props.doSearch}
+                sx={{
+                    position: 'fixed',
+                    top: viewPort.height - 56 - 16,
+                    right: 16,
+                    backgroundColor: "background.main",
+                    color: "text.secondary",
+                    "&:hover": {
+                        backgroundColor: "background.main",
+                        color: "text.secondary",
+                    }
+                }}
+            >
+                <SearchIcon />
+            </Fab>
+        </Zoom>
+
+    </>
 }
 

@@ -17,7 +17,7 @@ import SortByAlphaIcon from '@mui/icons-material/SortByAlpha';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
-import FloatAddButton from './MainPageComponents/FloatSpeedDial';
+import FloatSpeedDial from './MainPageComponents/FloatSpeedDial';
 import LeftMenu from './MainPageComponents/LeftMenu';
 import LongClickMenu from './MainPageComponents/LongClickMenu';
 import TopSearchBar from './MainPageComponents/TopSearchBar';
@@ -30,6 +30,7 @@ import { observer } from "mobx-react";
 import { addFavorite, continueDownload, deleteGallery, downloadGallery, fetchGalleryList, removeFavorite } from '../api/serverApi';
 import { autorun, toJS } from 'mobx';
 import FolderZipIcon from '@mui/icons-material/FolderZip';
+import { useVisualViewport } from '../utils/MyHooks';
 
 
 const removeAndInsert = (oldState, newState) => {
@@ -287,7 +288,7 @@ function MainPage_inner(props) {
     }
 
 
-    const normalActions = [action_goTop, action_randomSort, action_nameHashSort, action_refresh]
+    const normalActions = [ action_goTop , action_randomSort , action_nameHashSort, action_refresh]
     const downloadPageActions = [action_continueDownload, action_goTop, action_randomSort, action_nameHashSort,]
 
 
@@ -327,15 +328,19 @@ function MainPage_inner(props) {
             text: "设置"
         }
     ]
+
+    const [searchFocus,setSearchFocus] = useState(false)
+    const [searchValue,setSearchValue] = useState(props.initSearch)
+
     return (
         <React.Fragment >
-            <FloatAddButton
+            <FloatSpeedDial
                 actions={props.downloadPage ? downloadPageActions : normalActions}
                 hidden={scrollControlledHidden}
+                searchFocus={searchFocus}
+                doSearch={() => { props.openURL("/search", `&f_search=${searchValue}`) }}
             />
-            <SecondConfirmDialog
-                {...deleteSecondConfirm}
-            />
+            <SecondConfirmDialog {...deleteSecondConfirm} />
             <LongClickMenu
                 pos={pos}
                 setPos={setPos}
@@ -349,9 +354,14 @@ function MainPage_inner(props) {
             />
             <TopSearchBar
                 leftButtonClick={() => setLeftMenuOpen(true)}
-                doSearch={text => { props.openURL("/search", `&f_search=${text}`) }}
+                doSearch={ () => { props.openURL("/search", `&f_search=${searchValue}`) } }
                 hidden={scrollControlledHidden}
                 initText={props.initSearch}
+                searchValue={searchValue}
+                setSearchValue={  setSearchValue }
+                searchFocus={searchFocus}
+                onFocus={() => setSearchFocus(true)}
+                onBlur={() => setSearchFocus(false)}
             />
             <VScrollCardContainer
                 key={refreshToken}

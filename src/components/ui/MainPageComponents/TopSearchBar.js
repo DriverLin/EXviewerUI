@@ -3,9 +3,11 @@ import SearchIcon from '@mui/icons-material/Search';
 import { AppBar, ButtonBase, Grid, InputBase, Paper, Slide, useMediaQuery } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import PropTypes from 'prop-types';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useLocation } from "react-router-dom";
 import { getGuess } from "../../utils/GetTranslate";
+import { v4 as uuidGenerator } from 'uuid';
+import AddIcon from '@mui/icons-material/Add';
 
 function HideOnScroll(props) {
     const { children, __window, hidden } = props;
@@ -23,7 +25,7 @@ HideOnScroll.propTypes = {
 
 
 export default function TopSearchBar(props) {
-
+    const uuid = useRef(uuidGenerator())
     const small_matches = useMediaQuery('(min-width:560px)')
     const break_matches = useMediaQuery('(min-width:840px)')
 
@@ -52,8 +54,6 @@ export default function TopSearchBar(props) {
     }, [small_matches, break_matches])
 
 
-
-
     const useStyles = makeStyles((theme) => ({
         inputRoot: {
             width: rootWidth,
@@ -75,15 +75,8 @@ export default function TopSearchBar(props) {
     const classes = useStyles();
 
     const searchValueRef = useRef(props.initText);
-    const [searchValue, setSearchValue] = useState(props.initText);
     const [guess, setGuess] = useState([])
     const [autocomplete, setAutocomplete] = useState(false)
-
-
-    useEffect(() => {
-        setSearchValue(props.initText)
-    }, [props.initText])
-
 
     const getWordOfLast = (inputText) => {
         let tags = inputText.match(/[A-Za-z0-9]+:"[^\$]+\$"/g)
@@ -113,39 +106,39 @@ export default function TopSearchBar(props) {
         }
     }
 
+
+
+    const [autoCompleteLoading, startAutoComplete] = useTransition(250)
     const handelAutoComplete = (inputText) => {
-        const guessTarget = getWordOfLast(inputText)
-        const maxLength = 25
-        if (guessTarget.length > 0) {
-            const guessResult = getGuess(guessTarget,maxLength)
-            setAutocomplete(true)
-            setGuess(guessResult)
-        } else {
-            setAutocomplete(false)
-            setGuess([])
-        }
+        startAutoComplete(() => {
+            const guessTarget = getWordOfLast(inputText)
+            const maxLength = 25
+            if (guessTarget.length > 0) {
+                const guessResult = getGuess(guessTarget, maxLength)
+                setAutocomplete(true)
+                setGuess(guessResult)
+            } else {
+                setAutocomplete(false)
+                setGuess([])
+            }
+        })
     }
 
     const finishAutoComplete = (data) => {
-        document.querySelector("#searchInputBase_d68s947h5g4sd6a446s7a").focus()
+        inputFocusState.current = true
+        document.getElementById(uuid.current).focus()
         const replaced = searchValueRef.current.replace(getWordOfLast(searchValueRef.current), `${data.type}:"${data.origin}$"`)
         searchValueRef.current = replaced
-        setSearchValue(replaced)
+        props.setSearchValue(replaced)
         setGuess([])
     }
 
     const updateSearchValue = (e) => {
         searchValueRef.current = e.target.value;
-        setSearchValue(e.target.value);
+        props.setSearchValue(e.target.value);
         handelAutoComplete(e.target.value)
     }
-    const doSearch = () => {
-        if (searchValueRef.current === "") return
-        props.doSearch(searchValueRef.current)
-    }
-
     const inputFocusState = useRef(false)
-
     const AutoCompleteItem = ({ data }) =>
         <ButtonBase
             onClick={() => { finishAutoComplete(data) }}
@@ -170,31 +163,6 @@ export default function TopSearchBar(props) {
         </ButtonBase>
 
 
-    const AutoInputElements = <div style={{
-        width: autoCompleteWidth,
-        overflow: "hidden",
-    }}>
-        <div
-            style={{
-                width: "calc(100% + 20px)",
-                maxHeight: "calc(min(60vh,550px))",
-                overflowY: "scroll",
-                overflowX: "hidden",
-            }}
-        >
-            <Grid
-                container
-                direction="column"
-                justifyContent="flex-start"
-                alignItems="center"
-                sx={{ width: "100%", }}
-            >
-                {
-                    guess.map((item, index) => <AutoCompleteItem key={index} data={item} />)
-                }
-            </Grid>
-        </div>
-    </div>
 
     return (
         <HideOnScroll {...props}>
@@ -217,7 +185,7 @@ export default function TopSearchBar(props) {
                             <MenuIcon />
                         </ButtonBase>
                         <InputBase
-                            id="searchInputBase_d68s947h5g4sd6a446s7a"
+                            id={uuid.current}
                             placeholder="搜点啥..."
                             classes={{
                                 root: classes.inputRoot,
@@ -225,25 +193,26 @@ export default function TopSearchBar(props) {
                             }}
                             inputProps={{ 'aria-label': 'text' }}
                             autoComplete='off'
-                            value={searchValue}
+                            value={props.searchValue}
                             onChange={updateSearchValue}
                             onFocus={() => {
                                 setAutocomplete(true)
                                 inputFocusState.current = true
-                                console.log("focus")
+                                props.onFocus()
                             }}
                             onBlur={() => {
-                                inputFocusState.current = false
-                                setTimeout(() => {
+                                inputFocusState.current = false //inputFocusState.current设置为false
+                                setTimeout(() => {//等待一段时间检查 仍然是false 才blur 
                                     if (inputFocusState.current === false) {
                                         setAutocomplete(false)
+                                        props.onBlur()
                                     }
-                                }, 250);
+                                }, 250);//为了达成点击自动填充项目不会丢失focus的目的
                             }}
 
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") {
-                                    doSearch()
+                                    props.doSearch()
                                 }
 
                             }}
@@ -255,11 +224,42 @@ export default function TopSearchBar(props) {
                                 height: 50,
                                 backgroundColor: "search.color",
                                 color: "search.text",
-                            }} onClick={doSearch}>
-                            <SearchIcon />
+                            }}
+                        // onClick={props.doSearch}
+                        >
+                            <AddIcon sx={{
+                                transition: ".3s",
+                                transform: "rotateZ(45}deg)"
+                            }} />
                         </ButtonBase>
                     </div>
-                    {autocomplete && guess.length !== 0 ? AutoInputElements : null}
+                    {
+                        autocomplete && guess.length !== 0 && <div style={{
+                            width: autoCompleteWidth,
+                            overflow: "hidden",
+                        }}>
+                            <div
+                                style={{
+                                    width: "calc(100% + 20px)",
+                                    maxHeight: "calc(min(60vh,550px))",
+                                    overflowY: "scroll",
+                                    overflowX: "hidden",
+                                }}
+                            >
+                                <Grid
+                                    container
+                                    direction="column"
+                                    justifyContent="flex-start"
+                                    alignItems="center"
+                                    sx={{ width: "100%", }}
+                                >
+                                    {
+                                        guess.map((item, index) => <AutoCompleteItem key={index} data={item} />)
+                                    }
+                                </Grid>
+                            </div>
+                        </div>
+                    }
                 </Paper>
             </AppBar>
         </HideOnScroll>
